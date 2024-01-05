@@ -3,6 +3,10 @@
 # after adding shiny library, run with: runApp("app.R")
 # install packages with R, not VSCode (VSC sometimes requires extra libraries)
 
+#testing 
+
+
+
 # list of packages required:
 list.of.packages <- c("shiny", "ggplot2", "oro.nifti",
                       "neurobase", "ggcorrplot", "ggridges", "pheatmap",
@@ -54,8 +58,7 @@ ui <- fluidPage(
       
       selectInput("task",
       			  label = "Task",
-      			  choices = c("All" = "*", "Rest" = "rest", "SST", 
-                          "Emotion" = "emotion", "N-back" = "nback", "Relational" = "relational", "Social" = "social", "Working Memory" = "wm", "Gambling" = "gambling"),
+      			  choices = c("All" = "*", "Rest" = "rest", "SST", "Emotion" = "emotion", "N-back" = "nback", "Relational" = "relational", "Social" = "social", "Working Memory" = "wm", "Gambling" = "gambling"),
               multiple = TRUE),
       
       selectInput("test_type",
@@ -117,7 +120,6 @@ helpText("To visualize activation effect sizes on the brain, select Task-Based A
     )
   )
 
-# testing git
 
 # Server logic ----
 server <- function(input, output, session) {
