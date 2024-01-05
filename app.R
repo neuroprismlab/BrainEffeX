@@ -4,14 +4,15 @@
 # install packages with R, not VSCode (VSC sometimes requires extra libraries)
 
 # list of packages required:
-list.of.packages <- c("shiny", "ggplot2", "oro.nifti", "neurobase", "ggcorrplot",
-"ggridges", "pheatmap", "shinycssloaders", "shinyjs")
+list.of.packages <- c("shiny", "ggplot2", "oro.nifti",
+                      "neurobase", "ggcorrplot", "ggridges", "pheatmap",
+                      "shinycssloaders", "shinyjs")
 
 # checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 
 # install missing packages ##TODO## UPDATE WHEN WE ADD MORE MAPS
-if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if (length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 
 #load packages and data
 library(shiny)
