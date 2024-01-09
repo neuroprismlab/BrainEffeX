@@ -1,4 +1,3 @@
-# example from https://shiny.rstudio.com/tutorial/written-tutorial/lesson5/
 # different ways of printing text: https://stackoverflow.com/questions/50781653/renderprint-option-in-shinyapp
 # after adding shiny library, run with: runApp("app.R")
 # install packages with R, not VSCode (VSC sometimes requires extra libraries)
