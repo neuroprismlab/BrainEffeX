@@ -3,20 +3,15 @@
 # after adding shiny library, run with: runApp("app.R")
 # install packages with R, not VSCode (VSC sometimes requires extra libraries)
 
-# this is a change i made in the sim_ci branch
-
-
-
 # list of packages required:
-list.of.packages <- c("shiny", "ggplot2", "oro.nifti",
-                      "neurobase", "ggcorrplot", "ggridges", "pheatmap",
-                      "shinycssloaders", "shinyjs")
+list.of.packages <- c("shiny", "ggplot2", "oro.nifti", "neurobase", "ggcorrplot",
+"ggridges", "pheatmap", "shinycssloaders", "shinyjs")
 
 # checking missing packages from list
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 
 # install missing packages ##TODO## UPDATE WHEN WE ADD MORE MAPS
-if (length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
 
 #load packages and data
 library(shiny)
@@ -28,7 +23,7 @@ library(ggridges)
 library(pheatmap)
 library(shinycssloaders)
 library(shinyjs)
-d_clean <- readRDS("data/d_clean_whcp.rds")
+d_clean <- readRDS("data/d_clean_hcp_ukb.rds")
 
 # options for spinner
 options(spinner.color="#9ecadb", spinner.color.background="#ffffff", spinner.size=1)
@@ -135,7 +130,7 @@ server <- function(input, output, session) {
       							   (d_clean$study %in% input$behaviour | grepl(paste(input$behaviour, collapse="|"), d_clean$study, ignore.case = TRUE)))
       
       if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
-        file_list <- list.files(path = "/Users/halleeshearer/Library/CloudStorage/GoogleDrive-halleeninet@gmail.com/.shortcut-targets-by-id/17uYR-Ubbo9n0459awrNyRct0CL4MwAXl/Hallee-Steph share/visualize_effects_app/data/", full.names = TRUE)
+        file_list <- list.files(path = "data/", full.names = TRUE)
         v$case_task <- toupper(input$task)
         pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
         matching_file <- grep(pattern, file_list, value = TRUE)
@@ -230,7 +225,7 @@ server <- function(input, output, session) {
     ## TODO ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
     output$brain <- renderPlot({
         # load template brain image: ** TODO WILL NEED TO CHANGE **
-    template <- readnii('/Users/halleeshearer/Desktop/visualize_effects_app/data/anatomical.nii')
+    template <- readnii('data/anatomical.nii')
       validate(
       need(length(input$task) < 2, "Please only select one task."),
       #need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
