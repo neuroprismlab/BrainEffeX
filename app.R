@@ -1,16 +1,19 @@
-# different ways of printing text: https://stackoverflow.com/questions/50781653/renderprint-option-in-shinyapp
+# different ways of printing text:
+# https://stackoverflow.com/questions/50781653/renderprint-option-in-shinyapp
 # after adding shiny library, run with: runApp("app.R")
 # install packages with R, not VSCode (VSC sometimes requires extra libraries)
 
 # list of packages required:
-list.of.packages <- c("shiny", "ggplot2", "oro.nifti", "neurobase", "ggcorrplot",
-"ggridges", "pheatmap", "shinycssloaders", "shinyjs")
+list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
+                      "neurobase", "ggcorrplot",
+                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs")
 
 # checking missing packages from list
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
+                                   [, "Package"])]
 
-# install missing packages ##TODO## UPDATE WHEN WE ADD MORE MAPS
-if(length(new.packages)) install.packages(new.packages, dependencies = TRUE)
+# install missing packages TODO UPDATE WHEN WE ADD MORE MAPS
+if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 #load packages and data
 library(shiny)
@@ -22,10 +25,25 @@ library(ggridges)
 library(pheatmap)
 library(shinycssloaders)
 library(shinyjs)
+
+# load data
 d_clean <- readRDS("data/d_clean_hcp_ukb.rds")
+# TODO this will change once I get the proper data structure
+# from Steph all in one file.
+# (for now using effect_maps data to obtain sample size values, but
+# ideally in the future the sample sizes will be a part of d_clean)
+# effect_maps <- readRDS("/Users/neuroprism/Library/CloudStorage/
+#                        GoogleDrive-halleeninet@gmail.com/
+#                        .shortcut-targets-by-id/
+#                        1gVHbxOjZcP8uB8Au0lhLpVHCR8RzcdCv/
+#                        Effect_Size/data/effect_maps")
+
+# assume that the final data Steph will give me has the following cols:
+# study_name, d, original_statistic, ci_lb, ci_ub, n1, n2, phenotype_code
 
 # options for spinner
-options(spinner.color="#9ecadb", spinner.color.background="#ffffff", spinner.size=1)
+options(spinner.color = "#9ecadb",
+        spinner.color.background = "#ffffff", spinner.size = 1)
 
 # list of available effect maps for visualization
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
@@ -62,7 +80,7 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.test_type.indexOf('r') > -1",
             selectInput("behaviour",
-      			  label = "Behavioural correlation",
+      			  label = "Behavioural correlation", #TODO: update choices to include all possible options! For example, missing BMI currently
       			  choices = c( "All" = "*","Age" = "\\.age", "IQ" = "\\.iq", "Fluid Intelligence" = "\\.gf", "Peabody Picture Vocab Test" = "\\.ppvt", "Expressive Vocab Test" = "\\.evt", "Stop Signal Task" = "\\.SST", "Letter N-Back Accuracy" = "\\.lnbxacc", "Letter N-Back Response Time" = "\\.lnbxrt", "Penn Face Memory Test Accuracy" = "\\.pfmtxacc", "Penn Face Memory Test Response Time" = "\\.pfmtxrt", "Penn Matrix Reasoning Test Correct Responses" = "\\.pmatxrc", "Penn Verbal Reasoning Test Accuracy" = "\\.pvrtxacc", "Penn Verbal Reasoning Test Response Time" = "\\.pvrtxrt", "Penn Word Memory Test Accuracy" = "\\.pwmtxacc", "Penn Word Memory Test Response Time" = "\\.pwmtxrt", "Wide Range Assessment Test" = "\\.wrat"),
               multiple = TRUE)),
       # selectInput("behaviour",
@@ -170,6 +188,11 @@ server <- function(input, output, session) {
 
     # plot
     # render UI
+
+    # TODO
+    # update this plot to be a CI plot with the sim_ci_calc_plot.R script
+    # once I get the proper data structure from Steph
+
     output$histograms <- renderPlot({
       # d_clean %>% filter(statistic == "r") # TODO: filter by input categories or compare all
       ggplot(v$d_clean,  aes(x = d, y = .data[[v$grouping]], fill = .data[[v$this_fill]])) +
@@ -203,7 +226,8 @@ server <- function(input, output, session) {
       validate(need(length(input$task) < 2, "Please only select one task."),
       need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
       need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
-      need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"))
+      need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
+      need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
         t <- v$d_clean[[1]]
         n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
         trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
