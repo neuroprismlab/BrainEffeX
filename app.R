@@ -230,9 +230,11 @@ server <- function(input, output, session) {
       need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
         t <- v$d_clean[[1]]
         n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-        trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+        trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where lower triangle is TRUE
         t2 <- trilmask
-        t2[trilmask] <- t
+        t2[trilmask] <- t # populates the lower triangle with values from t
+        # the above line works by populating down columns from top to bottom, left to right
+        # need to find out if that's the same way that d_clean was populated! TODO
         xlabel <- sprintf("%s Nodes", n_nodes)
         ylabel <- sprintf("%s Nodes", n_nodes)
 
