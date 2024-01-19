@@ -222,28 +222,95 @@ server <- function(input, output, session) {
     #     })
 
     # try plotting the map with heatmap instead of image
+    # output$maps <- renderPlot({
+    #   validate(need(length(input$task) < 2, "Please only select one task."),
+    #   need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
+    #   need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
+    #   need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
+    #   need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
+    #     t <- v$d_clean[[1]]
+    #     n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+    #     trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where lower triangle is TRUE
+    #     t2 <- trilmask
+    #     t2[trilmask] <- t # populates the lower triangle with values from t
+    #     # the above line works by populating down columns from top to bottom, left to right
+    #     # need to find out if that's the same way that d_clean was populated! TODO
+    #     xlabel <- sprintf("%s Nodes", n_nodes)
+    #     ylabel <- sprintf("%s Nodes", n_nodes)
+    # 
+    #     heatmap(t(apply(t2, 2, rev)),
+    #       Colv = NA, Rowv = NA,  # Turn off row and column clustering
+    #       col = heat.colors(256),
+    #       xlab = xlabel, ylab = ylabel,
+    #       scale = "none"
+    #     )
+    # })
+    
+    # # changing this plot to address the upper/lower triangle problem
+    # # the previous way was not accounting for the change in triangle properly
+    # output$maps <- renderPlot({
+    #   validate(need(length(input$task) < 2, "Please only select one task."),
+    #            need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
+    #            need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
+    #            need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
+    #            need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
+    #   t <- v$d_clean[[1]]
+    #   n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+    #   trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where upper triangle is TRUE
+    #   t2 <- trilmask
+    #   t2[trilmask] <- t # populates the upper triangle with values from t
+    #   xlabel <- sprintf("%s Nodes", n_nodes)
+    #   ylabel <- sprintf("%s Nodes", n_nodes)
+    #   
+    #   heatmap(t(apply(t2, 2, rev)),
+    #           Colv = NA, Rowv = NA,  # Turn off row and column clustering
+    #           col = heat.colors(256),
+    #           xlab = xlabel, ylab = ylabel,
+    #           scale = "none"
+    #   )
+    # })
+    # 
+    # output$maps <- renderPlot({
+    #     t <- v$d_clean[[1]]
+    #     n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+    #     trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+    #     t2 <- trilmask
+    #     t2[trilmask] <- t
+    #     image(t2[,nrow(t2):1],
+    #           xlab = sprintf("%s Nodes", n_nodes),
+    #           ylab = sprintf("%s Nodes", n_nodes),
+    #           axes = FALSE)
+    #     axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
+    #     axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize Y-axis
+    #     })
+    
     output$maps <- renderPlot({
-      validate(need(length(input$task) < 2, "Please only select one task."),
-      need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
-      need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
-      need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
-      need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
-        t <- v$d_clean[[1]]
-        n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-        trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where lower triangle is TRUE
+      t <- v$d_clean[[1]]
+      if (length(t) == 71824) {
+        # if the data includes the whole matrix, not just a triangle:
+        n_nodes <- sqrt(length(t))
+        trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
         t2 <- trilmask
-        t2[trilmask] <- t # populates the lower triangle with values from t
-        # the above line works by populating down columns from top to bottom, left to right
-        # need to find out if that's the same way that d_clean was populated! TODO
-        xlabel <- sprintf("%s Nodes", n_nodes)
-        ylabel <- sprintf("%s Nodes", n_nodes)
-
-        heatmap(t(apply(t2, 2, rev)),
-          Colv = NA, Rowv = NA,  # Turn off row and column clustering
-          col = heat.colors(256),
-          xlab = xlabel, ylab = ylabel,
-          scale = "none"
-        )
+        t2[trilmask] <- t
+        image(t2[,nrow(t2):1],
+              xlab = sprintf("%s Nodes", n_nodes),
+              ylab = sprintf("%s Nodes", n_nodes),
+              axes = FALSE)
+        axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
+        axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))
+      }
+      else {
+        n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+        trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+        t2 <- trilmask
+        t2[trilmask] <- t
+        image(t2[,nrow(t2):1],
+              xlab = sprintf("%s Nodes", n_nodes),
+              ylab = sprintf("%s Nodes", n_nodes),
+              axes = FALSE)
+        axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
+        axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))
+      }
     })
 
     # try plotting brain images:
@@ -269,7 +336,7 @@ server <- function(input, output, session) {
             xyz = c(input$xCoord, input$yCoord, input$zCoord),
             ycolorbar = TRUE,
             ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
-            mfrow = c(1, 3),
+            mfrow = c(1, 3)
         )
 
 
