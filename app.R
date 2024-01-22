@@ -317,8 +317,7 @@ server <- function(input, output, session) {
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
         axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5, lwd = 0)  # Customize X-axis
         axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.5, lwd = 0)
-      } # TODO: make the matrix always be square rather than stretching!
-      # TODO: add colorbar to plot and maybe make the colorbar always be the same?
+      } 
     })
 
     # try plotting brain images:
