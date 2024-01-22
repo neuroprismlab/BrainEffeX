@@ -66,3 +66,27 @@ for (i in names) {
   dev.off()
   }
   }
+
+
+
+# plot one FC matrix for testing purposes:
+
+d_clean <- readRDS("/Users/neuroprism/Library/CloudStorage/GoogleDrive-halleeninet@gmail.com/My Drive/NeuroPRISM/effect_size_shiny_git/effect_size_shiny/data/d_clean_hcp_ukb.rds")
+
+t <- filter(d_clean, study == "ABCD.fc.r.rest.age")
+t <- t[[1]]
+
+n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+t2 <- trilmask
+t2[trilmask] <- t
+image(t2[,nrow(t2):1],
+      #xlab = sprintf("%s Nodes", n_nodes),
+      #ylab = sprintf("%s Nodes", n_nodes),
+      axes = FALSE)
+axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5)  # Customize X-axis
+axis(2, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5)
+
+# try with ggplot
+
+ggplot(data = t2[,nrow(t2):1])

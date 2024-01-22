@@ -6,7 +6,7 @@
 # list of packages required:
 list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
                       "neurobase", "ggcorrplot",
-                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs")
+                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields")
 
 # checking missing packages from list
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
@@ -25,6 +25,7 @@ library(ggridges)
 library(pheatmap)
 library(shinycssloaders)
 library(shinyjs)
+library(fields)
 
 # load data
 d_clean <- readRDS("data/d_clean_hcp_ukb.rds")
@@ -122,7 +123,7 @@ helpText("To visualize activation effect sizes on the brain, select Task-Based A
         conditionalPanel(
           condition = "input.measurement_type === 'fc' && input.dataset !== '*' && input.task !== '*' && input.test_type !== '*' && input.behaviour !== '*' && input.behaviour.length > 0",
           h2("Effect size matrix"),
-          withSpinner(plotOutput("maps"), type = 1)
+          withSpinner(plotOutput("maps", height = "500px", width = "500px"), type = 1)
           ),
         conditionalPanel( # if activation maps selected, show MRI visualization
           condition = "input.measurement_type === 'act' && input.dataset !== '*' && input.task !== '*' && input.test_type !== '*'",
@@ -139,6 +140,7 @@ server <- function(input, output, session) {
     v <- reactiveValues()
     observe({
         # change the data being used to generate plots depending on inputs selected
+        # TODO: allow for two task selections, i.e. rest and SST to filter by BOTH tasks
       v$d_clean <- subset(d_clean, grepl(input$dataset, d_clean$study) & 
       							   grepl(input$measurement_type, d_clean$study) &
       							   # grepl(input$task, d_clean$study) &
@@ -285,6 +287,11 @@ server <- function(input, output, session) {
     #     })
     
     output$maps <- renderPlot({
+      validate(need(length(input$task) < 2, "Please only select one task."),
+      need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
+      need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
+      need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
+      need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
       t <- v$d_clean[[1]]
       if (length(t) == 71824) {
         # if the data includes the whole matrix, not just a triangle:
@@ -292,25 +299,26 @@ server <- function(input, output, session) {
         trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
         t2 <- trilmask
         t2[trilmask] <- t
-        image(t2[,nrow(t2):1],
+        image.plot(t2[,nrow(t2):1],
               xlab = sprintf("%s Nodes", n_nodes),
               ylab = sprintf("%s Nodes", n_nodes),
-              axes = FALSE)
-        axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
-        axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))
+              axes = FALSE, col = hcl.colors(100, palette = "viridis"))
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.5, lwd = 0)
       }
       else {
         n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
         trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
         t2 <- trilmask
         t2[trilmask] <- t
-        image(t2[,nrow(t2):1],
+        image.plot(t2[,nrow(t2):1],
               xlab = sprintf("%s Nodes", n_nodes),
               ylab = sprintf("%s Nodes", n_nodes),
-              axes = FALSE)
-        axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
-        axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))
-      }
+              axes = FALSE, col = hcl.colors(100, palette = "viridis"))
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.5, lwd = 0)
+      } # TODO: make the matrix always be square rather than stretching!
+      # TODO: add colorbar to plot and maybe make the colorbar always be the same?
     })
 
     # try plotting brain images:
@@ -338,7 +346,7 @@ server <- function(input, output, session) {
             ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
             mfrow = c(1, 3)
         )
-
+#TODO: add numbers to legend of brain figure
 
         # orthographic(template, effect_map,
         # xyz = c(input$xCoord, input$yCoord, input$zCoord),
