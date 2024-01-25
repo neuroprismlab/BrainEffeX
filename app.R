@@ -300,11 +300,11 @@ server <- function(input, output, session) {
         t2 <- trilmask
         t2[trilmask] <- t
         image.plot(t2[,nrow(t2):1],
-              xlab = sprintf("%s Nodes", n_nodes),
-              ylab = sprintf("%s Nodes", n_nodes),
+              # xlab = sprintf("%s Nodes", n_nodes),
+              # ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5, lwd = 0)  # Customize X-axis
-        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.5, lwd = 0)
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
       }
       else {
         n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
@@ -312,11 +312,11 @@ server <- function(input, output, session) {
         t2 <- trilmask
         t2[trilmask] <- t
         image.plot(t2[,nrow(t2):1],
-              xlab = sprintf("%s Nodes", n_nodes),
-              ylab = sprintf("%s Nodes", n_nodes),
+              # xlab = sprintf("%s Nodes", n_nodes),
+              # ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.5, lwd = 0)  # Customize X-axis
-        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.5, lwd = 0)
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
       } 
     })
 
