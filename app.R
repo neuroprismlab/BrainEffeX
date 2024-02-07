@@ -198,8 +198,6 @@ server <- function(input, output, session) {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
         if (!is.null(input$test_type) && input$test_type == "\\.r\\.") {
           updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[selected_studies, ]$var2)))
-        } else {
-          updateSelectInput(session, "behaviour", choices = c("All" = "*"))
         }
       })
 
