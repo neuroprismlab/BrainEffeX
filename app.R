@@ -203,9 +203,7 @@ server <- function(input, output, session) {
 
       observeEvent(ignoreInit = TRUE, list(input$behaviour, input$measurement_type, input$task, input$test_type), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
-        if (!is.null(input$test_type) && input$test_type == "\\.r\\.") {
-          updateSelectInput(session, "dataset", choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
-        }
+        updateSelectInput(session, "dataset", choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
       })
 
 
