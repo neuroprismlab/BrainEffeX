@@ -187,11 +187,11 @@ server <- function(input, output, session) {
         updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
       observeEvent(v$d_clean, {
-        updateSelectInput(session, "behaviour", choices = studies[studies$name %in% unique(v$d_clean$study), ]$var2)
+        updateSelectInput(session, "behaviour", choices = c("All" = "*", studies[studies$name %in% unique(v$d_clean$study), ]$var2))
       })
 
       observeEvent(v$d_clean, {
-        updateSelectInput(session, "dataset", choices = studies[studies$name %in% unique(v$d_clean$study), ]$dataset)
+        updateSelectInput(session, "dataset", choices = c("All" = "*", studies[studies$name %in% unique(v$d_clean$study), ]$dataset))
       })
 
       # observeEvent(v$d_clean, {
