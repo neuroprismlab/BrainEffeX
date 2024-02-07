@@ -186,15 +186,15 @@ server <- function(input, output, session) {
       #   if (input$test_type != "\\.r\\.") {
       #   updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
-      toListen <- reactive({
-        list(input$dataset, input$measurement_type, input$task, input$test_type)})
+      # toListen <- reactive({
+      #   list(input$dataset, input$measurement_type, input$task, input$test_type)})
         
       
       # observeEvent(toListen(), {
       #   updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[studies$name %in% unique(v$d_clean$study), ]$var2)))
       # })
 
-      observeEvent(toListen(), {
+      observeEvent(ignoreInit = TRUE, list(input$dataset, input$measurement_type, input$task, input$test_type), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
         if (!is.null(input$test_type) && input$test_type == "\\.r\\.") {
           updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[selected_studies, ]$var2)))
