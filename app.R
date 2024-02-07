@@ -204,8 +204,12 @@ server <- function(input, output, session) {
       observeEvent(ignoreInit = TRUE, list(input$behaviour, input$measurement_type, input$task, input$test_type), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
         updateSelectInput(session, "dataset", choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
-      })
+      }) # this works, but doesn't look like it's working perfectly because the data used to make studies is not the same as the data used to make d_clean for now
 
+      observeEvent(ignoreInit = TRUE, list(input$behaviour, input$dataset, input$task, input$test_type), {
+        selected_studies <- studies$name %in% unique(v$d_clean$study)
+        updateSelectInput(session, "measurement_type", choices = c("All" = "*", unique(studies[selected_studies, ]$map_type)))
+      })
 
       # observeEvent(v$d_clean, {
       #   updateSelectInput(session, "dataset", choices = c("All" = "*", studies[studies$name %in% unique(v$d_clean$study), ]$dataset))
