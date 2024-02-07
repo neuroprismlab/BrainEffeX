@@ -190,9 +190,9 @@ server <- function(input, output, session) {
       #   list(input$dataset, input$measurement_type, input$task, input$test_type)})
         
       
-      # observeEvent(toListen(), {
-      #   updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[studies$name %in% unique(v$d_clean$study), ]$var2)))
-      # })
+      observeEvent(toListen(), {
+        updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[studies$name %in% unique(v$d_clean$study), ]$var2)))
+      })
 
       observeEvent(toListen(), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
