@@ -194,17 +194,17 @@ server <- function(input, output, session) {
         updateSelectInput(session, "dataset", choices = studies[studies$name %in% unique(v$d_clean$study), ]$dataset)
       })
 
-      observeEvent(v$d_clean, {
-        updateSelectInput(session, "measurement_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$map_type)
-      })
+      # observeEvent(v$d_clean, {
+      #   updateSelectInput(session, "measurement_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$map_type)
+      # })
 
-      observeEvent(v$d_clean, {
-        updateSelectInput(session, "task", choices = studies[studies$name %in% unique(v$d_clean$study), ]$var1)
-      })
+      # observeEvent(v$d_clean, {
+      #   updateSelectInput(session, "task", choices = studies[studies$name %in% unique(v$d_clean$study), ]$var1)
+      # })
 
-      observeEvent(v$d_clean, {
-        updateSelectInput(session, "test_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$stat_type)
-      })
+      # observeEvent(v$d_clean, {
+      #   updateSelectInput(session, "test_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$stat_type)
+      # })
 
     })
       
