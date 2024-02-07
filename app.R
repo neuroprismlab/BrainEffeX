@@ -201,6 +201,8 @@ server <- function(input, output, session) {
         }
       })
 
+      ## TODO: with these constraining functions, need to make the resulting choices more human-readable
+
       observeEvent(ignoreInit = TRUE, list(input$behaviour, input$measurement_type, input$task, input$test_type), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
         updateSelectInput(session, "dataset", choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
@@ -209,6 +211,16 @@ server <- function(input, output, session) {
       observeEvent(ignoreInit = TRUE, list(input$behaviour, input$dataset, input$task, input$test_type), {
         selected_studies <- studies$name %in% unique(v$d_clean$study)
         updateSelectInput(session, "measurement_type", choices = c("All" = "*", unique(studies[selected_studies, ]$map_type)))
+      })
+
+      observeEvent(ignoreInit = TRUE, list(input$behaviour, input$dataset, input$task, input$measurement_type), {
+        selected_studies <- studies$name %in% unique(v$d_clean$study)
+        updateSelectInput(session, "test_type", choices = c("All" = "*", unique(studies[selected_studies, ]$stat_type)))
+      })
+
+      observeEvent(ignoreInit = TRUE, list(input$behaviour, input$dataset, input$test_type, input$measurement_type), {
+        selected_studies <- studies$name %in% unique(v$d_clean$study)
+        updateSelectInput(session, "task", choices = c("All" = "*", unique(studies[selected_studies, ]$var1))) ## TODO: be more specific about var1 and var2
       })
 
       # observeEvent(v$d_clean, {
