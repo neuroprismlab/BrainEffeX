@@ -186,8 +186,8 @@ server <- function(input, output, session) {
       #   if (input$test_type != "\\.r\\.") {
       #   updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
-      toListen <- reactive({
-        list(input$dataset, input$measurement_type, input$task, input$test_type)})
+      # toListen <- reactive({
+      #   list(input$dataset, input$measurement_type, input$task, input$test_type)})
         
       
       # observeEvent(toListen(), {
