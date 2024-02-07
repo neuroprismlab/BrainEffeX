@@ -29,6 +29,7 @@ library(fields)
 
 # load data
 d_clean <- readRDS("data/d_clean_hcp_ukb.rds")
+studies <- read.csv("data/studies.csv")
 # TODO this will change once I get the proper data structure
 # from Steph all in one file.
 # (for now using effect_maps data to obtain sample size values, but
@@ -186,7 +187,7 @@ server <- function(input, output, session) {
         updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
       observeEvent(v$d_clean, {
-        updateSelectInput(session, "behaviour", choices = c("test1", "test2"))
+        updateSelectInput(session, "behaviour", choices = studies[studies$name %in% unique(v$d_clean$study), ]$var2)
       })
     })
       
