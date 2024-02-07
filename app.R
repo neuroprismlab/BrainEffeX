@@ -182,9 +182,9 @@ server <- function(input, output, session) {
       # reset behavioural correlation selections when test_type is changed from behavioural correlation to something else
       # the behavioural correlation selectInput disappears when test_type is not behavioural correlation, 
       # so need to reset when it disappears
-      observeEvent(input$test_type, {
-        if (input$test_type != "\\.r\\.") {
-        updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
+      # observeEvent(input$test_type, {
+      #   if (input$test_type != "\\.r\\.") {
+      #   updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
       toListen <- reactive({
         list(input$dataset, input$measurement_type, input$task, input$test_type)})
