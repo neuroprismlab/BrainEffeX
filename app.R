@@ -184,6 +184,10 @@ server <- function(input, output, session) {
       observeEvent(input$test_type, {
         if (input$test_type != "\\.r\\.") {
         updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
+
+      observeEvent(v$d_clean, {
+        updateSelectInput(session, "behaviour", choices = c("test1", "test2"))
+      })
     })
       
 
