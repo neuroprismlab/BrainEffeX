@@ -1,8 +1,3 @@
-# different ways of printing text:
-# https://stackoverflow.com/questions/50781653/renderprint-option-in-shinyapp
-# after adding shiny library, run with: runApp("app.R")
-# install packages with R, not VSCode (VSC sometimes requires extra libraries)
-
 # list of packages required:
 list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
                       "neurobase", "ggcorrplot",
@@ -16,9 +11,10 @@ new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
 if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 # load data
+load("data/shiny_d_simci_hcp.RData") # this will load a variable called "study" that contains study information
 
-d_clean <- readRDS("data/effect_maps_d_simci.Rdata")
-load("data/effect_maps_clean.RData") # this will load a variable called "study" that contains study information
+# this will load a variable called d_clean that has the effect maps, 
+# and a variable called "study" that contains study information
 
 ### d_clean is a list of studies, each study contains: 
 # sample size as n, n1, and/or n2
@@ -40,13 +36,30 @@ load("data/effect_maps_clean.RData") # this will load a variable called "study" 
 # var1
 # var2
 
-
 # options for spinner
 options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
-
-# list of available effect maps for visualization
-effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
+        
+# helper function for plotting:
+plot_sim_ci <- function(d_clean, i) {
+  data <- d_clean[[i]]
+  # remove na
+  na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
+  data$d <- data$d[!na_idx]
+  data$sim_ci_lb <- data$sim_ci_lb[!na_idx]
+  data$sim_ci_ub <- data$sim_ci_ub[!na_idx]
+  sorted_indices <- order(data$d)
+  sorted_d <- data$d[sorted_indices]
+  sorted_upper_bounds <- data$sim_ci_ub[sorted_indices]
+  sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
+  
+  plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
+       main = names(d_clean[i]), xlab = "Edges/Voxels", ylab = "Cohen's d")
+  
+  polygon(c(1:length(sorted_d), rev(1:length(sorted_d))), 
+          c(sorted_upper_bounds, rev(sorted_lower_bounds)), 
+          col = rgb(0.5, 0.5, 0.5, alpha = 0.3), border = NA)
+}
 
 
 
@@ -108,55 +121,54 @@ ui <- fluidPage(
       ),
 
 hr() ,
-helpText("To visualize an FC effect size matrix, select FC as Measurement Type, and complete other selections."),
-helpText("To visualize activation effect sizes on the brain, select Task-Based Activation and select a dataset, task, and test type."),
-
-    fluidRow( # second row: conditional row of additional inputs and plots depending on previous selections
-        column(4, # if activation maps are selected, show MRI visualization inputs
-        conditionalPanel(
-        condition = "input.measurement_type === 'act' && input.dataset !== '*' && input.task !== '*' && input.test_type !== '*' && input.behaviour !== '*'",
-        sidebarPanel(
+    fluidRow( # second row: plots of activation maps for activation studies and FC effect matrices for FC studies
+        column(4, # inputs for activation maps
+            sidebarPanel(
             numericInput("xCoord", "X Coordinate", 30),
             numericInput("yCoord", "Y Coordinate", 30),
             numericInput("zCoord", "Z Coordinate", 30))
-    )),
+        ),
 
-        column(8, align = "center", # if FC is selected, show heatplot of FC effect sizes
-        conditionalPanel(
-          condition = "input.measurement_type === 'fc' && input.dataset !== '*' && input.task !== '*' && input.test_type !== '*' && input.behaviour !== '*' && input.behaviour.length > 0",
-          h2("Effect size matrix"),
-          withSpinner(plotOutput("maps", height = "500px", width = "500px"), type = 1)
-          ),
-        conditionalPanel( # if activation maps selected, show MRI visualization
-          condition = "input.measurement_type === 'act' && input.dataset !== '*' && input.task !== '*' && input.test_type !== '*'",
-          h2("Effect size maps"),
+        column(4, align = "center", # plots of FC effect matrices for FC studies
+          h2("Activation effect size map"),
           withSpinner(plotOutput("brain"), type = 1)
-          ))
+        ),
+        
+        column(4, align = "center", # plots of activation maps for activation studies 
+          h2("FC effect size matrix"),
+          withSpinner(plotOutput("maps", height = "500px", width = "500px"), type = 1)
+          )
     )
-  )
+)
 
+    
 
+########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
     # set reactive parameters
     v <- reactiveValues()
     observe({
-        # change the data being used to generate plots depending on inputs selected
-        # TODO: allow for two task selections, i.e. rest and SST to filter by BOTH tasks
-      v$d_clean <- subset(d_clean, grepl(input$dataset, d_clean$study) & 
-      							   grepl(input$measurement_type, d_clean$study) &
-      							   # grepl(input$task, d_clean$study) &
-                       (d_clean$study %in% input$task | grepl(paste(input$task, collapse="|"), d_clean$study, ignore.case = TRUE)) &
-      							   grepl(input$test_type, d_clean$study) &
-      							   (d_clean$study %in% input$behaviour | grepl(paste(input$behaviour, collapse="|"), d_clean$study, ignore.case = TRUE)))
+        # v$matching_studies <- (study$dataset == input$dataset & 
+        #                        study$map_type == input$measurement_type & 
+        #                        study$var1 == input$task & 
+        #                        study$orig_stat_type == input$test_type & 
+        #                        study$var2 == input$behaviour)
+        # filter d_clean by the input parameters selected
+        v$d_clean <- d_clean[(study$dataset == input$dataset & 
+                               study$map_type == input$measurement_type & 
+                               study$var1 == input$task & 
+                               study$orig_stat_type == input$test_type & 
+                               study$var2 == input$behaviour)]
       
-      if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
-        file_list <- list.files(path = "data/", full.names = TRUE)
-        v$case_task <- toupper(input$task)
-        pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
-        matching_file <- grep(pattern, file_list, value = TRUE)
-        v$effect_map <- readnii(matching_file)
-      }
+
+    #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
+    #     file_list <- list.files(path = "data/", full.names = TRUE)
+    #     v$case_task <- toupper(input$task)
+    #     pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
+    #     matching_file <- grep(pattern, file_list, value = TRUE)
+    #     v$effect_map <- readnii(matching_file)
+    #   }
 
       v$this_fill <- "statistic"
 
@@ -172,73 +184,46 @@ server <- function(input, output, session) {
         v$this_density_scale <- 2.1
         v$this_xlim <- c(-1,1)
       }
-      else if (input$group_by == "Phenotype Category") { # group by phenotype category
-        v$grouping <- "code"
-        #v$this_fill <- "code"
-        v$axis_label <- "Phenotype Category"
-        v$this_density_scale <- 3
-        v$this_xlim <- c(-0.5, 0.5)
-      }
+    #   else if (input$group_by == "Phenotype Category") { # group by phenotype category
+    #     v$grouping <- "code"
+    #     #v$this_fill <- "code"
+    #     v$axis_label <- "Phenotype Category"
+    #     v$this_density_scale <- 3
+    #     v$this_xlim <- c(-0.5, 0.5)
+    #   }
+    ## TODO: add this again after ^^
 
-      # reset behavioural correlation selections when test_type is changed from behavioural correlation to something else
-      # the behavioural correlation selectInput disappears when test_type is not behavioural correlation, 
-      # so need to reset when it disappears
-      # observeEvent(input$test_type, {
-      #   if (input$test_type != "\\.r\\.") {
-      #   updateSelectInput(session, "behaviour", selected = "*")}}, ignoreNULL = TRUE)
 
-      # toListen <- reactive({
-      #   list(input$dataset, input$measurement_type, input$task, input$test_type)})
-        
-      
-      # observeEvent(toListen(), {
-      #   updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[studies$name %in% unique(v$d_clean$study), ]$var2)))
-      # })
 
-      observeEvent(ignoreInit = TRUE, list(input$dataset, input$measurement_type, input$task, input$test_type), {
-        selected_studies <- studies$name %in% unique(v$d_clean$study)
-        if (!is.null(input$test_type) && input$test_type == "\\.r\\.") {
-          updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[selected_studies, ]$var2)))
-        }
-      })
+# TODO: add this section back after to constrain parameters!!:
+    #   observeEvent(ignoreInit = TRUE, list(input$dataset, input$measurement_type, input$task, input$test_type), {
+    #     selected_studies <- studies$name %in% unique(v$d_clean$study)
+    #     if (!is.null(input$test_type) && input$test_type == "\\.r\\.") {
+    #       updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(studies[selected_studies, ]$var2)))
+    #     }
+    #   })
 
-      ## TODO: with these constraining functions, need to make the resulting choices more human-readable
+    #   ## TODO: with these constraining functions, need to make the resulting choices more human-readable
 
-      observeEvent(ignoreInit = TRUE, list(input$measurement_type, input$task, input$test_type), {
-        selected_studies <- studies$name %in% unique(v$d_clean$study)
-        updateSelectInput(session, "dataset", selected = input$dataset, choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
-      }) # this works, but doesn't look like it's working perfectly because the data used to make studies is not the same as the data used to make d_clean for now
+    #   observeEvent(ignoreInit = TRUE, list(input$measurement_type, input$task, input$test_type), {
+    #     selected_studies <- studies$name %in% unique(v$d_clean$study)
+    #     updateSelectInput(session, "dataset", selected = input$dataset, choices = c("All" = "*", unique(studies[selected_studies, ]$dataset)))
+    #   }) # this works, but doesn't look like it's working perfectly because the data used to make studies is not the same as the data used to make d_clean for now
 
-      observeEvent(ignoreInit = TRUE, list(input$dataset, input$task, input$test_type), {
-        selected_studies <- studies$name %in% unique(v$d_clean$study)
-        updateSelectInput(session, "measurement_type", selected = input$measurement_type, choices = c("All" = "*", unique(studies[selected_studies, ]$map_type)))
-      })
+    #   observeEvent(ignoreInit = TRUE, list(input$dataset, input$task, input$test_type), {
+    #     selected_studies <- studies$name %in% unique(v$d_clean$study)
+    #     updateSelectInput(session, "measurement_type", selected = input$measurement_type, choices = c("All" = "*", unique(studies[selected_studies, ]$map_type)))
+    #   })
 
-      observeEvent(ignoreInit = TRUE, list(input$dataset, input$task, input$measurement_type), {
-        selected_studies <- studies$name %in% unique(v$d_clean$study)
-        updateSelectInput(session, "test_type", selected = input$test_type, choices = c("All" = "*", unique(studies[selected_studies, ]$stat_type)))
-      })
+    #   observeEvent(ignoreInit = TRUE, list(input$dataset, input$task, input$measurement_type), {
+    #     selected_studies <- studies$name %in% unique(v$d_clean$study)
+    #     updateSelectInput(session, "test_type", selected = input$test_type, choices = c("All" = "*", unique(studies[selected_studies, ]$stat_type)))
+    #   })
 
-      observeEvent(ignoreInit = TRUE, list(input$dataset, input$test_type, input$measurement_type), {
-        selected_studies <- studies$name %in% unique(v$d_clean$study)
-        updateSelectInput(session, "task", selected = input$task, choices = c("All" = "*", unique(studies[selected_studies, ]$var1))) ## TODO: be more specific about var1 and var2
-      })
-
-      # observeEvent(v$d_clean, {
-      #   updateSelectInput(session, "dataset", choices = c("All" = "*", studies[studies$name %in% unique(v$d_clean$study), ]$dataset))
-      # })
-
-      # observeEvent(v$d_clean, {
-      #   updateSelectInput(session, "measurement_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$map_type)
-      # })
-
-      # observeEvent(v$d_clean, {
-      #   updateSelectInput(session, "task", choices = studies[studies$name %in% unique(v$d_clean$study), ]$var1)
-      # })
-
-      # observeEvent(v$d_clean, {
-      #   updateSelectInput(session, "test_type", choices = studies[studies$name %in% unique(v$d_clean$study), ]$stat_type)
-      # })
+    #   observeEvent(ignoreInit = TRUE, list(input$dataset, input$test_type, input$measurement_type), {
+    #     selected_studies <- studies$name %in% unique(v$d_clean$study)
+    #     updateSelectInput(session, "task", selected = input$task, choices = c("All" = "*", unique(studies[selected_studies, ]$var1))) ## TODO: be more specific about var1 and var2
+    #   })
 
     })
       
@@ -251,17 +236,26 @@ server <- function(input, output, session) {
     # update this plot to be a CI plot with the sim_ci_calc_plot.R script
     # once I get the proper data structure from Steph
 
+    # output$histograms <- renderPlot({
+    #   # d_clean %>% filter(statistic == "r") # TODO: filter by input categories or compare all
+    #   ggplot(v$d_clean,  aes(x = d, y = .data[[v$grouping]], fill = .data[[v$this_fill]])) +
+    #     geom_density_ridges(scale = v$this_density_scale) +
+    #     theme_ridges() +
+    #     #theme(legend.position = "none") +
+    #     labs(y = v$axis_label, x = "Cohen's d") +
+    #     theme(axis.title.y = element_text(size = 20, face = "bold", hjust = 0.5),
+    #     	  axis.title.x = element_text(size = 20, face = "bold", hjust = 0.5)) +
+    #     xlim(v$this_xlim) +
+    #     scale_fill_manual(values = c("t" = '#AABBE9', "r" = "#EBC6D0", "t2" = "#BEDCD5", "t (act)" = "#ECE7BC"))
+    # })
+
     output$histograms <- renderPlot({
-      # d_clean %>% filter(statistic == "r") # TODO: filter by input categories or compare all
-      ggplot(v$d_clean,  aes(x = d, y = .data[[v$grouping]], fill = .data[[v$this_fill]])) +
-        geom_density_ridges(scale = v$this_density_scale) +
-        theme_ridges() +
-        #theme(legend.position = "none") +
-        labs(y = v$axis_label, x = "Cohen's d") +
-        theme(axis.title.y = element_text(size = 20, face = "bold", hjust = 0.5),
-        	  axis.title.x = element_text(size = 20, face = "bold", hjust = 0.5)) +
-        xlim(v$this_xlim) +
-        scale_fill_manual(values = c("t" = '#AABBE9', "r" = "#EBC6D0", "t2" = "#BEDCD5", "t (act)" = "#ECE7BC"))
+        # plot all studies 
+        par(mfrow=c(((length(v$d_clean) %/% 3) + 1), 3))  # Set up multiple plots side by side
+
+        for (i in 1:length(d_clean)) {
+            plot_sim_ci(d_clean, i)
+        }
     })
  
 
