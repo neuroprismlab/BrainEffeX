@@ -41,8 +41,7 @@ options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
         
 # helper function for plotting:
-plot_sim_ci <- function(d_clean, i) {
-  data <- d_clean[[i]]
+plot_sim_ci <- function(data) {
   # remove na
   na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
   data$d <- data$d[!na_idx]
@@ -59,6 +58,7 @@ plot_sim_ci <- function(d_clean, i) {
   polygon(c(1:length(sorted_d), rev(1:length(sorted_d))), 
           c(sorted_upper_bounds, rev(sorted_lower_bounds)), 
           col = rgb(0.5, 0.5, 0.5, alpha = 0.3), border = NA)
+  return(plot_obj)
 }
 
 
@@ -71,6 +71,10 @@ ui <- fluidPage(
   titlePanel("Typical fMRI Effect Size Explorer"),
   
   hr(), # space
+
+  # mainPanel(
+  #   textOutput("selected_vars")
+  # ),
 
   fluidRow( # top row: inputs, probability density plots
       column(4, # inputs
@@ -87,7 +91,7 @@ ui <- fluidPage(
       selectInput("task",
       			  label = "Task",
       			  choices = c("All" = "*", "Rest" = "rest", "SST", "Emotion" = "emotion", "N-back" = "nback", "Relational" = "relational", "Social" = "social", "Working Memory" = "wm", "Gambling" = "gambling"),
-              multiple = TRUE),
+              multiple = TRUE, selected = "*"),
       
       selectInput("test_type",
       			  label = "Test Type",
@@ -98,7 +102,8 @@ ui <- fluidPage(
             selectInput("behaviour",
       			  label = "Behavioural correlation", #TODO: update choices to include all possible options! For example, missing BMI currently
       			  choices = unique(study[study$orig_stat_type=="r","var2"]),
-              multiple = TRUE)),
+              multiple = TRUE),
+              selected = "*"),
       # selectInput("behaviour",
       # 			  label = "Behavioural correlation",
       # 			  choices = c( "All" = "*","Age" = "\\.age", "IQ" = "\\.iq", "Fluid Intelligence" = "\\.gf", "Peabody Picture Vocab Test" = "\\.ppvt", "Expressive Vocab Test" = "\\.evt", "Stop Signal Task" = "\\.SST", "Letter N-Back Accuracy" = "\\.lnbxacc", "Letter N-Back Response Time" = "\\.lnbxrt", "Penn Face Memory Test Accuracy" = "\\.pfmtxacc", "Penn Face Memory Test Response Time" = "\\.pfmtxrt", "Penn Matrix Reasoning Test Correct Responses" = "\\.pmatxrc", "Penn Verbal Reasoning Test Accuracy" = "\\.pvrtxacc", "Penn Verbal Reasoning Test Response Time" = "\\.pvrtxrt", "Penn Word Memory Test Accuracy" = "\\.pwmtxacc", "Penn Word Memory Test Response Time" = "\\.pwmtxrt", "Wide Range Assessment Test" = "\\.wrat"),
@@ -115,7 +120,7 @@ ui <- fluidPage(
       ),
 
       column(8, align = "center", # probability density plots
-      h2("Effect size probability density"),
+      h2("Effect sizes of all edges/voxels"),
       withSpinner(plotOutput("histograms"), type = 1)
       )
       ),
@@ -155,12 +160,31 @@ server <- function(input, output, session) {
         #                        study$orig_stat_type == input$test_type & 
         #                        study$var2 == input$behaviour)
         # filter d_clean by the input parameters selected
-        v$d_clean <- d_clean[(study$dataset == input$dataset & 
-                               study$map_type == input$measurement_type & 
-                               study$var1 == input$task & 
-                               study$orig_stat_type == input$test_type & 
-                               study$var2 == input$behaviour)]
+        # v$d_clean <- d_clean[(study$dataset == input$dataset & 
+        #                        study$map_type == input$measurement_type & 
+        #                        study$var1 == input$task & 
+        #                        study$orig_stat_type == input$test_type & 
+        #                        # only filter by behaviour if the test type is a behavioural correlation
+        #                         ifelse(input$test_type == "\\.r\\.", study$var2 == input$behaviour, TRUE))]
+
+
+        v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
+                             grepl(input$measurement_type, study$map_type) & 
+                             grepl(input$task, study$var1) & 
+                             grepl(input$test_type, study$orig_stat_type) & 
+                             ifelse(input$test_type == "\\.r\\.", grepl(input$behaviour, study$var2), TRUE))]
       
+
+    # output$selected_vars <- renderText({
+    #     paste("Selected dataset:", input$dataset, "\n",
+    #           "Selected measurement type:", input$measurement_type, "\n",
+    #           "Selected task:", input$task, "\n",
+    #           "Selected test type:", input$test_type, "\n",
+    #           "Selected behaviour:", input$behaviour, "\n",
+    #           "Selected spatial scale:", input$spatial_scale, "\n",
+    #           "Grouping by:", input$group_by)
+    # })
+
 
     #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
     #     file_list <- list.files(path = "data/", full.names = TRUE)
@@ -249,15 +273,60 @@ server <- function(input, output, session) {
     #     scale_fill_manual(values = c("t" = '#AABBE9', "r" = "#EBC6D0", "t2" = "#BEDCD5", "t (act)" = "#ECE7BC"))
     # })
 
-    output$histograms <- renderPlot({
-        # plot all studies 
-        par(mfrow=c(((length(v$d_clean) %/% 3) + 1), 3))  # Set up multiple plots side by side
+    # output$histograms <- renderPlot({
+    #     # plot all studies 
+    #   #   par(mfrow=c(((length(v$d_clean) %/% 3) + 1), 3))  # Set up multiple plots side by side
+    #   # plot_sim_ci(v$d_clean, 1)
 
-        for (i in 1:length(d_clean)) {
-            plot_sim_ci(d_clean, i)
-        }
-    })
+    #   #   for (i in 1:length(v$d_clean)) {
+    #   #       plot_sim_ci(v$d_clean, i)
+    #   #   }
+    #   plot_sim_ci(v$d_clean, 1)
+    # })
+
+    # output$histograms <- renderUI({
+    #   plot_output_list <- lapply(unique(v$d_clean), function(i) {
+    #     plotname <- paste0(i)
+    #     plotOutput(plotname)
+    #     # htmlOutput(plotname)
+    #   })
+    #   do.call(tagList, plot_output_list)
+    # })
+
+    # for (i in 1:unique(v$d_clean)[length(unique(v$d_clean))]) {
+    #   local({
+    #     my_i <- i
+    #     plotname <- paste0(my_i)
+
+    #     output[[plot_name]] <- renderPlot({
+    #       plot_sim_ci(v$d_clean, my_i)
+    #     })
  
+    #     })
+    #   }
+
+  # output$histograms <- renderPlot({
+  #   # plot all studies
+  #   plot_sim_ci(v$d_clean, 1)
+  # })
+    
+    output$plots <- renderUI({
+    plot_list <- lapply(names(d_clean), function(name) {
+      plotOutput(paste0("plot_", name))
+    })
+    do.call(tagList, plot_list)
+  })
+  
+  # Render individual plots
+  for (i in seq_along(d_clean[1:5])) {
+    local({
+      my_i <- i
+      output[[paste0("plot_", names(d_clean)[i])]] <- renderPlot({
+        plot_sim_ci(d_clean[[my_i]])
+      })
+    })
+  }
+
 
     # output$maps <- renderPlot({
     #     t <- v$d_clean[[1]]
