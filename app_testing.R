@@ -3,12 +3,19 @@ list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
                       "neurobase", "ggcorrplot",
                       "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields")
 
-# checking missing packages from list
-new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
-                                   [, "Package"])]
+for (package in list_of_packages) {
+  if (!require(package, character.only = TRUE)) {
+    install.packages(package, dependencies = TRUE)
+    library(package, character.only = TRUE)
+  }
+}
 
-# install missing packages
-if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
+# # checking missing packages from list
+# new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
+#                                    [, "Package"])]
+
+# # install missing packages
+# if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 # load data
 load("data/shiny_d_simci_hcp.RData") # this will load a variable called "study" that contains study information
@@ -41,7 +48,7 @@ options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
         
 # helper function for plotting:
-plot_sim_ci <- function(data) {
+plot_sim_ci <- function(data, name) {
   # remove na
   na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
   data$d <- data$d[!na_idx]
@@ -52,13 +59,17 @@ plot_sim_ci <- function(data) {
   sorted_upper_bounds <- data$sim_ci_ub[sorted_indices]
   sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
   
-  plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
-       main = names(d_clean[i]), xlab = "Edges/Voxels", ylab = "Cohen's d")
+  # downsample the data for plotting
+  # downsample_factor <- 1000
+  # sorted_d <- sorted_d[seq(1, length(sorted_d), downsample_factor)]
+  # sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), downsample_factor)]
+  # sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), downsample_factor)]
+   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
+       main = name, xlab = "Edges/Voxels", ylab = "Cohen's d")
   
   polygon(c(1:length(sorted_d), rev(1:length(sorted_d))), 
           c(sorted_upper_bounds, rev(sorted_lower_bounds)), 
           col = rgb(0.5, 0.5, 0.5, alpha = 0.3), border = NA)
-  return(plot_obj)
 }
 
 
@@ -121,7 +132,7 @@ ui <- fluidPage(
 
       column(8, align = "center", # probability density plots
       h2("Effect sizes of all edges/voxels"),
-      withSpinner(plotOutput("histograms"), type = 1)
+      withSpinner(uiOutput("histograms"), type = 1)
       )
       ),
 
@@ -310,22 +321,43 @@ server <- function(input, output, session) {
   #   plot_sim_ci(v$d_clean, 1)
   # })
     
-    output$plots <- renderUI({
-    plot_list <- lapply(names(d_clean), function(name) {
-      plotOutput(paste0("plot_", name))
-    })
-    do.call(tagList, plot_list)
-  })
-  
-  # Render individual plots
-  for (i in seq_along(d_clean[1:5])) {
-    local({
-      my_i <- i
-      output[[paste0("plot_", names(d_clean)[i])]] <- renderPlot({
-        plot_sim_ci(d_clean[[my_i]])
+    # insert the right number of plot output objects into the web page
+    # if d_clean is not empty, then plot. Check if d_clean is empty:
+
+    output$histograms <- renderUI({
+      if (is.null(v$d_clean) || length(v$d_clean) == 0) {
+        # if there is no data, display a message
+        tagList(
+          h3("No data available for the selected parameters.")
+        )
+      }
+      else {
+        plot_output_list <- lapply(1:length(v$d_clean), function(i) {
+          plotname <- paste0("plot", i)
+          plotOutput(plotname)
+        })
+
+        # convert the list to a tagList, this is necessary for the list of items to display properly
+        do.call(tagList, plot_output_list)
+      }})
+
+    # call renderPlot for ecah one
+    # plots are only actually generated when they are visible on the web page
+    observe({
+    for (i in 1:length(v$d_clean)) {
+      # create a local variable to hold the value of i
+      local({
+        my_i <- i
+        plotname <- paste0("plot", my_i, sep="")
+
+        output[[plotname]] <- renderPlot({
+          #plot_sim_ci(v$d_clean[[my_i]], my_i)
+          # test with a very simple fast plot:
+          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i])
+        })
       })
+    }
     })
-  }
 
 
     # output$maps <- renderPlot({
