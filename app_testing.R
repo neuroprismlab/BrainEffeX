@@ -10,6 +10,8 @@ for (package in list_of_packages) {
   }
 }
 
+effect_maps_available = toupper(c("emotion", "gambling", "relational", "social", "wm"))
+
 # # checking missing packages from list
 # new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
 #                                    [, "Package"])]
@@ -129,12 +131,12 @@ ui <- fluidPage(
       
       selectInput("task",
       			  label = "Task",
-      			  choices = c("All" = "*", "Rest" = "rest", "SST", "Emotion" = "emotion", "N-back" = "nback", "Relational" = "relational", "Social" = "social", "Working Memory" = "wm", "Gambling" = "gambling"),
+      			  choices = c("All" = "*", unique(study["var1"])),
               multiple = TRUE, selected = "*"),
       
       selectInput("test_type",
       			  label = "Test Type",
-      			  choices = c("All" = "*", "One-sample task-rest" = "t", "Two-sample group contrast" = "t2", "Behavioural correlation" = "r")), ## TODO: change this is d when data is updated to cohen's d
+      			  choices = c("All" = "*", unique(study$orig_stat_type))), ## TODO: change this is d when data is updated to cohen's d
       			  
       conditionalPanel(
         condition = "input.test_type.indexOf('r') > -1",
@@ -165,7 +167,7 @@ ui <- fluidPage(
       ),
 
 hr() ,
-    fluidRow( # second row: plots of activation maps for activation studies and FC effect matrices for FC studies
+    fluidRow( # second row: plots of activation maps for activation studies 
         column(4, # inputs for activation maps
             sidebarPanel(
             numericInput("xCoord", "X Coordinate", 30),
@@ -173,14 +175,15 @@ hr() ,
             numericInput("zCoord", "Z Coordinate", 30))
         ),
 
-        column(4, align = "center", # plots of FC effect matrices for FC studies
+        column(8, align = "center", 
           h2("Activation effect size map"),
           withSpinner(plotOutput("brain"), type = 1)
-        ),
-        
-        column(4, align = "center", # plots of activation maps for activation studies 
+        )),
+hr(),
+    fluidRow( # third row: plots FC effect matrices for FC studies
+        column(12, align = "center", 
           h2("FC effect size matrix"),
-          withSpinner(plotOutput("maps", height = "500px", width = "500px"), type = 1)
+          withSpinner(plotOutput("maps", height = "500px", width = "1000px"), type = 1)
           )
     )
 )
@@ -209,29 +212,14 @@ server <- function(input, output, session) {
 
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
-                             (length(input$task) == 0 | grepl(input$task, study$var1)) & 
+                             (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
                              grepl(input$test_type, study$orig_stat_type) & 
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
 
-    # output$selected_vars <- renderText({
-    #     paste("Selected dataset:", input$dataset, "\n",
-    #           "Selected measurement type:", input$measurement_type, "\n",
-    #           "Selected task:", input$task, "\n",
-    #           "Selected test type:", input$test_type, "\n",
-    #           "Selected behaviour:", input$behaviour, "\n",
-    #           "Selected spatial scale:", input$spatial_scale, "\n",
-    #           "Grouping by:", input$group_by)
-    # })
+        v$d_clean_act <- d_clean[grepl("act", study$map_type)]
 
-
-    #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
-    #     file_list <- list.files(path = "data/", full.names = TRUE)
-    #     v$case_task <- toupper(input$task)
-    #     pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
-    #     matching_file <- grep(pattern, file_list, value = TRUE)
-    #     v$effect_map <- readnii(matching_file)
-    #   }
+        v$d_clean_fc <- d_clean[grepl("fc", study$map_type)]
 
       v$this_fill <- "statistic"
 
@@ -247,6 +235,15 @@ server <- function(input, output, session) {
         v$this_density_scale <- 2.1
         v$this_xlim <- c(-1,1)
       }
+    
+      if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
+      file_list <- list.files(path = "data/", full.names = TRUE)
+      v$case_task <- toupper(input$task)
+      pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
+      matching_file <- grep(pattern, file_list, value = TRUE)
+      v$effect_map <- readnii(matching_file)
+      }
+
     #   else if (input$group_by == "Phenotype Category") { # group by phenotype category
     #     v$grouping <- "code"
     #     #v$this_fill <- "code"
@@ -290,64 +287,6 @@ server <- function(input, output, session) {
 
     })
       
-
-
-    # plot
-    # render UI
-
-    # TODO
-    # update this plot to be a CI plot with the sim_ci_calc_plot.R script
-    # once I get the proper data structure from Steph
-
-    # output$histograms <- renderPlot({
-    #   # d_clean %>% filter(statistic == "r") # TODO: filter by input categories or compare all
-    #   ggplot(v$d_clean,  aes(x = d, y = .data[[v$grouping]], fill = .data[[v$this_fill]])) +
-    #     geom_density_ridges(scale = v$this_density_scale) +
-    #     theme_ridges() +
-    #     #theme(legend.position = "none") +
-    #     labs(y = v$axis_label, x = "Cohen's d") +
-    #     theme(axis.title.y = element_text(size = 20, face = "bold", hjust = 0.5),
-    #     	  axis.title.x = element_text(size = 20, face = "bold", hjust = 0.5)) +
-    #     xlim(v$this_xlim) +
-    #     scale_fill_manual(values = c("t" = '#AABBE9', "r" = "#EBC6D0", "t2" = "#BEDCD5", "t (act)" = "#ECE7BC"))
-    # })
-
-    # output$histograms <- renderPlot({
-    #     # plot all studies 
-    #   #   par(mfrow=c(((length(v$d_clean) %/% 3) + 1), 3))  # Set up multiple plots side by side
-    #   # plot_sim_ci(v$d_clean, 1)
-
-    #   #   for (i in 1:length(v$d_clean)) {
-    #   #       plot_sim_ci(v$d_clean, i)
-    #   #   }
-    #   plot_sim_ci(v$d_clean, 1)
-    # })
-
-    # output$histograms <- renderUI({
-    #   plot_output_list <- lapply(unique(v$d_clean), function(i) {
-    #     plotname <- paste0(i)
-    #     plotOutput(plotname)
-    #     # htmlOutput(plotname)
-    #   })
-    #   do.call(tagList, plot_output_list)
-    # })
-
-    # for (i in 1:unique(v$d_clean)[length(unique(v$d_clean))]) {
-    #   local({
-    #     my_i <- i
-    #     plotname <- paste0(my_i)
-
-    #     output[[plot_name]] <- renderPlot({
-    #       plot_sim_ci(v$d_clean, my_i)
-    #     })
- 
-    #     })
-    #   }
-
-  # output$histograms <- renderPlot({
-  #   # plot all studies
-  #   plot_sim_ci(v$d_clean, 1)
-  # })
     
     # insert the right number of plot output objects into the web page
     # if d_clean is not empty, then plot. Check if d_clean is empty:
@@ -387,117 +326,84 @@ server <- function(input, output, session) {
     }
     })
 
-
-    # output$maps <- renderPlot({
-    #     t <- v$d_clean[[1]]
-    #     n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-    #     trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-    #     t2 <- trilmask
-    #     t2[trilmask] <- t
-    #     image(100 * t(apply(t2, 2, rev)),
-    #           xlab = sprintf("%s Nodes", n_nodes),
-    #           ylab = sprintf("%s Nodes", n_nodes),
-    #           axes = FALSE)
-    #     axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
-    #     axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize Y-axis
-    #     })
-
-    # try plotting the map with heatmap instead of image
-    # output$maps <- renderPlot({
-    #   validate(need(length(input$task) < 2, "Please only select one task."),
-    #   need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
-    #   need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
-    #   need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
-    #   need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
-    #     t <- v$d_clean[[1]]
-    #     n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-    #     trilmask <- lower.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where lower triangle is TRUE
-    #     t2 <- trilmask
-    #     t2[trilmask] <- t # populates the lower triangle with values from t
-    #     # the above line works by populating down columns from top to bottom, left to right
-    #     # need to find out if that's the same way that d_clean was populated! TODO
-    #     xlabel <- sprintf("%s Nodes", n_nodes)
-    #     ylabel <- sprintf("%s Nodes", n_nodes)
-    # 
-    #     heatmap(t(apply(t2, 2, rev)),
-    #       Colv = NA, Rowv = NA,  # Turn off row and column clustering
-    #       col = heat.colors(256),
-    #       xlab = xlabel, ylab = ylabel,
-    #       scale = "none"
-    #     )
-    # })
-    
-    # # changing this plot to address the upper/lower triangle problem
-    # # the previous way was not accounting for the change in triangle properly
-    # output$maps <- renderPlot({
-    #   validate(need(length(input$task) < 2, "Please only select one task."),
-    #            need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
-    #            need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
-    #            need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
-    #            need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
-    #   t <- v$d_clean[[1]]
-    #   n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-    #   trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes)) # creates a mask where upper triangle is TRUE
-    #   t2 <- trilmask
-    #   t2[trilmask] <- t # populates the upper triangle with values from t
-    #   xlabel <- sprintf("%s Nodes", n_nodes)
-    #   ylabel <- sprintf("%s Nodes", n_nodes)
-    #   
-    #   heatmap(t(apply(t2, 2, rev)),
-    #           Colv = NA, Rowv = NA,  # Turn off row and column clustering
-    #           col = heat.colors(256),
-    #           xlab = xlabel, ylab = ylabel,
-    #           scale = "none"
-    #   )
-    # })
-    # 
-    # output$maps <- renderPlot({
-    #     t <- v$d_clean[[1]]
-    #     n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-    #     trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-    #     t2 <- trilmask
-    #     t2[trilmask] <- t
-    #     image(t2[,nrow(t2):1],
-    #           xlab = sprintf("%s Nodes", n_nodes),
-    #           ylab = sprintf("%s Nodes", n_nodes),
-    #           axes = FALSE)
-    #     axis(1, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize X-axis
-    #     axis(2, at = seq(0, n_nodes, by = 20), labels = seq(0, n_nodes, by = 20))  # Customize Y-axis
-    #     })
     
     output$maps <- renderPlot({
-      validate(need(length(input$task) < 2, "Please only select one task."),
-      need(length(input$behaviour) > 0, "Please select one behavioural correlation."),
-      need(length(input$behaviour) < 2, "Please only select one behavioural correlation."),
-      need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
-      need((length(unique(v$d_clean$study)) < 2), "Can only plot one study, please select more specific parameters"))
-      t <- v$d_clean[[1]]
-      if (length(t) == 71824) {
-        # if the data includes the whole matrix, not just a triangle:
-        n_nodes <- sqrt(length(t))
-        trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
-        t2 <- trilmask
-        t2[trilmask] <- t
-        image.plot(t2[,nrow(t2):1],
-              # xlab = sprintf("%s Nodes", n_nodes),
-              # ylab = sprintf("%s Nodes", n_nodes),
-              axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
-        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
+      validate(
+      need((0 < length(v$d_clean_fc)), "We do not have FC data for the selected parameters"))
+      #need((input$measurement_type == "fc"), "To see an effect size matrix, please select functional connectivity as the measurement type"))
+      #need((length(unique(v$d_clean)) < 2), "Can only plot one study, please select more specific parameters"))
+      # for each study in d_clean, get t as the whole matrix
+      
+      # create a matrix to store the data for if there is more than one study
+      t_total_268 <- matrix(0, nrow = 268, ncol = 268)
+      t_total_55 <-  matrix(0, nrow = 55, ncol = 55)
+
+      n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
+      n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
+
+      for (i in 1:length(v$d_clean_fc)) {
+        t <- v$d_clean_fc[[i]]$d
+        if (length(t) == 71824) {
+          # if the data includes the whole matrix, not just a triangle:
+          n_nodes <- sqrt(length(t))
+          trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
+          t2 <- trilmask
+          t2[trilmask] <- t
+
+          # set the lower triangle to zero 
+          t2[lower.tri(t2, diag = TRUE)] <- 0
+          
+          # add t2 to the total matrix as the sum of t_total and t2
+          t_total_268 <- t_total_268 + t2
+          n_268_studies <- n_268_studies + 1
+        }
+        
+        else if (length(t) == 35778) {
+          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+          t2 <- trilmask
+          t2[trilmask] <- t
+
+          # add the data to the total matrix
+          t_total_268 <- t_total_268 + t2
+
+          n_268_studies <- n_268_studies + 1
+        }
+
+        else if (length(t) == 1485) {
+          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
+          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
+          t2 <- trilmask
+          t2[trilmask] <- t
+
+          # add the data to the total matrix
+          t_total_55 <- t_total_55 + t2
+
+          n_55_studies <- n_55_studies + 1
+        }
       }
-      else {
-        n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-        trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-        t2 <- trilmask
-        t2[trilmask] <- t
-        image.plot(t2[,nrow(t2):1],
-              # xlab = sprintf("%s Nodes", n_nodes),
-              # ylab = sprintf("%s Nodes", n_nodes),
+
+      # if d_clean_fc is longer than 1, find the average of the matrices
+      t_avg_268 <- t_total_268 / n_268_studies
+      t_avg_55 <- t_total_55 / n_55_studies
+      
+      par(mfrow = c(1, 2))
+      image.plot(t_avg_268[,nrow(t_avg_268):1],
+            xlab = "268 Nodes",
+            #ylab = sprintf("%s Nodes", n_nodes),
+            axes = FALSE, col = hcl.colors(100, palette = "viridis"))
+      axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+      axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
+
+      image.plot(t_avg_55[,nrow(t_avg_55):1],
+            xlab = "55 Nodes",
+            #ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
         axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
         axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
-      } 
+
     })
+    
 
     # try plotting brain images:
     ## TODO ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
@@ -505,13 +411,14 @@ server <- function(input, output, session) {
         # load template brain image: ** TODO WILL NEED TO CHANGE **
     template <- readnii('data/anatomical.nii')
       validate(
-      need(length(input$task) < 2, "Please only select one task."),
+      #need(length(input$task) < 2, "Please only select one task.")
+      need(length(v$d_clean_act) > 0, "We do not have activation data for the selected parameters"),
+      #need(input$measurement_type == "act", "To see an activation map, please select task-based activation as the measurement type")
+      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map.")
       #need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
-      need(input$test_type == "\\.t\\.", "We currently only have task-based activation maps for one-sample task-rest contrasts")
+      #need(input$test_type == "\\.t\\.", "We currently only have task-based activation maps for one-sample task-rest contrasts")
     )
-    # load sample stat map: ** WILL NEED TO CHANGE **
-    # effect_map <- readnii('/Users/halleeshearer/Desktop/visualize_effects_app/data/abstract_association-test_z_FDR_0.01.nii')
-  
+    
         ortho2(
             x = template,
             y = v$effect_map,
