@@ -1,8 +1,7 @@
 # list of packages required:
 list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
                       "neurobase", "ggcorrplot",
-                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields", "sass", "bslib",
-                      "shinythemes")
+                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields")
 
 for (package in list_of_packages) {
   if (!require(package, character.only = TRUE)) {
@@ -120,16 +119,10 @@ plot_sim_ci <- function(data, name) {
 
 ########################################################################################
 # User interface ----
-ui <- fluidPage(theme = shinytheme("spacelab"),
+ui <- fluidPage(
   useShinyjs(),
 
-  titlePanel(fluidRow(
-    column(12,
-           h1("EffeX"),
-           h4("A tool for exploring effect sizes in typical neuroimaging study designs")
-    )
-  )
-  ),
+  titlePanel("Typical fMRI Effect Size Explorer"),
   
   hr(), # space
 
@@ -138,7 +131,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
   # ),
 
   fluidRow( # top row: inputs, probability density plots
-      column(3, # inputs
+      column(4, # inputs
       helpText("Select from the following options to visualize effect sizes:"),
                   
       selectInput("dataset",
@@ -180,52 +173,33 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
     
       ),
 
-      column(9, align = "center", # probability density plots
-      navset_card_tab(
-        nav_panel("CI Plots", withSpinner(uiOutput("histograms"), type = 1)),
-        nav_panel("FC Matrices", withSpinner(plotOutput("maps", height = "400px", width = "800px"), type = 1)),
-        nav_panel("Activation Maps", h3("Activation Maps (Cohen's d)"),
-            fluidRow( # second row: plots of activation maps for activation studies 
-            column(3, # inputs for activation maps
-                sidebarPanel(
-                    width = 8,
-                numericInput("xCoord", "X Coordinate", 30),
-                numericInput("yCoord", "Y Coordinate", 30),
-                numericInput("zCoord", "Z Coordinate", 30))
-            ),
-            column(9, align = "center",
-                withSpinner(plotOutput("brain"), type = 1)
-            )))
+      column(8, align = "center", # probability density plots
+      h2("Effect sizes of all edges/voxels"),
+      withSpinner(uiOutput("histograms"), type = 1)
       )
-      )
-  ))
+      ),
 
-#       h2("Effect sizes of all edges/voxels"),
-#       withSpinner(uiOutput("histograms"), type = 1)
-#       )
-#       ),
+hr() ,
+    fluidRow( # second row: plots of activation maps for activation studies 
+        column(4, # inputs for activation maps
+            sidebarPanel(
+            numericInput("xCoord", "X Coordinate", 30),
+            numericInput("yCoord", "Y Coordinate", 30),
+            numericInput("zCoord", "Z Coordinate", 30))
+        ),
 
-# hr() ,
-#     fluidRow( # second row: plots of activation maps for activation studies 
-#         column(4, # inputs for activation maps
-#             sidebarPanel(
-#             numericInput("xCoord", "X Coordinate", 30),
-#             numericInput("yCoord", "Y Coordinate", 30),
-#             numericInput("zCoord", "Z Coordinate", 30))
-#         ),
-
-#         column(8, align = "center", 
-#           h2("Activation effect size map"),
-#           withSpinner(plotOutput("brain"), type = 1)
-#         )),
-# hr(),
-#     fluidRow( # third row: plots FC effect matrices for FC studies
-#         column(12, align = "center", 
-#           h2("FC effect size matrix"),
-#           withSpinner(plotOutput("maps", height = "500px", width = "1000px"), type = 1)
-#           )
-#     )
-# )
+        column(8, align = "center", 
+          h2("Activation effect size map"),
+          withSpinner(plotOutput("brain"), type = 1)
+        )),
+hr(),
+    fluidRow( # third row: plots FC effect matrices for FC studies
+        column(12, align = "center", 
+          h2("FC effect size matrix"),
+          withSpinner(plotOutput("maps", height = "500px", width = "1000px"), type = 1)
+          )
+    )
+)
 
     
 
@@ -440,7 +414,7 @@ server <- function(input, output, session) {
       }
 
       
-      par(mfrow = c(1, 2), mar = c(4,4,4,6))
+      par(mfrow = c(1, 2))
       image.plot(t_avg_268[,nrow(t_avg_268):1],
             xlab = "268 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
