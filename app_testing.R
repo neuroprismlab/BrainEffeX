@@ -10,7 +10,7 @@ for (package in list_of_packages) {
   }
 }
 
-effect_maps_available = toupper(c("emotion", "gambling", "relational", "social", "wm"))
+effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # # checking missing packages from list
 # new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
@@ -20,7 +20,9 @@ effect_maps_available = toupper(c("emotion", "gambling", "relational", "social",
 # if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 # load data
-load("data/shiny_d_simci_hcp.RData") # this will load a variable called "study" that contains study information
+load("data/estimate_simci.RData") 
+
+d_clean <- d
 
 # this will load a variable called d_clean that has the effect maps, 
 # and a variable called "study" that contains study information
@@ -68,6 +70,17 @@ plot_sim_ci <- function(data, name) {
   
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
+
+  # get n for title of plot
+  # if the study is a correlation, or one sample t test, the n is n
+  if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
+    n_title <- paste0("n = ", data$n)
+  } 
+  # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
+  else if (grepl("_t2_", name)) {
+    n_title <- paste0("n1 = ", data$n1, " and n2 = ", data$n2)
+  }
+ 
   
   # if there are no values below zero, set the index to 1
   if (length(below_cross_idx) == 0) {
@@ -83,7 +96,7 @@ plot_sim_ci <- function(data, name) {
 
   # plot a line for d
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
-       main = name, xlab = "Edges/Voxels", ylab = "Cohen's d")
+       main = paste0(name, ", ", n_title), xlab = "Edges/Voxels", ylab = "Cohen's d")
   
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
@@ -123,11 +136,11 @@ ui <- fluidPage(
                   
       selectInput("dataset",
       			  label = "Dataset",
-      			  choices = c("All" = "*", "ABCD", "SLIM", "HCP" = "hcp", "PNC" = "pnc", "UKB" = "ukb", "HBN" = "hbn", "IMAGEN")),
+      			  choices = c("All" = "*", unique(study["dataset"]))),
       
       selectInput("measurement_type",
       			  label = "Measurement Type",
-      			  choices = c("All" = "*", "Task-based Activation" = "act", "Functional Connectivity" = "fc")),
+      			  choices = c("All" = "*", unique(study["map_type"]))),
       
       selectInput("task",
       			  label = "Task",
@@ -213,13 +226,15 @@ server <- function(input, output, session) {
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
-                             grepl(input$test_type, study$orig_stat_type) & 
+                            #  grepl(input$test_type, study$orig_stat_type) & 
+                            (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
 
-        v$d_clean_act <- d_clean[grepl("act", study$map_type)]
+        v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
+        v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-        v$d_clean_fc <- d_clean[grepl("fc", study$map_type)]
+        # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
 
       v$this_fill <- "statistic"
 
@@ -236,7 +251,7 @@ server <- function(input, output, session) {
         v$this_xlim <- c(-1,1)
       }
     
-      if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && input$task %in% effect_maps_available) {
+      if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
       file_list <- list.files(path = "data/", full.names = TRUE)
       v$case_task <- toupper(input$task)
       pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
@@ -318,8 +333,6 @@ server <- function(input, output, session) {
         plotname <- paste0("plot", my_i, sep="")
 
         output[[plotname]] <- renderPlot({
-          #plot_sim_ci(v$d_clean[[my_i]], my_i)
-          # test with a very simple fast plot:
           plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i])
         })
       })
@@ -384,8 +397,22 @@ server <- function(input, output, session) {
       }
 
       # if d_clean_fc is longer than 1, find the average of the matrices
-      t_avg_268 <- t_total_268 / n_268_studies
-      t_avg_55 <- t_total_55 / n_55_studies
+      if (n_268_studies > 1) {
+        t_avg_268 <- t_total_268 / n_268_studies
+      }
+
+      if (n_268_studies == 1 | n_268_studies == 0) {
+        t_avg_268 <- t_total_268
+      }
+
+      if (n_55_studies > 1) {
+        t_avg_55 <- t_total_55 / n_55_studies
+      }
+
+      if (n_55_studies == 1 | n_55_studies == 0) {
+        t_avg_55 <- t_total_55
+      }
+
       
       par(mfrow = c(1, 2))
       image.plot(t_avg_268[,nrow(t_avg_268):1],
