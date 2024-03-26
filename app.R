@@ -1,15 +1,30 @@
-# list of packages required:
-list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
-                      "neurobase", "ggcorrplot",
-                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields", "sass", "bslib",
-                      "shinythemes")
 
-for (package in list_of_packages) {
-  if (!require(package, character.only = TRUE)) {
-    install.packages(package, dependencies = TRUE)
-    library(package, character.only = TRUE)
-  }
-}
+library(shiny)
+library(shinythemes)
+library(ggplot2)
+library(oro.nifti)
+library(neurobase)
+library(ggcorrplot)
+library(ggridges)
+library(pheatmap)
+library(shinycssloaders)
+library(shinyjs)
+library(fields)
+library(sass)
+library(bslib)
+
+# list of packages required:
+# list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
+#                       "neurobase", "ggcorrplot",
+#                       "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields", "sass", "bslib",
+#                       "shinythemes")
+# 
+# for (package in list_of_packages) {
+#   if (!require(package, character.only = TRUE)) {
+#     install.packages(package, dependencies = TRUE)
+#     library(package, character.only = TRUE, dependencies = TRUE)
+#   }
+# }
 
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
