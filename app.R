@@ -83,7 +83,7 @@ plot_sim_ci <- function(data, name, study_details) {
   sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
 
   # downsample data for plotting
-  downsample <- 100
+  downsample <- length(sorted_indices) %/% 1000
   sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
   sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
   sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
@@ -116,26 +116,19 @@ plot_sim_ci <- function(data, name, study_details) {
   if (length(above_cross_idx) == 0) {
     above_cross_idx = length(above_zero)
   } 
-
-  # could downsample for plotting if slow
-
  
   # plot a line for d
-  par(mar=c(1, 15, 1, 2))
+  par(mar=c(1, 4, 4, 2))
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
        xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
   # add a horizontal line at y = 0
-  # abline(h = 0, col = "#ba2d25", lty = 3)
-  lines(x=c(0,(length(sorted_upper_bounds) - (length(sorted_upper_bounds)/30))), y=c(0,0), col = "#ba2d25", lty = 3)
+  abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  #mtext("test", side =2)
-  # legend("topleft", inset = c(0,0), legend = c(substitute(bold(Study: ~ name), list(name = study_details$name)), paste0(n_title, "  Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type, "  Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2)), bty = "n", cex = 0.9)
-  #legend("topright", inset = c(-0.2,0), legend = c(paste0("Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type, "  Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2, "  ", n_title)), bty = "n", cex = 1)
-  legend("topleft", inset = c(-0.43,0), 
+  legend("topleft", inset = c(0, -0.27),
        legend = c(
          bquote(bold("Dataset:")), 
          paste(study_details$dataset, "  "),
-         bquote(bold("Measurement Type:")), 
+         bquote(bold("Map Type:")), 
          paste(study_details$map_type, "  "),
          bquote(bold("Test type:")), 
          paste(study_details$orig_stat_type, "  "),
@@ -146,7 +139,7 @@ plot_sim_ci <- function(data, name, study_details) {
          bquote(bold("Sample Size:")),
          paste(n_title)
        ), 
-       bty = "n", cex = 1, xpd = TRUE)
+       bty = "n", ncol = 7, cex = 1, xpd = TRUE)
 
 
 
