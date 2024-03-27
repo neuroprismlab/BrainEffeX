@@ -103,7 +103,7 @@ plot_sim_ci <- function(data, name, study_details) {
   } 
   # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
   if (grepl("_t2_", name)) {
-    n_title <- paste0("n1 = ", data$n1, " and n2 = ", data$n2)
+    n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
   }
  
   
@@ -119,15 +119,38 @@ plot_sim_ci <- function(data, name, study_details) {
 
   # could downsample for plotting if slow
 
+ 
   # plot a line for d
-  par(mar=c(5, 20, 4, 2), xpd=TRUE)
+  par(mar=c(1, 15, 1, 2))
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
        xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
   # add a horizontal line at y = 0
-  abline(h = 0, col = "#ba2d25", lty = 3)
+  # abline(h = 0, col = "#ba2d25", lty = 3)
+  lines(x=c(0,(length(sorted_upper_bounds) - (length(sorted_upper_bounds)/30))), y=c(0,0), col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
   #mtext("test", side =2)
-  legend("topleft", , inset = c(-1.2,0), legend = c(substitute(bold(Study: ~ name), list(name = study_details$name)), paste0(n_title), paste0("Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type), paste0("Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2)), bty = "n", cex = 1)
+  # legend("topleft", inset = c(0,0), legend = c(substitute(bold(Study: ~ name), list(name = study_details$name)), paste0(n_title, "  Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type, "  Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2)), bty = "n", cex = 0.9)
+  #legend("topright", inset = c(-0.2,0), legend = c(paste0("Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type, "  Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2, "  ", n_title)), bty = "n", cex = 1)
+  legend("topleft", inset = c(-0.43,0), 
+       legend = c(
+         bquote(bold("Dataset:")), 
+         paste(study_details$dataset, "  "),
+         bquote(bold("Measurement Type:")), 
+         paste(study_details$map_type, "  "),
+         bquote(bold("Test type:")), 
+         paste(study_details$orig_stat_type, "  "),
+         bquote(bold("Var1:")), 
+         paste(study_details$var1, "  "),
+         bquote(bold("Var2:")), 
+         paste(study_details$var2, "  "),
+         bquote(bold("Sample Size:")),
+         paste(n_title)
+       ), 
+       bty = "n", cex = 1, xpd = TRUE)
+
+
+
+
 
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
@@ -379,7 +402,7 @@ server <- function(input, output, session) {
       else {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "250px")
+          plotOutput(plotname, height = "200px", width = "100%")
         })
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
