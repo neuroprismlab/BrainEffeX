@@ -68,17 +68,26 @@ options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
         
 # helper function for plotting:
-plot_sim_ci <- function(data, name) {
+plot_sim_ci <- function(data, name, study_details) {
 
   # remove na
   na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
   data$d <- data$d[!na_idx]
   data$sim_ci_lb <- data$sim_ci_lb[!na_idx]
   data$sim_ci_ub <- data$sim_ci_ub[!na_idx]
+  # sort data from smallest to largest d
   sorted_indices <- order(data$d)
   sorted_d <- data$d[sorted_indices]
+  # sort confidence intervals by the same order
   sorted_upper_bounds <- data$sim_ci_ub[sorted_indices]
   sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
+
+  # downsample data for plotting
+  downsample <- 100
+  sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
+  sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
+  sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
+
   
   # for coloring of confidence intervals:
   below_zero <- sorted_upper_bounds < 0
@@ -93,7 +102,7 @@ plot_sim_ci <- function(data, name) {
     n_title <- paste0("n = ", data$n)
   } 
   # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  else if (grepl("_t2_", name)) {
+  if (grepl("_t2_", name)) {
     n_title <- paste0("n1 = ", data$n1, " and n2 = ", data$n2)
   }
  
@@ -111,9 +120,15 @@ plot_sim_ci <- function(data, name) {
   # could downsample for plotting if slow
 
   # plot a line for d
+  par(mar=c(5, 20, 4, 2), xpd=TRUE)
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
-       main = paste0(name, ", ", n_title), xlab = "Edges/Voxels", ylab = "Cohen's d")
-  
+       xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
+  # add a horizontal line at y = 0
+  abline(h = 0, col = "#ba2d25", lty = 3)
+  axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
+  #mtext("test", side =2)
+  legend("topleft", , inset = c(-1.2,0), legend = c(substitute(bold(Study: ~ name), list(name = study_details$name)), paste0(n_title), paste0("Dataset: ", study_details$dataset, "  Measurement Type: ", study_details$map_type), paste0("Test type: ", study_details$orig_stat_type, "  Var1: ", study_details$var1, "   Var2: ", study_details$var2)), bty = "n", cex = 1)
+
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
   polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
@@ -275,6 +290,13 @@ server <- function(input, output, session) {
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
+        # also filter study by the same parameters
+        v$study <- study[grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) & 
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+                         grepl(paste(input$behaviour, collapse="|"), study$var2),]
+
         # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
 
       v$this_fill <- "statistic"
@@ -374,7 +396,7 @@ server <- function(input, output, session) {
         plotname <- paste0("plot", my_i, sep="")
 
         output[[plotname]] <- renderPlot({
-          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i])
+          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i], v$study[my_i,])
         })
       })
     }
@@ -491,7 +513,7 @@ server <- function(input, output, session) {
             x = template,
             y = v$effect_map,
             crosshairs = FALSE,
-            bg = 'black',
+            bg = 'white',
             NA.x = TRUE,
             col.y = oro.nifti::hotmetal(),
             xyz = c(input$xCoord, input$yCoord, input$zCoord),
