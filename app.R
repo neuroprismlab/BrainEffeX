@@ -83,7 +83,10 @@ plot_sim_ci <- function(data, name, study_details) {
   sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
 
   # downsample data for plotting
-  downsample <- length(sorted_indices) %/% 1000
+  downsample <- length(sorted_indices) %/% 500
+  if (downsample == 0) {
+    downsample = 1
+  }
   sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
   sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
   sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
@@ -505,8 +508,8 @@ server <- function(input, output, session) {
             xlab = "55 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
-        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, dim(t_avg_55)[1], by = dim(t_avg_55)[1]-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(dim(t_avg_55)[1], 1, by = -dim(t_avg_55)[1]+1), cex.axis = 1.3, lwd = 0)
 
     })
 
