@@ -174,7 +174,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
 
   titlePanel(fluidRow(
     column(12,
-           h1("EffeX"),
+           h1("BrainEffeX"),
            h4("A tool for exploring effect sizes in typical neuroimaging study designs")
     )
   )
