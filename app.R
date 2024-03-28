@@ -398,7 +398,7 @@ server <- function(input, output, session) {
       else {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "200px", width = "100%")
+          plotOutput(plotname, height = "200px", width = "50%")
         })
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
