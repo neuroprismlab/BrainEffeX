@@ -509,6 +509,14 @@ server <- function(input, output, session) {
         axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
 
     })
+
+    ###### an attempt at marking the networks on the axes for 268 parcellation: TODO - check this, and find network names!
+      # axis(1, at = c((29/2)/268, 46/268, 73/268, 128/268, 198/268, 232/268, 246/268, 259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)  # Customize X-axis
+      # axis(1, at = c(0, (29)/268, (29+34)/268, (29+34+20)/268, (29+34+20+90)/268, (29+34+20+90+50)/268, (29+34+20+90+50+18)/268, (29+34+20+90+50+18+9)/268, (29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
+
+      # axis(2, at = c(1-(29/2)/268, 1-46/268, 1-73/268, 1-128/268, 1-198/268, 1-232/268, 1-246/268, 1-259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)
+      # axis(2, at = c(1-0, 1-(29)/268, 1-(29+34)/268, 1-(29+34+20)/268, 1-(29+34+20+90)/268, 1-(29+34+20+90+50)/268, 1-(29+34+20+90+50+18)/268, 1-(29+34+20+90+50+18+9)/268, 1-(29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
+
     
 
     # try plotting brain images:
@@ -518,9 +526,9 @@ server <- function(input, output, session) {
     template <- readnii('data/anatomical.nii')
       validate(
       #need(length(input$task) < 2, "Please only select one task.")
-      need(length(v$d_clean_act) > 0, "We do not have activation data for the selected parameters"),
+      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
+      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available)))
       #need(input$measurement_type == "act", "To see an activation map, please select task-based activation as the measurement type")
-      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map.")
       #need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
       #need(input$test_type == "\\.t\\.", "We currently only have task-based activation maps for one-sample task-rest contrasts")
     )
@@ -533,10 +541,12 @@ server <- function(input, output, session) {
             NA.x = TRUE,
             col.y = oro.nifti::hotmetal(),
             xyz = c(input$xCoord, input$yCoord, input$zCoord),
-            ycolorbar = TRUE,
+            text.color = 'black',
             ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
+            ycolorbar = TRUE,
             mfrow = c(1, 3)
         )
+        # colorbar(breaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65), col = oro.nifti::hotmetal(), labels = seq(min(v$effect_map), max(v$effect_map), length.out = 64), text.col = "black")
 #TODO: add numbers to legend of brain figure
 
         # orthographic(template, effect_map,
