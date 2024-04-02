@@ -127,7 +127,7 @@ plot_sim_ci <- function(data, name, study_details) {
   # add a horizontal line at y = 0
   abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", inset = c(-0.1, -0.27),
+  legend("topleft", inset = c(-0.2, -0.27),
        legend = c(
          bquote(bold("Dataset:")), 
          paste(study_details$dataset, "  "),
@@ -142,7 +142,7 @@ plot_sim_ci <- function(data, name, study_details) {
          bquote(bold("Sample Size:")),
          paste(n_title)
        ), 
-       bty = "n", ncol = 7, cex = 0.8, x.intersp = 0.05, xpd = TRUE)
+       bty = "n", ncol = 7, cex = 0.7, x.intersp = 0.05, xpd = TRUE)
 
 
 
@@ -186,7 +186,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
   #   textOutput("selected_vars")
   # ),
 
-  fluidRow( # top row
+  fluidRow( # top row: inputs, probability density plots
       column(3, # inputs
       helpText("Select from the following options to visualize effect sizes:"),
                   
@@ -225,33 +225,29 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
               
       selectInput("group_by", 
                   label = "What do you want to group by?",
-                  choices = c("None", "Statistic", "Phenotype Category")), 
-      
-      downloadButton("downloadData", "Download Data")
+                  choices = c("None", "Statistic", "Phenotype Category"))
     
       ),
 
-      column(5, align = "centre", # probability density plots
-      
-        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
-      
-      column(4, align = "center", # effect size matrices)
-        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"),
-        withSpinner(plotOutput("maps", width = "100%", height = "800px"), type = 1)),
-        h1(" "),
-        h1(""),
-        h1(""),
-        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-        h1(""),
+      column(9, align = "center", # probability density plots
+      navset_card_tab(
+        nav_panel("CI Plots", withSpinner(uiOutput("histograms"), type = 1)),
+        nav_panel("FC Matrices", withSpinner(plotOutput("maps", height = "400px", width = "800px"), type = 1)),
+        nav_panel("Activation Maps", h3("Activation Maps (Cohen's d)"),
             fluidRow( # second row: plots of activation maps for activation studies 
-              column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-              column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1)))
-        )))
-        
-        )
-      
-
- 
+            column(3, # inputs for activation maps
+                sidebarPanel(
+                    width = 8,
+                numericInput("xCoord", "X Coordinate", 30),
+                numericInput("yCoord", "Y Coordinate", 30),
+                numericInput("zCoord", "Z Coordinate", 30))
+            ),
+            column(9, align = "center",
+                withSpinner(plotOutput("brain"), type = 1)
+            )))
+      )
+      )
+  ))
 
 #       h2("Effect sizes of all edges/voxels"),
 #       withSpinner(uiOutput("histograms"), type = 1)
@@ -285,8 +281,6 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
-    
-    
     # set reactive parameters
     v <- reactiveValues()
     observe({
@@ -311,17 +305,6 @@ server <- function(input, output, session) {
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
-
-      # Download button
-      output$downloadData <- downloadHandler(
-      filename = function() {
-        paste("EffeX_data", ".RData", sep="")
-      },
-      content = function(file) {
-        save(v$d_clean, file)
-      }
-    )
-
 
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
@@ -415,7 +398,7 @@ server <- function(input, output, session) {
       else {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "200px", width = "100%")
+          plotOutput(plotname, height = "200px", width = "50%")
         })
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
@@ -513,22 +496,21 @@ server <- function(input, output, session) {
       }
 
       
-      par(mfrow = c(2, 1), mar = c(4,2,2,1), mgp = c(3, 1, 0))
+      par(mfrow = c(1, 2), mar = c(4,4,4,6))
       image.plot(t_avg_268[,nrow(t_avg_268):1],
-            #xlab = "268 Nodes", cex.lab = 1.5,
+            xlab = "268 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
             axes = FALSE, col = hcl.colors(100, palette = "viridis"))
       axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
       axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
-      title(xlab="268 Nodes", line=2, cex.lab=1.5)
 
       image.plot(t_avg_55[,nrow(t_avg_55):1],
-            #xlab = "55 Nodes", cex.lab = 1.5,
+            xlab = "55 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
         axis(1, at = seq(0, 1, by = 1), labels = seq(1, dim(t_avg_55)[1], by = dim(t_avg_55)[1]-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
         axis(2, at = seq(0, 1, by = 1), labels = seq(dim(t_avg_55)[1], 1, by = -dim(t_avg_55)[1]+1), cex.axis = 1.3, lwd = 0)
-        title(xlab="55 Nodes", line=2, cex.lab=1.5)
+
     })
 
     ###### an attempt at marking the networks on the axes for 268 parcellation: TODO - check this, and find network names!
@@ -565,7 +547,7 @@ server <- function(input, output, session) {
             text.color = 'black',
             ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
             ycolorbar = TRUE,
-            mfrow = c(3, 1)
+            mfrow = c(1, 3)
         )
         # colorbar(breaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65), col = oro.nifti::hotmetal(), labels = seq(min(v$effect_map), max(v$effect_map), length.out = 64), text.col = "black")
 #TODO: add numbers to legend of brain figure
