@@ -318,7 +318,7 @@ server <- function(input, output, session) {
         paste("EffeX_data", ".RData", sep="")
       },
       content = function(file) {
-        save(v$d_clean, file)
+        saveRDS(v$d_clean, file)
       }
     )
 
