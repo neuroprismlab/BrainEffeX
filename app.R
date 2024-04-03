@@ -108,6 +108,12 @@ plot_sim_ci <- function(data, name, study_details) {
   if (grepl("_t2_", name)) {
     n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
   }
+
+  # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
+  percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
+  percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
+  
+
  
   
   # if there are no values below zero, set the index to 1
@@ -195,7 +201,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       			  choices = c("All" = "*", unique(study["dataset"]))),
       
       selectInput("measurement_type",
-      			  label = "Measurement Type",
+      			  label = "Map Type",
       			  choices = c("All" = "*", unique(study["map_type"]))),
       
       selectInput("task",
