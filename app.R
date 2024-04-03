@@ -101,11 +101,16 @@ plot_sim_ci <- function(data, name, study_details) {
 
   # get n for title of plot
   # if the study is a correlation, or one sample t test, the n is n
-  if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
+  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
+  #   n_title <- paste0("n = ", data$n)
+  # } 
+  
+  if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t") {
     n_title <- paste0("n = ", data$n)
   } 
+  
   # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  if (grepl("_t2_", name)) {
+  if (study_details$orig_stat_type == "t2") {
     n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
   }
 
