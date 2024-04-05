@@ -138,7 +138,7 @@ plot_sim_ci <- function(data, name, study_details) {
   # add a horizontal line at y = 0
   abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", inset = c(-0.15, -0.27),
+  legend("topleft", inset = c(-0.1, -0.27),
        legend = c(
          bquote(bold("Dataset:")), 
          paste(study_details$dataset, "  "),
