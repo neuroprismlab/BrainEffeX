@@ -153,7 +153,8 @@ plot_sim_ci <- function(data, name, study_details) {
          bquote(bold("Sample Size:")),
          paste(n_title)
        ), 
-       bty = "n", ncol = 6, cex = 0.7, text.width = c(70, 80, 80, 90, 110, 70), x.intersp = 0, xpd = TRUE)
+       bty = "n", ncol = 6, cex = 0.8, text.width = c(70, 80, 80, 90, 110, 70), x.intersp = 0, xpd = TRUE)
+  legend("bottomright", legend = c(bquote(bold("Maximum conservative effect size: ")), round(max(data$sim_ci_lb, na.rm = TRUE), 2)), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 0.8, x.intersp = 0, xpd = TRUE)
 
 
 
