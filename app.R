@@ -247,7 +247,14 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
     
       ),
 
-      column(5, align = "centre", # probability density plots
+      column(5, align = "centre", # simCI plots
+        h4("The plots below visualize all edges or voxels in each study."),
+        helpText("Shading represents simultaneous confidence intervals (95% confidence intervals corrected for multiple comparisons across all edges/voxels."),
+        helpText("Simultaneous confidence intervals that overlap with zero are shaded red, and those that don't overlap with zero are green."),
+        helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
+        helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
+        helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
+        helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
       
         wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
       
