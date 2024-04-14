@@ -1,30 +1,14 @@
-
-library(shiny)
-library(shinythemes)
-library(ggplot2)
-library(oro.nifti)
-library(neurobase)
-library(ggcorrplot)
-library(ggridges)
-library(pheatmap)
-library(shinycssloaders)
-library(shinyjs)
-library(fields)
-library(sass)
-library(bslib)
-
 # list of packages required:
-# list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
-#                       "neurobase", "ggcorrplot",
-#                       "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields", "sass", "bslib",
-#                       "shinythemes")
-# 
-# for (package in list_of_packages) {
-#   if (!require(package, character.only = TRUE)) {
-#     install.packages(package, dependencies = TRUE)
-#     library(package, character.only = TRUE, dependencies = TRUE)
-#   }
-# }
+list_of_packages <- c("shiny", "ggplot2", "oro.nifti",
+                      "neurobase", "ggcorrplot",
+                      "ggridges", "pheatmap", "shinycssloaders", "shinyjs", "fields")
+
+for (package in list_of_packages) {
+  if (!require(package, character.only = TRUE)) {
+    install.packages(package, dependencies = TRUE)
+    library(package, character.only = TRUE)
+  }
+}
 
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
@@ -68,29 +52,17 @@ options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
         
 # helper function for plotting:
-plot_sim_ci <- function(data, name, study_details) {
+plot_sim_ci <- function(data, name) {
 
   # remove na
   na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
   data$d <- data$d[!na_idx]
   data$sim_ci_lb <- data$sim_ci_lb[!na_idx]
   data$sim_ci_ub <- data$sim_ci_ub[!na_idx]
-  # sort data from smallest to largest d
   sorted_indices <- order(data$d)
   sorted_d <- data$d[sorted_indices]
-  # sort confidence intervals by the same order
   sorted_upper_bounds <- data$sim_ci_ub[sorted_indices]
   sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
-
-  # downsample data for plotting
-  downsample <- length(sorted_indices) %/% 500
-  if (downsample == 0) {
-    downsample = 1
-  }
-  sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
-  sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
-  sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
-
   
   # for coloring of confidence intervals:
   below_zero <- sorted_upper_bounds < 0
@@ -101,24 +73,13 @@ plot_sim_ci <- function(data, name, study_details) {
 
   # get n for title of plot
   # if the study is a correlation, or one sample t test, the n is n
-  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t") {
+  if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
     n_title <- paste0("n = ", data$n)
   } 
-  
   # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  if (study_details$orig_stat_type == "t2") {
-    n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
+  else if (grepl("_t2_", name)) {
+    n_title <- paste0("n1 = ", data$n1, " and n2 = ", data$n2)
   }
-
-  # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
-  percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
-  percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
-  
-
  
   
   # if there are no values below zero, set the index to 1
@@ -130,40 +91,13 @@ plot_sim_ci <- function(data, name, study_details) {
   if (length(above_cross_idx) == 0) {
     above_cross_idx = length(above_zero)
   } 
- 
+
+  # could downsample for plotting if slow
+
   # plot a line for d
-  par(mar=c(1, 4, 4, 2))
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
-       xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
-  # add a horizontal line at y = 0
-  abline(h = 0, col = "#ba2d25", lty = 3)
-  axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", inset = c(-0.1, -0.27),
-       legend = c(
-         bquote(bold("Dataset:")), 
-         paste(study_details$dataset, "  "),
-         bquote(bold("Map Type:")), 
-         paste(study_details$map_type, "  "),
-         bquote(bold("Test type:")), 
-         paste(study_details$orig_stat_type, "  "),
-         bquote(bold("Var1:")), 
-         paste(study_details$var1, "  "),
-         bquote(bold("Var2:")), 
-         paste(study_details$var2, "  "),
-         bquote(bold("Sample Size:")),
-         paste(n_title)
-       ), 
-       bty = "n", ncol = 6, cex = 0.8, text.width = c(70, 80, 80, 90, 110, 70), x.intersp = 0, xpd = TRUE)
-  legend("bottomright", legend = c(bquote(bold("Maximum conservative effect size: ")), 
-                                   ifelse((abs(max(data$sim_ci_lb, na.rm = TRUE)) > abs(min(data$sim_ci_ub, na.rm = TRUE))), 
-                                          ifelse((max(data$sim_ci_lb, na.rm = TRUE) > 0),
-                                          round(abs(max(data$sim_ci_lb, na.rm = TRUE)), 2), 0),
-                                          ifelse((min(data$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data$sim_ci_ub, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 0.8, x.intersp = 0, xpd = TRUE)
-
-
-
-
-
+       main = paste0(name, ", ", n_title), xlab = "Edges/Voxels", ylab = "Cohen's d")
+  
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
   polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
@@ -185,16 +119,10 @@ plot_sim_ci <- function(data, name, study_details) {
 
 ########################################################################################
 # User interface ----
-ui <- fluidPage(theme = shinytheme("spacelab"),
+ui <- fluidPage(
   useShinyjs(),
 
-  titlePanel(fluidRow(
-    column(12,
-           h1("BrainEffeX"),
-           h4("A tool for exploring effect sizes in typical neuroimaging study designs")
-    )
-  )
-  ),
+  titlePanel("Typical fMRI Effect Size Explorer"),
   
   hr(), # space
 
@@ -202,8 +130,8 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
   #   textOutput("selected_vars")
   # ),
 
-  fluidRow( # top row
-      column(3, # inputs
+  fluidRow( # top row: inputs, probability density plots
+      column(4, # inputs
       helpText("Select from the following options to visualize effect sizes:"),
                   
       selectInput("dataset",
@@ -211,7 +139,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       			  choices = c("All" = "*", unique(study["dataset"]))),
       
       selectInput("measurement_type",
-      			  label = "Map Type",
+      			  label = "Measurement Type",
       			  choices = c("All" = "*", unique(study["map_type"]))),
       
       selectInput("task",
@@ -241,75 +169,43 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
               
       selectInput("group_by", 
                   label = "What do you want to group by?",
-                  choices = c("None", "Statistic", "Phenotype Category")), 
-      
-      downloadButton("downloadData", "Download Data")
+                  choices = c("None", "Statistic", "Phenotype Category"))
     
       ),
 
-      column(5, align = "centre", # simCI plots
-        h4("The plots below visualize all edges or voxels in each study."),
-        helpText("Shading represents simultaneous confidence intervals (95% confidence intervals corrected for multiple comparisons across all edges/voxels."),
-        helpText("Simultaneous confidence intervals that overlap with zero are shaded red, and those that don't overlap with zero are green."),
-        helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
-        helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
-        helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
-        helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-      
-        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
-      
-      column(4, align = "center", # effect size matrices)
-        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"),
-        withSpinner(plotOutput("maps", width = "100%", height = "800px"), type = 1)),
-        h1(" "),
-        h1(""),
-        h1(""),
-        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-        h1(""),
-            fluidRow( # second row: plots of activation maps for activation studies 
-              column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-              column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1)))
-        )))
-        
-        )
-      
+      column(8, align = "center", # probability density plots
+      h2("Effect sizes of all edges/voxels"),
+      withSpinner(uiOutput("histograms"), type = 1)
+      )
+      ),
 
- 
+hr() ,
+    fluidRow( # second row: plots of activation maps for activation studies 
+        column(4, # inputs for activation maps
+            sidebarPanel(
+            numericInput("xCoord", "X Coordinate", 30),
+            numericInput("yCoord", "Y Coordinate", 30),
+            numericInput("zCoord", "Z Coordinate", 30))
+        ),
 
-#       h2("Effect sizes of all edges/voxels"),
-#       withSpinner(uiOutput("histograms"), type = 1)
-#       )
-#       ),
-
-# hr() ,
-#     fluidRow( # second row: plots of activation maps for activation studies 
-#         column(4, # inputs for activation maps
-#             sidebarPanel(
-#             numericInput("xCoord", "X Coordinate", 30),
-#             numericInput("yCoord", "Y Coordinate", 30),
-#             numericInput("zCoord", "Z Coordinate", 30))
-#         ),
-
-#         column(8, align = "center", 
-#           h2("Activation effect size map"),
-#           withSpinner(plotOutput("brain"), type = 1)
-#         )),
-# hr(),
-#     fluidRow( # third row: plots FC effect matrices for FC studies
-#         column(12, align = "center", 
-#           h2("FC effect size matrix"),
-#           withSpinner(plotOutput("maps", height = "500px", width = "1000px"), type = 1)
-#           )
-#     )
-# )
+        column(8, align = "center", 
+          h2("Activation effect size map"),
+          withSpinner(plotOutput("brain"), type = 1)
+        )),
+hr(),
+    fluidRow( # third row: plots FC effect matrices for FC studies
+        column(12, align = "center", 
+          h2("FC effect size matrix"),
+          withSpinner(plotOutput("maps", height = "500px", width = "1000px"), type = 1)
+          )
+    )
+)
 
     
 
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
-    
-    
     # set reactive parameters
     v <- reactiveValues()
     observe({
@@ -335,26 +231,8 @@ server <- function(input, output, session) {
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
 
-      # Download button
-      output$downloadData <- downloadHandler(
-      filename = function() {
-        paste("EffeX_data", ".RData", sep="")
-      },
-      content = function(file) {
-        saveRDS(v$d_clean, file)
-      }
-    )
-
-
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
-
-        # also filter study by the same parameters
-        v$study <- study[grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) & 
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
-                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                         grepl(paste(input$behaviour, collapse="|"), study$var2),]
 
         # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
 
@@ -438,7 +316,7 @@ server <- function(input, output, session) {
       else {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "200px", width = "100%")
+          plotOutput(plotname, height = "250px")
         })
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
@@ -455,7 +333,7 @@ server <- function(input, output, session) {
         plotname <- paste0("plot", my_i, sep="")
 
         output[[plotname]] <- renderPlot({
-          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i], v$study[my_i,])
+          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i])
         })
       })
     }
@@ -536,31 +414,22 @@ server <- function(input, output, session) {
       }
 
       
-      par(mfrow = c(2, 1), mar = c(4,2,2,1), mgp = c(3, 1, 0))
+      par(mfrow = c(1, 2))
       image.plot(t_avg_268[,nrow(t_avg_268):1],
-            #xlab = "268 Nodes", cex.lab = 1.5,
+            xlab = "268 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
             axes = FALSE, col = hcl.colors(100, palette = "viridis"))
       axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
       axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
-      title(xlab="268 Nodes", line=2, cex.lab=1.5)
 
       image.plot(t_avg_55[,nrow(t_avg_55):1],
-            #xlab = "55 Nodes", cex.lab = 1.5,
+            xlab = "55 Nodes",
             #ylab = sprintf("%s Nodes", n_nodes),
               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-        axis(1, at = seq(0, 1, by = 1), labels = seq(1, dim(t_avg_55)[1], by = dim(t_avg_55)[1]-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
-        axis(2, at = seq(0, 1, by = 1), labels = seq(dim(t_avg_55)[1], 1, by = -dim(t_avg_55)[1]+1), cex.axis = 1.3, lwd = 0)
-        title(xlab="55 Nodes", line=2, cex.lab=1.5)
+        axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+        axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
+
     })
-
-    ###### an attempt at marking the networks on the axes for 268 parcellation: TODO - check this, and find network names!
-      # axis(1, at = c((29/2)/268, 46/268, 73/268, 128/268, 198/268, 232/268, 246/268, 259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)  # Customize X-axis
-      # axis(1, at = c(0, (29)/268, (29+34)/268, (29+34+20)/268, (29+34+20+90)/268, (29+34+20+90+50)/268, (29+34+20+90+50+18)/268, (29+34+20+90+50+18+9)/268, (29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
-
-      # axis(2, at = c(1-(29/2)/268, 1-46/268, 1-73/268, 1-128/268, 1-198/268, 1-232/268, 1-246/268, 1-259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)
-      # axis(2, at = c(1-0, 1-(29)/268, 1-(29+34)/268, 1-(29+34+20)/268, 1-(29+34+20+90)/268, 1-(29+34+20+90+50)/268, 1-(29+34+20+90+50+18)/268, 1-(29+34+20+90+50+18+9)/268, 1-(29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
-
     
 
     # try plotting brain images:
@@ -570,9 +439,9 @@ server <- function(input, output, session) {
     template <- readnii('data/anatomical.nii')
       validate(
       #need(length(input$task) < 2, "Please only select one task.")
-      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
-      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available)))
+      need(length(v$d_clean_act) > 0, "We do not have activation data for the selected parameters"),
       #need(input$measurement_type == "act", "To see an activation map, please select task-based activation as the measurement type")
+      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map.")
       #need(dim(v$d_clean)[1] > 0, "We do not have data for the selected parameters"),
       #need(input$test_type == "\\.t\\.", "We currently only have task-based activation maps for one-sample task-rest contrasts")
     )
@@ -581,16 +450,14 @@ server <- function(input, output, session) {
             x = template,
             y = v$effect_map,
             crosshairs = FALSE,
-            bg = 'white',
+            bg = 'black',
             NA.x = TRUE,
             col.y = oro.nifti::hotmetal(),
             xyz = c(input$xCoord, input$yCoord, input$zCoord),
-            text.color = 'black',
-            ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
             ycolorbar = TRUE,
-            mfrow = c(3, 1)
+            ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
+            mfrow = c(1, 3)
         )
-        # colorbar(breaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65), col = oro.nifti::hotmetal(), labels = seq(min(v$effect_map), max(v$effect_map), length.out = 64), text.col = "black")
 #TODO: add numbers to legend of brain figure
 
         # orthographic(template, effect_map,
