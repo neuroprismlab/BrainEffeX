@@ -72,6 +72,10 @@ d_clean <- d
 # options for spinner
 options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
+
+
+
+
         
 
 ########################################################################################
@@ -105,7 +109,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       			  label = "Map Type",
       			  choices = c("All" = "*", unique(study["map_type"]))),
       
-      selectInput("task",
+      selectizeInput("task",
       			  label = "Task",
       			  choices = c("All" = "*", unique(study["var1"])),
               multiple = TRUE, selected = "*"),
@@ -133,7 +137,9 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       selectInput("group_by", 
                   label = "What do you want to group by?",
                   choices = c("None", "Statistic", "Phenotype Category")), 
-      
+    
+
+
       downloadButton("downloadData", "Download Data"),
       h1(" "),
       wellPanel(style = "background-color: #ffffff;", 
@@ -142,8 +148,13 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
       helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
       helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
-      )
-    
+      ),
+      # add a box that can print out troubleshooting information
+      # wellPanel(style = "background-color: #ffffff;",
+      #           h3("Troubleshooting"),
+      #           verbatimTextOutput("selected_vars")
+      #           )
+
       ),
 
       column(5, align = "centre", # simCI plots
@@ -206,21 +217,7 @@ server <- function(input, output, session) {
     
     # set reactive parameters
     v <- reactiveValues()
-    observe({
-        # v$matching_studies <- (study$dataset == input$dataset & 
-        #                        study$map_type == input$measurement_type & 
-        #                        study$var1 == input$task & 
-        #                        study$orig_stat_type == input$test_type & 
-        #                        study$var2 == input$behaviour)
-        # filter d_clean by the input parameters selected
-        # v$d_clean <- d_clean[(study$dataset == input$dataset & 
-        #                        study$map_type == input$measurement_type & 
-        #                        study$var1 == input$task & 
-        #                        study$orig_stat_type == input$test_type & 
-        #                        # only filter by behaviour if the test type is a behavioural correlation
-        #                         ifelse(input$test_type == "\\.r\\.", study$var2 == input$behaviour, TRUE))]
-
-
+    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
@@ -228,6 +225,106 @@ server <- function(input, output, session) {
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
+        # also filter study by the same parameters
+        v$study <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) & 
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+                         grepl(paste(input$behaviour, collapse="|"), study$var2)),]
+
+        v$task_choices <- unique(v$study$var1)
+            
+        # filter phen_study the same way
+        v$phen_study <- phen_study[grepl(input$dataset, phen_study$dataset) & 
+                  grepl(input$measurement_type, phen_study$map_type) & 
+                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), phen_study$var1)) & 
+                  (input$test_type == "*" | (phen_study$orig_stat_type == input$test_type)) &
+                  grepl(paste(input$behaviour, collapse="|"), phen_study$var2),]
+    })
+
+        # try resetting measurement type, test type, and task when dataset is changed...
+        # observeEvent(ignoreInit = TRUE, input$dataset, {
+        #   updateSelectizeInput(session, "measurement_type", selected = "*", choices = c("All" = "*", unique(v$study$map_type)))
+        #   #updateSelectInput(session, "test_type", selected = "*", choices = c("All" = "*", unique(v$study$orig_stat_type)))
+        #   # updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$study$var1)))
+        #   #updateSelectInput(session, "behaviour", selected = "*", choices = c("All" = "*", unique(v$study$var2)))
+        # })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
+          updateSelectInput(session, "test_type", selected = "*", choices = c("All" = "*", unique(v$test_choices)))
+        })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+        })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          updateSelectInput(session, "behaviour", selected = "*", choices = c("All" = "*", unique(v$beh_choices)))
+        })
+        
+        # constrain parameters
+        # update behaviour selections to only be the available constrained selections... 
+        observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
+          # v$study <- study[(grepl(input$dataset, study$dataset) & 
+          #                grepl(input$measurement_type, study$map_type) & 
+          #                (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+          #                (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+          #                grepl(paste(input$behaviour, collapse="|"), study$var2)),]
+
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          if (input$test_type == "r") {
+            updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(v$beh_choices)))
+          }
+          print("measurement type changed")
+          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+        }) 
+
+
+
+        # when test type is changed from r to another test type, reset behaviour to all 
+        observeEvent(ignoreInit = TRUE, list(input$test_type), {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          if (input$test_type != "r") {
+            updateSelectInput(session, "behaviour", selected = "*", choices = v$beh_choices)
+          }
+        })
+
+        # # when map type is changed, reset tasks to all and set the available tasks to the unique tasks in the selected map type
+        # observeEvent(ignoreInit = TRUE, list(input$measurement_type), {
+        #   updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$study$var1)))
+        #   # also print out the available tasks to just check and troubleshoot in the selected_vars troubleshooting box
+        #   output$selected_vars <- renderPrint({
+        #     unique(v$study$var1)
+        #   })
+        # })
+
 
       # Download button
       output$downloadData <- downloadHandler(
@@ -239,24 +336,11 @@ server <- function(input, output, session) {
       }
     )
 
-
+observe({
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
-
-        # also filter study by the same parameters
-        v$study <- study[grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) & 
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
-                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                         grepl(paste(input$behaviour, collapse="|"), study$var2),]
-
-        # filter phen_study the same way
-        v$phen_study <- phen_study[grepl(input$dataset, phen_study$dataset) & 
-                  grepl(input$measurement_type, phen_study$map_type) & 
-                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), phen_study$var1)) & 
-                  (input$test_type == "*" | (phen_study$orig_stat_type == input$test_type)) &
-                  grepl(paste(input$behaviour, collapse="|"), phen_study$var2),]
-
+})
+        
         # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
 
 
@@ -343,7 +427,8 @@ server <- function(input, output, session) {
 #           v$grouped_data[[stat]] <- v$grouped_data
         
 
-
+    # wrap this in observe
+    observe({
       v$this_fill <- "statistic"
 
       if (input$group_by == "None") { # show each individual study
@@ -366,7 +451,7 @@ server <- function(input, output, session) {
       matching_file <- grep(pattern, file_list, value = TRUE)
       v$effect_map <- readnii(matching_file)
       }
-
+    })
     #   else if (input$group_by == "Phenotype Category") { # group by phenotype category
     #     v$grouping <- "code"
     #     #v$this_fill <- "code"
@@ -408,12 +493,12 @@ server <- function(input, output, session) {
     #     updateSelectInput(session, "task", selected = input$task, choices = c("All" = "*", unique(studies[selected_studies, ]$var1))) ## TODO: be more specific about var1 and var2
     #   })
 
-    })
+
       
     
     # insert the right number of plot output objects into the web page
     # if d_clean is not empty, then plot. Check if d_clean is empty:
-
+    observe({
     output$histograms <- renderUI({
       if (is.null(v$d_clean) || length(v$d_clean) == 0) {
         # if there is no data, display a message
@@ -430,7 +515,7 @@ server <- function(input, output, session) {
         # convert the list to a tagList, this is necessary for the list of items to display properly
         do.call(tagList, plot_output_list)
       }})
-
+    })
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
@@ -464,7 +549,7 @@ server <- function(input, output, session) {
 
       for (i in 1:length(v$d_clean_fc)) {
         t <- v$d_clean_fc[[i]]$d
-        if (length(t) == 71824) {
+        if (length(t) == 71824) { # TODO: change the if statement to be based on the "space" variable instead of the length of t
           # if the data includes the whole matrix, not just a triangle:
           n_nodes <- sqrt(length(t))
           trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
