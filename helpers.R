@@ -156,3 +156,29 @@ plot_sim_ci <- function(data, name, study_details) {
           c(sorted_upper_bounds[above_cross_idx:length(above_zero)], rev(sorted_lower_bounds[above_cross_idx:length(above_zero)])), 
           col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
 }
+
+
+#### Plot FC Matrix:
+
+# input: a square map (as a numeric vector) (the output from triangle_to_matrix function)
+# output: a plot of the square map
+
+plot_matrix <- function(square_map) {
+  # map_index is an integer that is the index for the map to visualize
+  # effect_maps is the list of effect maps
+  
+  # map <- effect_maps[[map_index]]$d
+  
+  # if the map is a full matrix (square):
+  if (sqrt(length(square_map)) %% 1 == 0) {
+    n_nodes <- sqrt(length(square_map))
+    image.plot(matrix(data = square_map, nrow = n_nodes, ncol = n_nodes)[,n_nodes:1],
+               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
+    axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
+    axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
+    title(xlab=paste0(n_nodes, " Nodes"), line=2, cex.lab=1.5)
+  } else if ((((-1 + sqrt(1 + 8 * length(square_map))) / 2) + 1) %% 1 == 0) {
+    # else if the map is half a matrix (triangle): 
+    stop("The map is not a square matrix.")
+  }
+}
