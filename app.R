@@ -541,7 +541,7 @@ observe({
       # for each study in d_clean, get t as the whole matrix
       
       # create a matrix to store the data for if there is more than one study
-      t_total_268 <- matrix(0, nrow = 268, ncol = 268)
+      t_total_268 <- matrix(0, nrow = 268, ncol = 268) #TODO: check if this should be a vector instead!
       t_total_55 <-  matrix(0, nrow = 55, ncol = 55)
 
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
@@ -549,41 +549,20 @@ observe({
 
       for (i in 1:length(v$d_clean_fc)) {
         t <- v$d_clean_fc[[i]]$d
-        if (length(t) == 71824) { # TODO: change the if statement to be based on the "space" variable instead of the length of t
-          # if the data includes the whole matrix, not just a triangle:
-          n_nodes <- sqrt(length(t))
-          trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
-          t2 <- trilmask
-          t2[trilmask] <- t
 
-          # set the lower triangle to zero 
-          t2[lower.tri(t2, diag = TRUE)] <- 0
+        if (v$study_fc$space[i] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
+          n_nodes <- sqrt(length(t))
           
-          # add t2 to the total matrix as the sum of t_total and t2
-          t_total_268 <- t_total_268 + t2
+          # add t to the total matrix as the sum of t_total and t
+          t_total_268 <- t_total_268 + t
           n_268_studies <- n_268_studies + 1
         }
         
-        else if (length(t) == 35778) {
-          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-          t2 <- trilmask
-          t2[trilmask] <- t
-
+        else if (v$study_fc$space[i] == "UKB_55") {
+          n_nodes <- sqrt(length(t))
+          
           # add the data to the total matrix
-          t_total_268 <- t_total_268 + t2
-
-          n_268_studies <- n_268_studies + 1
-        }
-
-        else if (length(t) == 1485) {
-          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-          t2 <- trilmask
-          t2[trilmask] <- t
-
-          # add the data to the total matrix
-          t_total_55 <- t_total_55 + t2
+          t_total_55 <- t_total_55 + t
 
           n_55_studies <- n_55_studies + 1
         }
