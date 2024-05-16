@@ -339,6 +339,9 @@ server <- function(input, output, session) {
 observe({
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
+
+        # create a v$study_fc table to store just fc studies
+        v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
 })
         
         # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
@@ -550,7 +553,8 @@ observe({
       for (i in 1:length(v$d_clean_fc)) {
         t <- v$d_clean_fc[[i]]$d
 
-        if (v$study_fc$space[i] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
+        phen_study_idx <- which(toupper(v$phen_study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        if (v$phen_study_fc$ref[phen_study_idx] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
           n_nodes <- sqrt(length(t))
           
           # add t to the total matrix as the sum of t_total and t
@@ -558,7 +562,7 @@ observe({
           n_268_studies <- n_268_studies + 1
         }
         
-        else if (v$study_fc$space[i] == "UKB_55") {
+        else if (v$phen_study_fc$ref[phen_study_idx] == "UKB_55") {
           n_nodes <- sqrt(length(t))
           
           # add the data to the total matrix
