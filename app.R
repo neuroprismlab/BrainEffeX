@@ -423,8 +423,6 @@ server <- function(input, output, session) {
       if (n_55_studies > 0) {
         plot_55 <- plot_matrix(t_avg_55, "data/map55_FILLER.csv", reorder = TRUE) #TODO: need to get the real 55 node map file!
       }
-      
-      # plot_55 <- plot_matrix(t_avg_55, "data/map55_FILLER.csv", reorder = TRUE) #TODO: need to get the real 55 node map file!
 
       # if there is only one plot, only plot that one, otherwise plot both
       if ((n_268_studies == 0) & (n_55_studies > 0)) {
@@ -436,7 +434,7 @@ server <- function(input, output, session) {
       else if ((n_55_studies > 0) & (n_268_studies > 0)) {
         grid.arrange(plot_268, plot_55, ncol = 1)
       }
-    }, height = reactive(v$h), width = reactive(v$w))
+    }, height = reactive(v$h))#, width = reactive(v$w))
     
 
     # plotting brain images:
