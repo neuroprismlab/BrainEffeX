@@ -1,47 +1,3 @@
-# Note: percent map is designed to work with the counties data set
-# It may not work correctly with other data sets if their row order does 
-# not exactly match the order in which the maps package plots counties
-percent_map <- function(var, color, legend.title, min = 0, max = 100) {
-
-  # generate vector of fill colors for map
-  shades <- colorRampPalette(c("white", color))(100)
-  
-  # constrain gradient to percents that occur between min and max
-  var <- pmax(var, min)
-  var <- pmin(var, max)
-  percents <- as.integer(cut(var, 100, 
-    include.lowest = TRUE, ordered = TRUE))
-  fills <- shades[percents]
-
-  # plot choropleth map
-  map("county", fill = TRUE, col = fills, 
-    resolution = 0, lty = 0, projection = "polyconic", 
-    myborder = 0, mar = c(0,0,0,0))
-  
-  # overlay state borders
-  map("state", col = "white", fill = FALSE, add = TRUE,
-    lty = 1, lwd = 1, projection = "polyconic", 
-    myborder = 0, mar = c(0,0,0,0))
-  
-  # add a legend
-  inc <- (max - min) / 4
-  legend.text <- c(paste0(min, " % or less"),
-    paste0(min + inc, " %"),
-    paste0(min + 2 * inc, " %"),
-    paste0(min + 3 * inc, " %"),
-    paste0(max, " % or more"))
-  
-  legend("bottomleft", 
-    legend = legend.text, 
-    fill = shades[c(1, 25, 50, 75, 100)], 
-    title = legend.title)
-}
-
-
-
-
-
-
 #########################################################################
 # helper function for plotting simultaneous confidence intervals:
 plot_sim_ci <- function(data, name, study_details) {
@@ -157,26 +113,75 @@ plot_sim_ci <- function(data, name, study_details) {
           col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
 }
 
+#########################################################################
 
 #### Plot FC Matrix:
 
 # input: a square map (as a numeric vector) (the output from triangle_to_matrix function)
 # output: a plot of the square map
 
-plot_matrix <- function(square_map) {
-  # map_index is an integer that is the index for the map to visualize
-  # effect_maps is the list of effect maps
+plot_matrix <- function(square_map, mapping_file_path, reorder = TRUE) {
   
-  # map <- effect_maps[[map_index]]$d
-  
-  # if the map is a full matrix (square):
+  # read in the mapping file
+  mapping <- read.csv(mapping_file_path, header = TRUE)
+  # check that the map is a full matrix (square):
   if (sqrt(length(square_map)) %% 1 == 0) {
+    # convert to a matrix
     n_nodes <- sqrt(length(square_map))
-    image.plot(matrix(data = square_map, nrow = n_nodes, ncol = n_nodes)[,n_nodes:1],
-               axes = FALSE, col = hcl.colors(100, palette = "viridis"))
-    axis(1, at = seq(0, 1, by = 1), labels = seq(1, n_nodes, by = n_nodes-1), cex.axis = 1.3, lwd = 0)  # Customize X-axis
-    axis(2, at = seq(0, 1, by = 1), labels = seq(n_nodes, 1, by = -n_nodes+1), cex.axis = 1.3, lwd = 0)
-    title(xlab=paste0(n_nodes, " Nodes"), line=2, cex.lab=1.5)
+    mat <- matrix(data = square_map, nrow = n_nodes, ncol = n_nodes)
+
+    # Reorder data if needed (typically not reordered) - Order the rows and columns of the connectivity matrix according to the mapping
+    if (reorder) {
+      ordered_matrix <- mat[mapping$oldroi, mapping$oldroi]
+    } else {
+      ordered_matrix <- mat
+    }
+
+    # melt ordered_matrix for ggplot
+    ordered_matrix <- melt(ordered_matrix)
+    colnames(ordered_matrix) <- c("Var1", "Var2", "value")
+
+    # Create a heatmap of the connectivity matrix
+    # heatmap_plot <- ggcorrplot(ordered_matrix) + # an alternative to the below line
+    heatmap_plot <- ggplot(ordered_matrix, aes(Var1, Var2, fill = value)) +
+      # set maximum and mimimum values for the color scale as max and min values of the matrix
+      labs(fill = "Cohen's d", 
+           title = ifelse(n_nodes == 268, "Studies with Shen 268 node atlas", ifelse(n_nodes == 55, "Studies with UKB 55 node Atlas", "Studies with unknown parcellation")),
+           x = "", y = "") +
+      
+      geom_tile() +
+      scale_fill_gradient2(limits = c(min(ordered_matrix$value), max(ordered_matrix$value)),
+        low = "blue", mid = "white", high = "red", midpoint = 0) +
+      theme_minimal() +
+      theme(axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.ticks.x = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            plot.margin = margin(.5, .5, .5, .5, "lines"),
+            plot.title = element_text(size = 16, face = "bold", hjust = 0.5))
+    
+    # Draw lines on the heatmap to represent the boundaries
+    for (i in 1:(nrow(mapping) - 1)) {
+      if (mapping$category[i] != mapping$category[i + 1]) {
+        heatmap_plot <- heatmap_plot + geom_vline(xintercept = i, color = "black", size = 0.3) +
+          geom_hline(yintercept = i, color = "black")
+      }
+    }
+    
+    # Calculate the positions of the labels
+    label_positions <- c(1, which(mapping$category[-1] != mapping$category[-length(mapping$category)]) + 1, length(mapping$category) + 1)
+    label_positions <- (label_positions[-1] + label_positions[-length(label_positions)]) / 2
+    label_strings <- mapping$label[label_positions]
+    
+    # Add labels to each mapping category
+    heatmap_plot <- heatmap_plot + annotate("text", x = label_positions, y = -4, label = label_strings, angle = 90, hjust = 1, vjust=0.5, size=3.5)
+    heatmap_plot <- heatmap_plot + annotate("text", x = -10, y = label_positions, label = label_strings, angle = 0, hjust = 0.5, vjust=1, size=3.5)
+    
+    # Return the heatmap plot
+    return(heatmap_plot)
+
   } else if ((((-1 + sqrt(1 + 8 * length(square_map))) / 2) + 1) %% 1 == 0) {
     # else if the map is half a matrix (triangle): 
     stop("The map is not a square matrix.")
