@@ -38,6 +38,12 @@ effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 # load data
 load("data/estimate_simci.RData") 
 
+# load phen_study dataframe (dataframe called phen_study)
+load("data/phen_study.RData")
+
+# source helper functions
+source("helpers.R")
+
 d_clean <- d
 
 # this will load a variable called d_clean that has the effect maps, 
@@ -66,122 +72,11 @@ d_clean <- d
 # options for spinner
 options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
+
+
+
+
         
-# helper function for plotting:
-plot_sim_ci <- function(data, name, study_details) {
-
-  # remove na
-  na_idx <- is.na(data$d) | is.na(data$sim_ci_lb) | is.na(data$sim_ci_ub)
-  data$d <- data$d[!na_idx]
-  data$sim_ci_lb <- data$sim_ci_lb[!na_idx]
-  data$sim_ci_ub <- data$sim_ci_ub[!na_idx]
-  # sort data from smallest to largest d
-  sorted_indices <- order(data$d)
-  sorted_d <- data$d[sorted_indices]
-  # sort confidence intervals by the same order
-  sorted_upper_bounds <- data$sim_ci_ub[sorted_indices]
-  sorted_lower_bounds <- data$sim_ci_lb[sorted_indices]
-
-  # downsample data for plotting
-  downsample <- length(sorted_indices) %/% 500
-  if (downsample == 0) {
-    downsample = 1
-  }
-  sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
-  sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
-  sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
-
-  
-  # for coloring of confidence intervals:
-  below_zero <- sorted_upper_bounds < 0
-  below_cross_idx <- which(diff(below_zero) == -1) # the last TRUE before switch
-  
-  above_zero <- sorted_lower_bounds > 0
-  above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
-
-  # get n for title of plot
-  # if the study is a correlation, or one sample t test, the n is n
-  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t") {
-    n_title <- paste0("n = ", data$n)
-  } 
-  
-  # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  if (study_details$orig_stat_type == "t2") {
-    n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
-  }
-
-  # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
-  percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
-  percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
-  
-
- 
-  
-  # if there are no values below zero, set the index to 1
-  if (length(below_cross_idx) == 0) {
-    below_cross_idx = 1
-  } 
-  
-  # if there are no values above zero, set the index to the end
-  if (length(above_cross_idx) == 0) {
-    above_cross_idx = length(above_zero)
-  } 
- 
-  # plot a line for d
-  par(mar=c(1, 4, 4, 2))
-  plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
-       xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
-  # add a horizontal line at y = 0
-  abline(h = 0, col = "#ba2d25", lty = 3)
-  axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", inset = c(-0.1, -0.27),
-       legend = c(
-         bquote(bold("Dataset:")), 
-         paste(study_details$dataset, "  "),
-         bquote(bold("Map Type:")), 
-         paste(study_details$map_type, "  "),
-         bquote(bold("Test type:")), 
-         paste(study_details$orig_stat_type, "  "),
-         bquote(bold("Var1:")), 
-         paste(study_details$var1, "  "),
-         bquote(bold("Var2:")), 
-         paste(study_details$var2, "  "),
-         bquote(bold("Sample Size:")),
-         paste(n_title)
-       ), 
-       bty = "n", ncol = 6, cex = 0.8, text.width = c(70, 80, 80, 90, 110, 70), x.intersp = 0, xpd = TRUE)
-  legend("bottomright", legend = c(bquote(bold("Maximum conservative effect size: ")), 
-                                   ifelse((abs(max(data$sim_ci_lb, na.rm = TRUE)) > abs(min(data$sim_ci_ub, na.rm = TRUE))), 
-                                          ifelse((max(data$sim_ci_lb, na.rm = TRUE) > 0),
-                                          round(abs(max(data$sim_ci_lb, na.rm = TRUE)), 2), 0),
-                                          ifelse((min(data$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data$sim_ci_ub, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 0.8, x.intersp = 0, xpd = TRUE)
-
-
-
-
-
-  # plot and shade the cofidence intervals:
-  # green for intervals that are entirely below zero
-  polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
-          c(sorted_upper_bounds[1:below_cross_idx], rev(sorted_lower_bounds[1:below_cross_idx])), 
-          col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
-  
-  # red for intervals that include zero
-  polygon(c(below_cross_idx:above_cross_idx, rev(below_cross_idx:above_cross_idx)), 
-          c(sorted_upper_bounds[below_cross_idx:above_cross_idx], rev(sorted_lower_bounds[below_cross_idx:above_cross_idx])), 
-          col = rgb(237/255, 185/255, 185/255, alpha = 0.5), border = NA)
-  
-  # green for intervals that are entirely above zero
-  polygon(c(above_cross_idx:length(above_zero), rev(above_cross_idx:length(above_zero))), 
-          c(sorted_upper_bounds[above_cross_idx:length(above_zero)], rev(sorted_lower_bounds[above_cross_idx:length(above_zero)])), 
-          col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
-}
-
-
 
 ########################################################################################
 # User interface ----
@@ -214,7 +109,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       			  label = "Map Type",
       			  choices = c("All" = "*", unique(study["map_type"]))),
       
-      selectInput("task",
+      selectizeInput("task",
       			  label = "Task",
       			  choices = c("All" = "*", unique(study["var1"])),
               multiple = TRUE, selected = "*"),
@@ -242,20 +137,30 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       selectInput("group_by", 
                   label = "What do you want to group by?",
                   choices = c("None", "Statistic", "Phenotype Category")), 
-      
-      downloadButton("downloadData", "Download Data")
     
+
+
+      downloadButton("downloadData", "Download Data"),
+      h1(" "),
+      wellPanel(style = "background-color: #ffffff;", 
+      # helpText("Simultaneous confidence intervals that overlap with zero are shaded red, and those that don't overlap with zero are green."),
+      helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
+      helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
+      helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
+      helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
+      ),
+      # add a box that can print out troubleshooting information
+      # wellPanel(style = "background-color: #ffffff;",
+      #           h3("Troubleshooting"),
+      #           verbatimTextOutput("selected_vars")
+      #           )
+
       ),
 
       column(5, align = "centre", # simCI plots
         h4("The plots below visualize all edges or voxels in each study."),
-        helpText("Shading represents simultaneous confidence intervals (95% confidence intervals corrected for multiple comparisons across all edges/voxels."),
-        helpText("Simultaneous confidence intervals that overlap with zero are shaded red, and those that don't overlap with zero are green."),
-        helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
-        helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
-        helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
-        helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-      
+        helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+        
         wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
       
       column(4, align = "center", # effect size matrices)
@@ -312,21 +217,7 @@ server <- function(input, output, session) {
     
     # set reactive parameters
     v <- reactiveValues()
-    observe({
-        # v$matching_studies <- (study$dataset == input$dataset & 
-        #                        study$map_type == input$measurement_type & 
-        #                        study$var1 == input$task & 
-        #                        study$orig_stat_type == input$test_type & 
-        #                        study$var2 == input$behaviour)
-        # filter d_clean by the input parameters selected
-        # v$d_clean <- d_clean[(study$dataset == input$dataset & 
-        #                        study$map_type == input$measurement_type & 
-        #                        study$var1 == input$task & 
-        #                        study$orig_stat_type == input$test_type & 
-        #                        # only filter by behaviour if the test type is a behavioural correlation
-        #                         ifelse(input$test_type == "\\.r\\.", study$var2 == input$behaviour, TRUE))]
-
-
+    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
@@ -334,6 +225,106 @@ server <- function(input, output, session) {
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
+        # also filter study by the same parameters
+        v$study <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) & 
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+                         grepl(paste(input$behaviour, collapse="|"), study$var2)),]
+
+        v$task_choices <- unique(v$study$var1)
+            
+        # filter phen_study the same way
+        v$phen_study <- phen_study[grepl(input$dataset, phen_study$dataset) & 
+                  grepl(input$measurement_type, phen_study$map_type) & 
+                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), phen_study$var1)) & 
+                  (input$test_type == "*" | (phen_study$orig_stat_type == input$test_type)) &
+                  grepl(paste(input$behaviour, collapse="|"), phen_study$var2),]
+    })
+
+        # try resetting measurement type, test type, and task when dataset is changed...
+        # observeEvent(ignoreInit = TRUE, input$dataset, {
+        #   updateSelectizeInput(session, "measurement_type", selected = "*", choices = c("All" = "*", unique(v$study$map_type)))
+        #   #updateSelectInput(session, "test_type", selected = "*", choices = c("All" = "*", unique(v$study$orig_stat_type)))
+        #   # updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$study$var1)))
+        #   #updateSelectInput(session, "behaviour", selected = "*", choices = c("All" = "*", unique(v$study$var2)))
+        # })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
+          updateSelectInput(session, "test_type", selected = "*", choices = c("All" = "*", unique(v$test_choices)))
+        })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+        })
+
+        observeEvent(ignoreInit = TRUE, input$dataset, {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          updateSelectInput(session, "behaviour", selected = "*", choices = c("All" = "*", unique(v$beh_choices)))
+        })
+        
+        # constrain parameters
+        # update behaviour selections to only be the available constrained selections... 
+        observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
+          # v$study <- study[(grepl(input$dataset, study$dataset) & 
+          #                grepl(input$measurement_type, study$map_type) & 
+          #                (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+          #                (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+          #                grepl(paste(input$behaviour, collapse="|"), study$var2)),]
+
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          if (input$test_type == "r") {
+            updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(v$beh_choices)))
+          }
+          print("measurement type changed")
+          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+        }) 
+
+
+
+        # when test type is changed from r to another test type, reset behaviour to all 
+        observeEvent(ignoreInit = TRUE, list(input$test_type), {
+          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type)),"var1"]
+
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+          if (input$test_type != "r") {
+            updateSelectInput(session, "behaviour", selected = "*", choices = v$beh_choices)
+          }
+        })
+
+        # # when map type is changed, reset tasks to all and set the available tasks to the unique tasks in the selected map type
+        # observeEvent(ignoreInit = TRUE, list(input$measurement_type), {
+        #   updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$study$var1)))
+        #   # also print out the available tasks to just check and troubleshoot in the selected_vars troubleshooting box
+        #   output$selected_vars <- renderPrint({
+        #     unique(v$study$var1)
+        #   })
+        # })
+
 
       # Download button
       output$downloadData <- downloadHandler(
@@ -345,19 +336,102 @@ server <- function(input, output, session) {
       }
     )
 
-
+observe({
         v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
         v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-        # also filter study by the same parameters
-        v$study <- study[grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) & 
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
-                         (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                         grepl(paste(input$behaviour, collapse="|"), study$var2),]
-
+        # create a v$study_fc table to store just fc studies
+        v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
+})
+        
         # v$d_clean_fc <- v$d_clean[grepl("FC", study$map_type)]
 
+
+
+        ###### HALLEE TESTING ######
+        # create a reactive value for grouped data if the user selects to group by a certain parameter
+        
+        # if (input$group_by == "None") {
+        #   v$grouped_data <- v$d_clean
+        # }
+
+        # else if (input$group_by == "Statistic") {
+        #   # t and d are the same, so we can group them together
+        #   idx <- (phen_study$orig_stat_type == "t" | phen_study$orig_stat_type == "d") & phen_study$parc == "Shen_268_node"
+        #   total <- drop(rep(0, length(v$d_clean[[which(idx)[1]]]$d)))
+        #   for (i in 1:length(which(idx))) {
+        #     total <- total + drop(d_clean[[i]]$d)
+        #   }
+        #   mean <- total/length(which(idx))
+        #   # save mean in v$grouped_data under the name "t_Shen_268_node"
+
+        # for (stat in c("t", "r", "t2")) {
+        #   for (parc in unique(phen_study$parc)) {
+        #     for (map in unique(phen_study$map_type)) {
+        #       if (stat == "t") {
+        #         idx <- ((phen_study$orig_stat_type == "t" | phen_study$orig_stat_type == "d") & phen_study$parc == parc & phen_study$map_type == map)
+        #       }
+        #       else {
+        #         idx <- (phen_study$orig_stat_type == stat & phen_study$parc == parc & phen_study$map_type == map)
+        #       }
+        #       total <- drop(rep(0, length(v$d_clean[[which(idx)[1]]]$d)))
+        #       for (i in 1:length(which(idx))) {
+        #         total <- total + drop(d_clean[[i]]$d)
+        #   }
+        #   mean <- total/length(which(idx))
+        #       }
+        #       idx <- (phen_study$orig_stat_type == "t" | phen_study$orig_stat_type == "d") & phen_study$parc == "Shen_268_node"
+        #       total <- drop(rep(0, length(v$d_clean[[which(idx)[1]]]$d)))
+        #       for (i in 1:length(which(idx))) {
+        #         total <- total + drop(d_clean[[i]]$d)
+        #   }
+        #   mean <- total/length(which(idx))
+        #     }
+        #   }
+
+
+        #   # for each unique orig_stat_type
+        #   idx_t_d <- (phen_study$orig_stat_type == "t" | phen_study$orig_stat_type == "d")
+        #   idx_r <- phen_study$orig_stat_type == "r"
+        #   idx_t2 <- phen_study$orig_stat_type == "t2"
+
+        #   # create an empty vector to store the total t and d values NEED TO ACCOUNT FOR PARCELLATION
+        #   total_t_d <- drop(rep(0, length(v$d_clean[[which(idx_t_d)[1]]]$d)))
+        #   for (i in 1:length(which(idx_t_d))) {
+        #     total_t_d <- total_t_d + drop(d_clean[[i]]$d)
+        #   }
+        #   mean_t_d <- total_t_d/length(which(idx_t_d))
+
+        
+########### TEST FROM HERE.... ######
+#           # repeat for r values   NEED TO ACCOUNT FOR PARCELLATION HERE
+#           total_r <- drop(rep(0, length(v$d_clean[[which(idx_r)[1]]]$d)))
+#           for (i in 1:length(which(idx_r))) {
+#             total_r <- total_r + drop(d_clean[[i]]$d)
+#           }
+#           mean_r <- total_r/length(which(idx_r))
+
+#           # repeat for t2 values NEED TO ACCOUNT FOR PARCELLATION HERE TOO
+#           total_t2 <- drop(rep(0, length(v$d_clean[[which(idx_t2)[1]]]$d)))
+#           for (i in 1:length(which(idx_t2))) {
+#             total_t2 <- total_t2 + d_clean[[i]]$d
+#           }
+#           mean_t2 <- total_t2/length(which(idx_t2))
+
+# ########### TO HERE ##################
+
+#           # filter d_clean by the stat
+#           v$this_stat_group <- v$d_clean[grepl(stat, phen_study$orig_stat_type)]
+
+#           # take the average of the d values across studies for each edge/voxel
+#           v$grouped_data[[stat]] <- aggregate(v$this_stat_group$d, by = list(v$this_stat_group$edge), FUN = mean)
+
+#           # add the filtered data to the grouped_data list
+#           v$grouped_data[[stat]] <- v$grouped_data
+        
+
+    # wrap this in observe
+    observe({
       v$this_fill <- "statistic"
 
       if (input$group_by == "None") { # show each individual study
@@ -380,7 +454,7 @@ server <- function(input, output, session) {
       matching_file <- grep(pattern, file_list, value = TRUE)
       v$effect_map <- readnii(matching_file)
       }
-
+    })
     #   else if (input$group_by == "Phenotype Category") { # group by phenotype category
     #     v$grouping <- "code"
     #     #v$this_fill <- "code"
@@ -422,12 +496,12 @@ server <- function(input, output, session) {
     #     updateSelectInput(session, "task", selected = input$task, choices = c("All" = "*", unique(studies[selected_studies, ]$var1))) ## TODO: be more specific about var1 and var2
     #   })
 
-    })
+
       
     
     # insert the right number of plot output objects into the web page
     # if d_clean is not empty, then plot. Check if d_clean is empty:
-
+    observe({
     output$histograms <- renderUI({
       if (is.null(v$d_clean) || length(v$d_clean) == 0) {
         # if there is no data, display a message
@@ -444,7 +518,7 @@ server <- function(input, output, session) {
         # convert the list to a tagList, this is necessary for the list of items to display properly
         do.call(tagList, plot_output_list)
       }})
-
+    })
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
@@ -470,7 +544,7 @@ server <- function(input, output, session) {
       # for each study in d_clean, get t as the whole matrix
       
       # create a matrix to store the data for if there is more than one study
-      t_total_268 <- matrix(0, nrow = 268, ncol = 268)
+      t_total_268 <- matrix(0, nrow = 268, ncol = 268) #TODO: check if this should be a vector instead!
       t_total_55 <-  matrix(0, nrow = 55, ncol = 55)
 
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
@@ -478,41 +552,21 @@ server <- function(input, output, session) {
 
       for (i in 1:length(v$d_clean_fc)) {
         t <- v$d_clean_fc[[i]]$d
-        if (length(t) == 71824) {
-          # if the data includes the whole matrix, not just a triangle:
-          n_nodes <- sqrt(length(t))
-          trilmask <- matrix(TRUE, nrow = n_nodes, ncol = n_nodes)
-          t2 <- trilmask
-          t2[trilmask] <- t
 
-          # set the lower triangle to zero 
-          t2[lower.tri(t2, diag = TRUE)] <- 0
+        phen_study_idx <- which(toupper(v$phen_study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        if (v$phen_study_fc$ref[phen_study_idx] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
+          n_nodes <- sqrt(length(t))
           
-          # add t2 to the total matrix as the sum of t_total and t2
-          t_total_268 <- t_total_268 + t2
+          # add t to the total matrix as the sum of t_total and t
+          t_total_268 <- t_total_268 + t
           n_268_studies <- n_268_studies + 1
         }
         
-        else if (length(t) == 35778) {
-          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-          t2 <- trilmask
-          t2[trilmask] <- t
-
+        else if (v$phen_study_fc$ref[phen_study_idx] == "UKB_55") {
+          n_nodes <- sqrt(length(t))
+          
           # add the data to the total matrix
-          t_total_268 <- t_total_268 + t2
-
-          n_268_studies <- n_268_studies + 1
-        }
-
-        else if (length(t) == 1485) {
-          n_nodes <- ((-1 + sqrt(1 + 8 * length(t))) / 2) + 1
-          trilmask <- upper.tri(matrix(1, nrow = n_nodes, ncol = n_nodes))
-          t2 <- trilmask
-          t2[trilmask] <- t
-
-          # add the data to the total matrix
-          t_total_55 <- t_total_55 + t2
+          t_total_55 <- t_total_55 + t
 
           n_55_studies <- n_55_studies + 1
         }
@@ -553,14 +607,6 @@ server <- function(input, output, session) {
         axis(2, at = seq(0, 1, by = 1), labels = seq(dim(t_avg_55)[1], 1, by = -dim(t_avg_55)[1]+1), cex.axis = 1.3, lwd = 0)
         title(xlab="55 Nodes", line=2, cex.lab=1.5)
     })
-
-    ###### an attempt at marking the networks on the axes for 268 parcellation: TODO - check this, and find network names!
-      # axis(1, at = c((29/2)/268, 46/268, 73/268, 128/268, 198/268, 232/268, 246/268, 259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)  # Customize X-axis
-      # axis(1, at = c(0, (29)/268, (29+34)/268, (29+34+20)/268, (29+34+20+90)/268, (29+34+20+90+50)/268, (29+34+20+90+50+18)/268, (29+34+20+90+50+18+9)/268, (29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
-
-      # axis(2, at = c(1-(29/2)/268, 1-46/268, 1-73/268, 1-128/268, 1-198/268, 1-232/268, 1-246/268, 1-259/268), labels = unique(sort(shen[,2])), cex.axis = 0.5, lwd = 0)
-      # axis(2, at = c(1-0, 1-(29)/268, 1-(29+34)/268, 1-(29+34+20)/268, 1-(29+34+20+90)/268, 1-(29+34+20+90+50)/268, 1-(29+34+20+90+50+18)/268, 1-(29+34+20+90+50+18+9)/268, 1-(29+34+20+90+50+18+9+18)/268), labels = FALSE, tick = TRUE, cex.axis = 0.5, lwd = 1)  # Customize X-axis
-
     
 
     # try plotting brain images:
