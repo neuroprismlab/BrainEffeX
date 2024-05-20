@@ -73,7 +73,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
     column(12,
            h1("BrainEffeX"),
            h4("A tool for exploring effect sizes in typical neuroimaging study designs")
-    )
+    ),
   )
   ),
   
@@ -130,6 +130,8 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
       helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
       ),
+      h1(" "),
+      h6("Version 1.1; Last updated 2024-May-20")
       # add a box that can print out troubleshooting information
       # wellPanel(style = "background-color: #ffffff;",
       #           h3("Troubleshooting"),
