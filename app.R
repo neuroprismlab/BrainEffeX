@@ -354,11 +354,11 @@ server <- function(input, output, session) {
       v$num_268_studies <- sum(v$phen_study_fc$ref == "Shen_268")
       v$num_55_studies <- sum(v$phen_study_fc$ref == "UKB_55")
       if (v$num_268_studies > 0 & v$num_55_studies > 0) {
-        v$h <- 1000
+        v$h <- 700
         v$w <- 500
       }
       else {
-        v$h <- 500
+        v$h <- 350
         v$w <- 500
       }
     })
@@ -421,7 +421,7 @@ server <- function(input, output, session) {
       
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_matrix(t_avg_55, "data/map55_FILLER.csv", reorder = TRUE) #TODO: need to get the real 55 node map file!
+        plot_55 <- plot_matrix(t_avg_55) #TODO: need to get the real 55 node map file!
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
