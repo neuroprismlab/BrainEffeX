@@ -25,15 +25,22 @@ effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 # if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 # load data
-load("data/estimate_simci.RData") 
+load("data/sim_ci.RData") 
 
 # load phen_study dataframe (dataframe called phen_study)
-load("data/phen_study.RData")
+#load("data/phen_study.RData")
 
 # source helper functions
 source("helpers.R")
 
 d_clean <- d
+
+phen_study <- study
+
+# temporary fix for removing IMAGEN data for now from study, phen_study, and effect_maps
+d_clean <- d_clean[!grepl("IMAGEN", study$dataset)]
+phen_study <- phen_study[!grepl("IMAGEN", phen_study$dataset),]
+study <- study[!grepl("IMAGEN", study$dataset),]
 
 # this will load a variable called d_clean that has the effect maps, 
 # and a variable called "study" that contains study information
