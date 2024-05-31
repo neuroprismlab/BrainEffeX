@@ -115,6 +115,69 @@ plot_sim_ci <- function(data, name, study_details) {
 
 #########################################################################
 
+#### Plot full FC matrix given a triangle:
+
+
+plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
+    # takes an ordered triangle vector (without NAs) and plots the full matrix
+    
+    nrow = (((-1 + sqrt(1 + 8 * length(triangle_ordered))) / 2) + 1)
+
+    # mirror the triangle across the x = y line to get full matrix
+    # first fill in half the matrix with the triangle data
+    mat <- matrix(0, nrow = nrow, ncol = nrow)
+    mat[upper.tri(mat)] <- triangle_ordered
+    full_mat <- mat + t(mat) #- diag(diag(triangle_ordered))
+
+    # melt the matrix for ggplot
+    melted <- melt(full_mat)
+    colnames(melted) <- c("Var1", "Var2", "value")
+
+    heatmap_plot <- ggplot(melted, aes(Var1, Var2, fill = value)) +
+      
+      geom_tile() +
+      scale_fill_gradient2(limits = c(min(melted$value), max(melted$value)),
+        low = "blue", mid = "white", high = "red", midpoint = 0) +
+      theme_minimal() +
+      theme(axis.title.x = element_text(margin = margin(t = 10)),
+            axis.title.y = element_text(margin = margin(r = 10)),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.ticks.x = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            plot.margin = margin(.5, .5, .5, .5, "lines"),
+            plot.title = element_text(size = 16, face = "bold", hjust = 0.5))
+
+    if (!is.na(mapping_path)) {
+        # load mapping
+        mapping <- read.csv(mapping_path, header = TRUE)
+
+        
+        for (i in 1:(nrow(mapping) - 1)) {
+            if (mapping$category[i] != mapping$category[i + 1]) {
+            heatmap_plot <- heatmap_plot + geom_vline(xintercept = i, color = "black", size = 0.3) +
+                geom_hline(yintercept = i, color = "black")
+            }
+        }
+        
+        # Calculate the positions of the labels
+        label_positions <- c(1, which(mapping$category[-1] != mapping$category[-length(mapping$category)]) + 1, length(mapping$category) + 1)
+        label_positions <- (label_positions[-1] + label_positions[-length(label_positions)]) / 2
+        label_strings <- mapping$label[label_positions]
+        
+        # Add labels to each mapping category
+        heatmap_plot <- heatmap_plot + annotate("text", x = label_positions, y = -6, label = label_strings, angle = 90, hjust = 1, vjust=0.5, size=3.5) + coord_cartesian(clip="off")
+        heatmap_plot <- heatmap_plot + annotate("text", x = -10, y = label_positions, label = label_strings, angle = 0, hjust = 0.5, vjust=1, size=3.5)
+
+        # Add axis labels to the heatmap
+        heatmap_plot <- heatmap_plot + labs(x = "Network", y = "Network")
+    }
+    return(heatmap_plot)
+}
+
+
 #### Plot FC Matrix:
 
 # input: a square map (as a numeric vector) (the output from triangle_to_matrix function)

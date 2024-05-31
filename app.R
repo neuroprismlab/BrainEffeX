@@ -377,9 +377,9 @@ server <- function(input, output, session) {
       validate(
       need((0 < length(v$d_clean_fc)), "We do not have FC data for the selected parameters"))
       
-      # create a matrix to store the data for if there is more than one study
-      t_total_268 <- matrix(0, nrow = 268, ncol = 268) #TODO: check if this should be a vector instead!
-      t_total_55 <-  matrix(0, nrow = 55, ncol = 55)
+      # create a vector to store the data for if there is more than one study
+      t_total_268 <- rep(0, 35778) 
+      t_total_55 <-  rep(0 , 1485)
 
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
@@ -389,17 +389,15 @@ server <- function(input, output, session) {
 
         phen_study_idx <- which(toupper(v$phen_study_fc$name) == toupper(names(v$d_clean_fc)[i]))
         if (v$phen_study_fc$ref[phen_study_idx] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
-          n_nodes <- sqrt(length(t))
           
-          # add t to the total matrix as the sum of t_total and t
+          # add t to the total vector as the sum of t_total and t
           t_total_268 <- t_total_268 + t
           n_268_studies <- n_268_studies + 1
         }
         
         else if (v$phen_study_fc$ref[phen_study_idx] == "UKB_55") {
-          n_nodes <- sqrt(length(t))
           
-          # add the data to the total matrix
+          # add the data to the total vector
           t_total_55 <- t_total_55 + t
 
           n_55_studies <- n_55_studies + 1
@@ -425,12 +423,12 @@ server <- function(input, output, session) {
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_matrix(t_avg_268, "data/map268_subnetwork.csv", reorder = TRUE)
+        plot_268 <- plot_full_mat(t_avg_268, "data/map268_subnetwork.csv")
       }
       
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_matrix(t_avg_55) #TODO: need to get the real 55 node map file!
+        plot_55 <- plot_full_mat(t_avg_55) #TODO: need to get the real 55 node map file!
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
