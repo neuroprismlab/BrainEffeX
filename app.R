@@ -138,7 +138,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
       ),
       h1(" "),
-      h6("Version 1.1; Last updated 2024-May-20")
+      h6("Version 1.2; Last updated 2024-May-31")
       # add a box that can print out troubleshooting information
       # wellPanel(style = "background-color: #ffffff;",
       #           h3("Troubleshooting"),
