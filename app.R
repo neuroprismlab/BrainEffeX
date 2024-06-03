@@ -154,7 +154,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
         wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
       
       column(4, align = "center", # effect size matrices)
-        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"),
+        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
         withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1)),
         h1(" "),
         h1(""),
@@ -286,10 +286,14 @@ server <- function(input, output, session) {
 
     ##### Group_by ######
 
-    observeEvent(input$group_by, {
+    toListen <- reactive({
+      list(input$group_by, input$dataset, input$map_type, input$task, input$test_type)
+    })
+
+    observeEvent(toListen(), {
       if (input$group_by == "Statistic") {
         # print a check statemtn
-        print("Grouping by statistic")
+        #print("Grouping by statistic")
         # initialize a list to store the data for each stat type and ref type
         v$d_stat <- list()
         # initialize a new study dataframe to store the info for the groupings
@@ -299,20 +303,20 @@ server <- function(input, output, session) {
           # for each reference type
           for (ref in unique(v$study$ref)) {
             matching_idx <- which(v$study$orig_stat_type == stat & v$study$ref == ref)
-            print(paste0("length of matching index: ", length(matching_idx)))
+            #print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
               matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
-              d_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
-              ci_ub_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d))
+              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
+              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d))
               for (i in matching_d_idx) {
-                d_total <- d_total + d_clean[[i]]$d
-                ci_lb_total <- ci_lb_total + d_clean[[i]]$sim_ci_lb
-                ci_ub_total <- ci_ub_total + d_clean[[i]]$sim_ci_ub
+                d_total <- d_total + v$d_clean[[i]]$d
+                ci_lb_total <- ci_lb_total + v$d_clean[[i]]$sim_ci_lb
+                ci_ub_total <- ci_ub_total + v$d_clean[[i]]$sim_ci_ub
               }
               d_avg <- d_total / length(matching_d_idx)
               ci_lb_avg <- ci_lb_total / length(matching_d_idx)
@@ -329,6 +333,50 @@ server <- function(input, output, session) {
           }
         }
       }
+
+      else if (input$group_by == "Phenotype Category") {
+        # print a check statement
+        #print("Grouping by phenotype category")
+        # initialize a list to store the data for each phenotype category
+        v$d_phen <- list()
+        # initialize a new study dataframe to store the info for the groupings
+        v$study_phen <- data.frame(phen_category = character(0), ref = character(0), name = character(0))
+        # for each phenotype category
+        for (phen in unique(v$study$code)) {
+
+          for (ref in unique(v$study$ref)) {
+            matching_idx <- which(v$study$code == phen & v$study$ref == ref)
+
+            #phen <- gsub(" ", "_", phen)
+            phen_clean <- gsub("\\(", "_", phen)
+            phen_clean <- gsub("\\)", "", phen_clean)
+            phen_clean <- gsub(" ", "", phen_clean)
+            if (length(matching_idx) > 0) {
+              matching_names <- v$study$name[matching_idx]
+              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
+              # matching_d_idx is the idx of the studies in d that match the current phen category
+              # average across all studies in matching_d_idx
+              # initialize an empty vector to store the sum across studies
+              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
+              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d))
+              for (i in matching_d_idx) {
+                d_total <- d_total + v$d_clean[[i]]$d
+                ci_lb_total <- ci_lb_total + v$d_clean[[i]]$sim_ci_lb
+                ci_ub_total <- ci_ub_total + v$d_clean[[i]]$sim_ci_ub
+              }
+              d_avg <- d_total / length(matching_d_idx)
+              ci_lb_avg <- ci_lb_total / length(matching_d_idx)
+              ci_ub_avg <- ci_ub_total / length(matching_d_idx)
+              # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$d_avg <- d_avg
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$ci_lb_avg <- ci_lb_avg
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$ci_ub_avg <- ci_ub_avg
+
+              v$study_phen <- rbind(v$study_phen, data.frame(phen_category = phen_clean, ref = ref, name = paste0("phen_", phen_clean, "_reference_", ref)))
+
+            }
+          }}}
 
       # if (input$group_by == "None") { # show each individual study
       #   v$grouping <- "study"
@@ -383,8 +431,20 @@ server <- function(input, output, session) {
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
         do.call(tagList, plot_output_list)
-      }})
+      }
+      
+      else if (input$group_by == "Phenotype Category") {
+        plot_output_list <- lapply(1:length(v$d_phen), function(i) {
+          plotname <- paste0("plot", i)
+          plotOutput(plotname, height = "200px", width = "100%")
+        })
+
+        # convert the list to a tagList, this is necessary for the list of items to display properly
+        do.call(tagList, plot_output_list)
+      }
     })
+    })
+
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
@@ -410,6 +470,20 @@ server <- function(input, output, session) {
 
             output[[plotname]] <- renderPlot({
               plot_sim_ci_stat(v$d_stat[[my_i]], names(v$d_stat)[my_i], v$study_stat[my_i,])
+            })
+          })
+        }
+      }
+
+      else if (input$group_by == "Phenotype Category") {
+        for (i in 1:length(v$d_phen)) {
+          # create a local variable to hold the value of i
+          local({
+            my_i <- i
+            plotname <- paste0("plot", my_i, sep="")
+
+            output[[plotname]] <- renderPlot({
+              plot_sim_ci_phen(v$d_phen[[my_i]], names(v$d_phen)[my_i], v$study_phen[my_i,])
             })
           })
         }
