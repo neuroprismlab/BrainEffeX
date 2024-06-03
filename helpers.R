@@ -185,7 +185,7 @@ plot_sim_ci_stat <- function(data, name, study_details) {
   # add a horizontal line at y = 0
   abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", #inset = c(-0.1, -0.5),
+  legend("topleft", inset = c(-0.1, -0.5),
        legend = c(
          bquote(bold("Statistic:")), 
          paste(study_details$stat_type, "  "),
@@ -193,7 +193,7 @@ plot_sim_ci_stat <- function(data, name, study_details) {
           paste(study_details$ref, "  ")
        ), 
        bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
-  legend("bottomright", inset = c(0, -0.2), legend = c(bquote(bold("Maximum conservative effect size: ")), 
+  legend("bottomright", inset = c(0, -0.4), legend = c(bquote(bold("Maximum conservative effect size: ")), 
                                    ifelse((abs(max(data$ci_lb_avg, na.rm = TRUE)) > abs(min(data$ci_ub_avg, na.rm = TRUE))), 
                                           ifelse((max(data$ci_lb_avg, na.rm = TRUE) > 0),
                                           round(abs(max(data$ci_lb_avg, na.rm = TRUE)), 2), 0),

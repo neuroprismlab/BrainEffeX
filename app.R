@@ -286,8 +286,10 @@ server <- function(input, output, session) {
 
     ##### Group_by ######
 
-    observe({
+    observeEvent(input$group_by, {
       if (input$group_by == "Statistic") {
+        # print a check statemtn
+        print("Grouping by statistic")
         # initialize a list to store the data for each stat type and ref type
         v$d_stat <- list()
         # initialize a new study dataframe to store the info for the groupings
@@ -297,6 +299,7 @@ server <- function(input, output, session) {
           # for each reference type
           for (ref in unique(v$study$ref)) {
             matching_idx <- which(v$study$orig_stat_type == stat & v$study$ref == ref)
+            print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
               matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
@@ -321,6 +324,7 @@ server <- function(input, output, session) {
 
               # store the study info in the study_stat dataframe
               v$study_stat <- rbind(v$study_stat, data.frame(stat_type = stat, ref = ref, name = paste0("stat_", stat, "_reference_", ref)))
+
             }
           }
         }
