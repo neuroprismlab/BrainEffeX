@@ -283,22 +283,63 @@ server <- function(input, output, session) {
           v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
 })
 
-    observe({
-      v$this_fill <- "statistic"
 
-      if (input$group_by == "None") { # show each individual study
-        v$grouping <- "study"
-        v$axis_label <- "Study"
-        v$this_density_scale <- 5
-        v$this_xlim <- c(-.5,.5)
+    ##### Group_by ######
+
+    observe({
+      if (input$group_by == "Statistic") {
+        # initialize a list to store the data for each stat type and ref type
+        v$d_stat <- list()
+        # initialize a new study dataframe to store the info for the groupings
+        v$study_stat <- data.frame(stat_type = character(0), ref = character(0), name = character(0))
+        # for each statistic type
+        for (stat in unique(v$study$orig_stat_type)) {
+          # for each reference type
+          for (ref in unique(v$study$ref)) {
+            matching_idx <- which(v$study$orig_stat_type == stat & v$study$ref == ref)
+            if (length(matching_idx) > 0) {
+              matching_names <- v$study$name[matching_idx]
+              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
+              # matching_d_idx is the idx of the studies in d that match the current stat and ref
+              # average across all studies in matching_d_idx
+              # initialize an empty vector to store the sum across studies
+              d_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
+              ci_lb_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+              ci_ub_total <- rep(0, length(d_clean[[matching_d_idx[1]]]$d))
+              for (i in matching_d_idx) {
+                d_total <- d_total + d_clean[[i]]$d
+                ci_lb_total <- ci_lb_total + d_clean[[i]]$sim_ci_lb
+                ci_ub_total <- ci_ub_total + d_clean[[i]]$sim_ci_ub
+              }
+              d_avg <- d_total / length(matching_d_idx)
+              ci_lb_avg <- ci_lb_total / length(matching_d_idx)
+              ci_ub_avg <- ci_ub_total / length(matching_d_idx)
+              # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$d_avg <- d_avg
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$ci_lb_avg <- ci_lb_avg
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$ci_ub_avg <- ci_ub_avg
+
+              # store the study info in the study_stat dataframe
+              v$study_stat <- rbind(v$study_stat, data.frame(stat_type = stat, ref = ref, name = paste0("stat_", stat, "_reference_", ref)))
+            }
+          }
+        }
       }
-      else if(input$group_by == "Statistic") { # group by statistic
-        v$grouping <- "statistic"
-        v$axis_label <- "Statistic"
-        v$this_density_scale <- 2.1
-        v$this_xlim <- c(-1,1)
-      }
+
+      # if (input$group_by == "None") { # show each individual study
+      #   v$grouping <- "study"
+      #   v$axis_label <- "Study"
+      #   v$this_density_scale <- 5
+      #   v$this_xlim <- c(-.5,.5)
+      # }
+      # else if(input$group_by == "Statistic") { # group by statistic
+      #   v$grouping <- "statistic"
+      #   v$axis_label <- "Statistic"
+      #   v$this_density_scale <- 2.1
+      #   v$this_xlim <- c(-1,1)
+      # }
     
+      # load effect map to plot when only one task selected
       if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
       file_list <- list.files(path = "data/", full.names = TRUE)
       v$case_task <- toupper(input$task)
@@ -307,17 +348,8 @@ server <- function(input, output, session) {
       v$effect_map <- readnii(matching_file)
       }
     })
-    #   else if (input$group_by == "Phenotype Category") { # group by phenotype category
-    #     v$grouping <- "code"
-    #     #v$this_fill <- "code"
-    #     v$axis_label <- "Phenotype Category"
-    #     v$this_density_scale <- 3
-    #     v$this_xlim <- c(-0.5, 0.5)
-    #   }
-    ## TODO: add this again after ^^
 
-
-
+    ###### plot simCI plots:
     
     # insert the right number of plot output objects into the web page
     # if d_clean is not empty, then plot. Check if d_clean is empty:
@@ -329,8 +361,18 @@ server <- function(input, output, session) {
           h3("No data available for the selected parameters.")
         )
       }
-      else {
+      else if (input$group_by == "None") {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
+          plotname <- paste0("plot", i)
+          plotOutput(plotname, height = "200px", width = "100%")
+        })
+
+        # convert the list to a tagList, this is necessary for the list of items to display properly
+        do.call(tagList, plot_output_list)
+      }
+      
+      else if (input$group_by == "Statistic") {
+        plot_output_list <- lapply(1:length(v$d_stat), function(i) {
           plotname <- paste0("plot", i)
           plotOutput(plotname, height = "200px", width = "100%")
         })
@@ -342,17 +384,32 @@ server <- function(input, output, session) {
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
-    for (i in 1:length(v$d_clean)) {
-      # create a local variable to hold the value of i
-      local({
-        my_i <- i
-        plotname <- paste0("plot", my_i, sep="")
+      if (input$group_by == "None") {
+        for (i in 1:length(v$d_clean)) {
+          # create a local variable to hold the value of i
+          local({
+            my_i <- i
+            plotname <- paste0("plot", my_i, sep="")
 
-        output[[plotname]] <- renderPlot({
-          plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i], v$study[my_i,])
-        })
-      })
-    }
+            output[[plotname]] <- renderPlot({
+              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i], v$study[my_i,])
+            })
+          })
+        }
+      }
+      else if (input$group_by == "Statistic") {
+        for (i in 1:length(v$d_stat)) {
+          # create a local variable to hold the value of i
+          local({
+            my_i <- i
+            plotname <- paste0("plot", my_i, sep="")
+
+            output[[plotname]] <- renderPlot({
+              plot_sim_ci_stat(v$d_stat[[my_i]], names(v$d_stat)[my_i], v$study_stat[my_i,])
+            })
+          })
+        }
+      }
     })
 
     # create a reactive value to store the height and width of the plot
