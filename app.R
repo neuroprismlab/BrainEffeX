@@ -1,4 +1,4 @@
-
+# load libraries
 library(shiny)
 library(shinythemes)
 library(ggplot2)
@@ -15,35 +15,26 @@ library(bslib)
 library(reshape)
 library(gridExtra)
 
+# source helper functions
+source("helpers.R")
+
+#TODO: this is a temporary fix because we don't have the data for the other studies yet and treat activation maps differently
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
-
-# # checking missing packages from list
-# new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()
-#                                    [, "Package"])]
-
-# # install missing packages
-# if(length(new_packages)) install.packages(new_packages, dependencies = TRUE)
 
 # load data
 load("data/sim_ci.RData") 
 
-# load phen_study dataframe (dataframe called phen_study)
-#load("data/phen_study.RData")
-
-# source helper functions
-source("helpers.R")
-
 d_clean <- d
 
-phen_study <- study
+phen_study <- study #TODO: just remove phen_study, it's the same as study now and can be interchangeable
 
-# temporary fix for removing IMAGEN data for now from study, phen_study, and effect_maps
+# temporary fix for removing IMAGEN data for now from study, phen_study, and effect_maps #TODO: either remove this or update the data to include IMAGEN data
 d_clean <- d_clean[!grepl("IMAGEN", study$dataset)]
 phen_study <- phen_study[!grepl("IMAGEN", phen_study$dataset),]
 study <- study[!grepl("IMAGEN", study$dataset),]
 
-# this will load a variable called d_clean that has the effect maps, 
-# and a variable called "study" that contains study information
+# d_clean is a list that includes the effect maps, 
+# and "study" is a table that contains study information
 
 ### d_clean is a list of studies, each study contains: 
 # sample size as n, n1, and/or n2
@@ -64,12 +55,12 @@ study <- study[!grepl("IMAGEN", study$dataset),]
 # orig_stat_type
 # var1
 # var2
+# ref
+# code (as the phenotype category)
 
 # options for spinner
 options(spinner.color = "#9ecadb",
         spinner.color.background = "#ffffff", spinner.size = 1)
-
-
 
 ########################################################################################
 # User interface ----
@@ -85,10 +76,6 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
   ),
   
   hr(), # space
-
-  # mainPanel(
-  #   textOutput("selected_vars")
-  # ),
 
   fluidRow( # top row
       column(3, # inputs
@@ -109,12 +96,12 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       
       selectInput("test_type",
       			  label = "Test Type",
-      			  choices = c("All" = "*", unique(study$orig_stat_type))), ## TODO: change this is d when data is updated to cohen's d
+      			  choices = c("All" = "*", unique(study$orig_stat_type))),
       			  
       conditionalPanel(
         condition = "input.test_type.indexOf('r') > -1",
             selectInput("behaviour",
-      			  label = "Behavioural correlation", #TODO: update choices to include all possible options! For example, missing BMI currently
+      			  label = "Behavioural correlation",
       			  choices = c("All" = "*", unique(study[study$orig_stat_type=="r","var2"])),
               multiple = TRUE,
               selected = c("*"))),
@@ -138,13 +125,7 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
       helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
       ),
       h1(" "),
-      h6("Version 1.2; Last updated 2024-May-31")
-      # add a box that can print out troubleshooting information
-      # wellPanel(style = "background-color: #ffffff;",
-      #           h3("Troubleshooting"),
-      #           verbatimTextOutput("selected_vars")
-      #           )
-
+      h6("Version 1.3; Last updated 2024-June-03")
       ),
 
       column(5, align = "centre", # simCI plots
@@ -164,17 +145,13 @@ ui <- fluidPage(theme = shinytheme("spacelab"),
             fluidRow( # second row: plots of activation maps for activation studies 
               column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
               column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1)))
-        )))
-        
-        )
+        )))) # end of fluidPage
     
 
     
-
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
-    
     
     # set reactive parameters
     v <- reactiveValues()
@@ -182,7 +159,6 @@ server <- function(input, output, session) {
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
-                            #  grepl(input$test_type, study$orig_stat_type) & 
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$var2)]
       
@@ -279,7 +255,6 @@ server <- function(input, output, session) {
           v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
           v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-          # create a v$study_fc table to store just fc studies
           v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
 })
 
@@ -292,8 +267,6 @@ server <- function(input, output, session) {
 
     observeEvent(toListen(), {
       if (input$group_by == "Statistic") {
-        # print a check statemtn
-        #print("Grouping by statistic")
         # initialize a list to store the data for each stat type and ref type
         v$d_stat <- list()
         # initialize a new study dataframe to store the info for the groupings
@@ -335,8 +308,6 @@ server <- function(input, output, session) {
       }
 
       else if (input$group_by == "Phenotype Category") {
-        # print a check statement
-        #print("Grouping by phenotype category")
         # initialize a list to store the data for each phenotype category
         v$d_phen <- list()
         # initialize a new study dataframe to store the info for the groupings
@@ -346,8 +317,6 @@ server <- function(input, output, session) {
 
           for (ref in unique(v$study$ref)) {
             matching_idx <- which(v$study$code == phen & v$study$ref == ref)
-
-            #phen <- gsub(" ", "_", phen)
             phen_clean <- gsub("\\(", "_", phen)
             phen_clean <- gsub("\\)", "", phen_clean)
             phen_clean <- gsub(" ", "", phen_clean)
@@ -358,7 +327,7 @@ server <- function(input, output, session) {
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
               d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just averages across CIs, but make sure there isn't a diff way we should do this
               ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d))
               for (i in matching_d_idx) {
                 d_total <- d_total + v$d_clean[[i]]$d
@@ -377,19 +346,6 @@ server <- function(input, output, session) {
 
             }
           }}}
-
-      # if (input$group_by == "None") { # show each individual study
-      #   v$grouping <- "study"
-      #   v$axis_label <- "Study"
-      #   v$this_density_scale <- 5
-      #   v$this_xlim <- c(-.5,.5)
-      # }
-      # else if(input$group_by == "Statistic") { # group by statistic
-      #   v$grouping <- "statistic"
-      #   v$axis_label <- "Statistic"
-      #   v$this_density_scale <- 2.1
-      #   v$this_xlim <- c(-1,1)
-      # }
     
       # load effect map to plot when only one task selected
       if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
@@ -603,14 +559,9 @@ server <- function(input, output, session) {
             mfrow = c(3, 1)
         )
         # colorbar(breaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65), col = oro.nifti::hotmetal(), labels = seq(min(v$effect_map), max(v$effect_map), length.out = 64), text.col = "black")
-#TODO: add numbers to legend of brain figure
-
-        # orthographic(template, effect_map,
-        # xyz = c(input$xCoord, input$yCoord, input$zCoord),
-        # bg = 'white', col = "white")
+        #TODO: add numbers to legend of brain figure (have tried many times and can't figure it out so far)
     })
 }
-
 
 # Run app ----
 shinyApp(ui, server)

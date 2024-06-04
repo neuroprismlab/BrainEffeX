@@ -1,5 +1,5 @@
 #########################################################################
-# helper function for plotting simultaneous confidence intervals:
+# helper function for plotting simultaneous confidence intervals: (when group_by is None)
 plot_sim_ci <- function(data, name, study_details) {
 
   # remove na
@@ -30,12 +30,6 @@ plot_sim_ci <- function(data, name, study_details) {
   
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
-
-  # get n for title of plot
-  # if the study is a correlation, or one sample t test, the n is n
-  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
   
   if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t" | study_details$orig_stat_type == "d") {
     n_title <- paste0("n = ", data$n)
@@ -50,8 +44,6 @@ plot_sim_ci <- function(data, name, study_details) {
   percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
   percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
   
-
- 
   
   # if there are no values below zero, set the index to 1
   if (length(below_cross_idx) == 0) {
@@ -91,9 +83,6 @@ plot_sim_ci <- function(data, name, study_details) {
                                           ifelse((max(data$sim_ci_lb, na.rm = TRUE) > 0),
                                           round(abs(max(data$sim_ci_lb, na.rm = TRUE)), 2), 0),
                                           ifelse((min(data$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data$sim_ci_ub, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
-
-
-
 
 
   # plot and shade the cofidence intervals:
@@ -146,26 +135,9 @@ plot_sim_ci_stat <- function(data, name, study_details) {
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
 
-  # get n for title of plot
-  # if the study is a correlation, or one sample t test, the n is n
-  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  # if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t" | study_details$orig_stat_type == "d") {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  # if (study_details$orig_stat_type == "t2") {
-  #   n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
-  # }
-
   # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
   percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
   percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
-  
-
  
   
   # if there are no values below zero, set the index to 1
@@ -200,9 +172,6 @@ plot_sim_ci_stat <- function(data, name, study_details) {
                                           ifelse((min(data$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
 
 
-
-
-
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
   polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
@@ -222,9 +191,7 @@ plot_sim_ci_stat <- function(data, name, study_details) {
 
 
 
-
-
-##### plotting the confidence intervals for group_by == statistic:
+##### plotting the confidence intervals for group_by == phenotype category:
 plot_sim_ci_phen <- function(data, name, study_details) {
 
   # remove na
@@ -256,26 +223,9 @@ plot_sim_ci_phen <- function(data, name, study_details) {
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
 
-  # get n for title of plot
-  # if the study is a correlation, or one sample t test, the n is n
-  # if (grepl("_r_", name) | grepl("_fc_t_", name) | grepl("_act_t_", name) | grepl("_d_", name)) {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  # if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t" | study_details$orig_stat_type == "d") {
-  #   n_title <- paste0("n = ", data$n)
-  # } 
-  
-  # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  # if (study_details$orig_stat_type == "t2") {
-  #   n_title <- paste0("n1 = ", data$n1, ", n2 = ", data$n2)
-  # }
-
   # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
   percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
   percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
-  
-
  
   
   # if there are no values below zero, set the index to 1
@@ -310,9 +260,6 @@ plot_sim_ci_phen <- function(data, name, study_details) {
                                           ifelse((min(data$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
 
 
-
-
-
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
   polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
@@ -330,10 +277,10 @@ plot_sim_ci_phen <- function(data, name, study_details) {
           col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
 }
 
+
 #########################################################################
 
 #### Plot full FC matrix given a triangle:
-
 
 plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
@@ -405,7 +352,7 @@ plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
 }
 
 
-#### Plot FC Matrix:
+#### Plot FC Matrix from a square:
 
 # input: a square map (as a numeric vector) (the output from triangle_to_matrix function)
 # output: a plot of the square map
