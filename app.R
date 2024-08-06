@@ -67,7 +67,7 @@ options(spinner.color = "#9ecadb",
 ########################################################################################
 # User interface ----
 ui <- fluidPage(
-  theme = shinytheme("spacelab"),
+ # theme = shinytheme("spacelab"),
   useShinyjs(),
   
   # JavaScript to trigger the modal on app load
@@ -84,11 +84,11 @@ ui <- fluidPage(
       column(12,
              h1("BrainEffeX"),
              h4("A tool for exploring effect sizes in typical neuroimaging study designs"),
-             # Add the button directly below the header with a light blue background
+       
              actionButton(
                "showInstructions",
                "How to Use This App",
-               style = "margin-top: 10px; background-color: #ADD8E6; color: #fff; border: none;"
+               style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
              )
       )
     )
@@ -183,7 +183,7 @@ ui <- fluidPage(
     tags$div(
       tags$p("Welcome to BrainEffeX! Here's how to get started:"),
       tags$ol(
-        tags$li("Select a dataset from the 'Dataset' dropdown."),
+        tags$li("Select a open source dataset from the 'Dataset' dropdown."),
         tags$li("Choose a map type that matches your analysis needs."),
         tags$li("Use the 'Task' dropdown to specify tasks you are interested in."),
         tags$li("Set the 'Test Type' to define the statistical analysis."),
