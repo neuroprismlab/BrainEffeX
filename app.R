@@ -74,7 +74,7 @@ ui <- fluidPage(
   tags$script(HTML("
     $(document).ready(function(){
       setTimeout(function() {
-        $('#instructionsModal').modal('show');
+        $('#instructionsModal1').modal('show');
       }, 500);
     });
   ")),
@@ -150,7 +150,8 @@ ui <- fluidPage(
                      helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
            ),
            h1(" "),
-           h6("Version 1.3; Last updated 2024-June-03")
+           h6(paste("Version 1.3; Last updated", Sys.Date()))
+           
     ),
     
     column(5, align = "centre", # simCI plots
@@ -176,14 +177,15 @@ ui <- fluidPage(
     )
   ), # end of fluidRow
   
-  # Modal Dialog
+  
+  # Modal Dialogs
   bsModal(
-    id = "instructionsModal", title = "How to Use This App", trigger = NULL,
+    id = "instructionsModal1", title = "Getting Started", trigger = NULL,
     size = "large",
     tags$div(
-      tags$p("Welcome to BrainEffeX! Here's how to get started:"),
-      tags$ol(
-        tags$li("Select a open source dataset from the 'Dataset' dropdown."),
+      tags$p("Welcome to",tags$b("BrainEffeX!"),"Here's how to get started:"),
+      tags$ul(
+        tags$li("Select a dataset from the 'Dataset' dropdown."),
         tags$li("Choose a map type that matches your analysis needs."),
         tags$li("Use the 'Task' dropdown to specify tasks you are interested in."),
         tags$li("Set the 'Test Type' to define the statistical analysis."),
@@ -193,7 +195,42 @@ ui <- fluidPage(
         tags$li("Visualize results in plots and download data if needed."),
         tags$li("Refer to the tooltips next to each input for additional guidance.")
       ),
-      tags$p("Use the 'How to Use This App' button at any time to revisit these instructions.")
+      tags$div(style = "text-align: center;",
+               actionButton("nextToPage2", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  ),
+  bsModal(
+    id = "instructionsModal2", title = "Understanding the Plots", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("The plots below visualize all edges or voxels in each study:"),
+      tags$ul(
+        tags$li("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
+        tags$li("Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters."),
+        tags$li("Activation Maps (Cohen's d) help you to visualize specific brain regions.")
+      ),
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage1", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("nextToPage3", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  ),
+  bsModal(
+    id = "instructionsModal3", title = "Downloading Data", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("How to download data from BrainEffeX:"),
+      tags$ul(
+        tags$li("Click the 'Download Data' button after configuring your analysis."),
+        tags$li("Select the file format you wish to download."),
+        tags$li("Make sure to save your data securely for further analysis.")
+      ),
+      tags$p("Use the 'How to Use This App' button at any time to revisit these instructions."),
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
     )
   )
 )
@@ -202,8 +239,29 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     
   # Show modal when 'How to Use This App' button is clicked
-    observeEvent(input$showInstructions, {
-    toggleModal(session, "instructionsModal", toggle = "open")
+  observeEvent(input$showInstructions, {
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  # Modal navigation
+  observeEvent(input$nextToPage2, {
+    toggleModal(session, "instructionsModal1", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage1, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  observeEvent(input$nextToPage3, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal3", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage2, {
+    toggleModal(session, "instructionsModal3", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
   })
   
   
