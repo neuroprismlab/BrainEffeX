@@ -1,0 +1,13 @@
+name: effect_size_shiny
+title:
+username: neuroprismlab
+account: neuroprismlab
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11089496
+bundleId: 8697441
+url: https://neuroprismlab.shinyapps.io/effect_size_shiny/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app_v1.R|app_v2.R|app_v3.R|group_by.R|slice_viewer_tmp.R|UKB_data_formatting.R
