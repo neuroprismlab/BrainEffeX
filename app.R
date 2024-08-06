@@ -14,6 +14,8 @@ library(sass)
 library(bslib)
 library(reshape)
 library(gridExtra)
+library(shinyBS) # For Bootstrap tooltips
+library(shinycssloaders)
 
 # source helper functions
 source("helpers.R")
@@ -64,95 +66,205 @@ options(spinner.color = "#9ecadb",
 
 ########################################################################################
 # User interface ----
-ui <- fluidPage(theme = shinytheme("spacelab"),
+ui <- fluidPage(
+ # theme = shinytheme("spacelab"),
   useShinyjs(),
-
-  titlePanel(fluidRow(
-    column(12,
-           h1("BrainEffeX"),
-           h4("A tool for exploring effect sizes in typical neuroimaging study designs")
-    ),
-  )
+  
+  # JavaScript to trigger the modal on app load
+  tags$script(HTML("
+    $(document).ready(function(){
+      setTimeout(function() {
+        $('#instructionsModal1').modal('show');
+      }, 500);
+    });
+  ")),
+  
+  titlePanel(
+    fluidRow(
+      column(12,
+             h1("BrainEffeX"),
+             h4("A tool for exploring effect sizes in typical neuroimaging study designs"),
+       
+             actionButton(
+               "showInstructions",
+               "How to Use This App",
+               style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+             )
+      )
+    )
   ),
   
   hr(), # space
-
+  
   fluidRow( # top row
-      column(3, # inputs
-      helpText("Select from the following options to visualize effect sizes:"),
-                  
-      selectInput("dataset",
-      			  label = "Dataset",
-      			  choices = c("All" = "*", unique(study["dataset"]))),
-      
-      selectInput("measurement_type",
-      			  label = "Map Type",
-      			  choices = c("All" = "*", unique(study["map_type"]))),
-      
-      selectizeInput("task",
-      			  label = "Task",
-      			  choices = c("All" = "*", unique(study["var1"])),
-              multiple = TRUE, selected = "*"),
-      
-      selectInput("test_type",
-      			  label = "Test Type",
-      			  choices = c("All" = "*", unique(study$orig_stat_type))),
-      			  
-      conditionalPanel(
-        condition = "input.test_type.indexOf('r') > -1",
-            selectInput("behaviour",
-      			  label = "Behavioural correlation",
-      			  choices = c("All" = "*", unique(study[study$orig_stat_type=="r","var2"])),
-              multiple = TRUE,
-              selected = c("*"))),
-
-      selectInput("spatial_scale",
-              label = "Spatial scale",
-              choices = c("Univariate", "Network-level", "whole-brain")),
-              
-      selectInput("group_by", 
-                  label = "What do you want to group by?",
-                  choices = c("None", "Statistic", "Phenotype Category")), 
+    column(3, # inputs
+           helpText("Select from the following options to visualize effect sizes:"),
+           
+           selectInput("dataset",
+                       label = tagList("Dataset", icon("info-circle", id = "dataset_icon")),
+                       choices = c("All" = "*", unique(study["dataset"]))),
+           bsTooltip("dataset_icon", "Choose the dataset to visualize.", "right", options = list(container = "body")),
+           
+           selectInput("measurement_type",
+                       label = tagList("Map Type", icon("info-circle", id = "measurement_type_icon")),
+                       choices = c("All" = "*", unique(study["map_type"]))),
+           bsTooltip("measurement_type_icon", "Select the type of map for analysis (e.g., brain regions, networks).", "right", options = list(container = "body")),
+           
+           selectizeInput("task",
+                          label = tagList("Task", icon("info-circle", id = "task_icon")),
+                          choices = c("All" = "*", unique(study["var1"])),
+                          multiple = TRUE, selected = "*"),
+           bsTooltip("task_icon", "Choose one or more tasks for the analysis.", "right", options = list(container = "body")),
+           
+           selectInput("test_type",
+                       label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
+                       choices = c("All" = "*", unique(study$orig_stat_type))),
+           bsTooltip("test_type_icon", "Select the statistical test type for the analysis.", "right", options = list(container = "body")),
+           
+           conditionalPanel(
+             condition = "input.test_type.indexOf('r') > -1",
+             selectInput("behaviour",
+                         label = tagList("Behavioural correlation", icon("info-circle", id = "behaviour_icon")),
+                         choices = c("All" = "*", unique(study[study$orig_stat_type=="r", "var2"])),
+                         multiple = TRUE,
+                         selected = c("*")),
+             bsTooltip("behaviour_icon", "Select behavioral variables for correlation analysis.", "right", options = list(container = "body"))
+           ),
+           
+           selectInput("spatial_scale",
+                       label = tagList("Spatial scale", icon("info-circle", id = "spatial_scale_icon")),
+                       choices = c("Univariate", "Network-level", "whole-brain")),
+           bsTooltip("spatial_scale_icon", "Select the spatial scale for the analysis.", "right", options = list(container = "body")),
+           
+           selectInput("group_by", 
+                       label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
+                       choices = c("None", "Statistic", "Phenotype Category")), 
+           bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
+           
+           downloadButton("downloadData", "Download Data"),
+           h1(" "),
+           wellPanel(style = "background-color: #ffffff;", 
+                     helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
+                     helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
+                     helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
+                     helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
+           ),
+           h1(" "),
+           h6(paste("Version 1.3; Last updated", Sys.Date()))
+           
+    ),
     
-
-
-      downloadButton("downloadData", "Download Data"),
-      h1(" "),
-      wellPanel(style = "background-color: #ffffff;", 
-      helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
-      helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
-      helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
-      helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals.")
+    column(5, align = "centre", # simCI plots
+           h4("The plots below visualize all edges or voxels in each study."),
+           helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+           
+           wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))
+    ),
+    
+    column(4, align = "center", # effect size matrices)
+           wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
+                     withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1)),
+           h1(" "),
+           h1(""),
+           h1(""),
+           wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
+                     h1(""),
+                     fluidRow( # second row: plots of activation maps for activation studies 
+                       column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
+                       column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1))
+                     )
+           )
+    )
+  ), # end of fluidRow
+  
+  
+  # Modal Dialogs
+  bsModal(
+    id = "instructionsModal1", title = "Getting Started", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("Welcome to",tags$b("BrainEffeX!"),"Here's how to get started:"),
+      tags$ul(
+        tags$li("Select a dataset from the 'Dataset' dropdown."),
+        tags$li("Choose a map type that matches your analysis needs."),
+        tags$li("Use the 'Task' dropdown to specify tasks you are interested in."),
+        tags$li("Set the 'Test Type' to define the statistical analysis."),
+        tags$li("If applicable, select 'Behavioural correlation' variables."),
+        tags$li("Choose the 'Spatial scale' to determine analysis granularity."),
+        tags$li("Decide how to group results using 'Group by'."),
+        tags$li("Visualize results in plots and download data if needed."),
+        tags$li("Refer to the tooltips next to each input for additional guidance.")
       ),
-      h1(" "),
-      h6("Version 1.3; Last updated 2024-June-03")
+      tags$div(style = "text-align: center;",
+               actionButton("nextToPage2", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  ),
+  bsModal(
+    id = "instructionsModal2", title = "Understanding the Plots", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("The plots below visualize all edges or voxels in each study:"),
+      tags$ul(
+        tags$li("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
+        tags$li("Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters."),
+        tags$li("Activation Maps (Cohen's d) help you to visualize specific brain regions.")
       ),
-
-      column(5, align = "centre", # simCI plots
-        h4("The plots below visualize all edges or voxels in each study."),
-        helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
-        
-        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))),
-      
-      column(4, align = "center", # effect size matrices)
-        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
-        withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1)),
-        h1(" "),
-        h1(""),
-        h1(""),
-        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-        h1(""),
-            fluidRow( # second row: plots of activation maps for activation studies 
-              column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-              column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1)))
-        )))) # end of fluidPage
-    
-
-    
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage1", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("nextToPage3", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  ),
+  bsModal(
+    id = "instructionsModal3", title = "Downloading Data", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("How to download data from BrainEffeX:"),
+      tags$ul(
+        tags$li("Click the 'Download Data' button after configuring your analysis."),
+        tags$li("Select the file format you wish to download."),
+        tags$li("Make sure to save your data securely for further analysis.")
+      ),
+      tags$p("Use the 'How to Use This App' button at any time to revisit these instructions."),
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  )
+)
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
     
+  # Show modal when 'How to Use This App' button is clicked
+  observeEvent(input$showInstructions, {
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  # Modal navigation
+  observeEvent(input$nextToPage2, {
+    toggleModal(session, "instructionsModal1", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage1, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  observeEvent(input$nextToPage3, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal3", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage2, {
+    toggleModal(session, "instructionsModal3", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
+  })
+  
+  
     # set reactive parameters
     v <- reactiveValues()
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
