@@ -1,20 +1,25 @@
-# This is a basic workflow that is manually triggered
+name: Run download_data.R
 
-name: Manual workflow
-
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
 on: workflow_dispatch
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "greet"
-  greet:
-    # The type of runner that the job will run on
+  run-script:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    - name: Download data
-      run: Rscript download_data.R
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: '4.10'  # You can specify the version of R you need
+
+    - name: Install R packages
+      run: |
+        Rscript -e 'install.packages(c("osfr"), repos="https://cran.rstudio.com")'
+        # Add any other packages your script might need
+
+    - name: Run download_data.R
+      run: |
+        Rscript scripts/download_data.R
