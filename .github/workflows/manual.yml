@@ -17,4 +17,4 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Download data
-      run: Rscript /scripts/download_data.R
+      run: Rscript download_data.R
