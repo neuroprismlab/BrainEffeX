@@ -16,6 +16,7 @@ library(reshape)
 library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 library(shinycssloaders)
+library(osfr)
 
 # source helper functions
 source("helpers.R")
@@ -24,7 +25,9 @@ source("helpers.R")
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # load data
-load("data/sim_ci.RData") 
+
+#load("data/sim_ci.RData") 
+load("data/effect_maps_public.RData")
 
 d_clean <- d
 
