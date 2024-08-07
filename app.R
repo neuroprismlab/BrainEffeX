@@ -112,9 +112,9 @@ ui <- fluidPage(
            
            selectizeInput("task",
                           label = tagList("Task", icon("info-circle", id = "task_icon")),
-                          choices = c("All" = "*", unique(study["var1"])),
-                          multiple = TRUE, selected = "*"),
-           bsTooltip("task_icon", "Choose one or more tasks for the analysis.", "right", options = list(container = "body")),
+                          choices = unique(study["var1"]),
+                          multiple = TRUE, selected = NULL),
+           bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available task options will be displayed by default.", "right", options = list(container = "body")),
            
            selectInput("test_type",
                        label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
@@ -237,7 +237,15 @@ ui <- fluidPage(
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
-    
+  
+  # Observer to handle default task display
+  observeEvent(input$task, {
+    if (is.null(input$task) || length(input$task) == 0) {
+      # Update the selectizeInput to show all tasks if none are selected
+      updateSelectizeInput(session, "task", selected = unique(study[["var1"]]))
+    }
+  }, ignoreInit = TRUE)
+  
   # Show modal when 'How to Use This App' button is clicked
   observeEvent(input$showInstructions, {
     toggleModal(session, "instructionsModal1", toggle = "open")
