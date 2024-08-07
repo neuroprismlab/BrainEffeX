@@ -673,8 +673,23 @@ server <- function(input, output, session) {
             ycolorbar = TRUE,
             mfrow = c(3, 1)
         )
-        # colorbar(breaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65), col = oro.nifti::hotmetal(), labels = seq(min(v$effect_map), max(v$effect_map), length.out = 64), text.col = "black")
-        #TODO: add numbers to legend of brain figure (have tried many times and can't figure it out so far)
+        # Add a colorbar with labels
+        min_val <- min(v$effect_map, na.rm = TRUE)
+        max_val <- max(v$effect_map, na.rm = TRUE)
+        num_breaks <- 65  # Number of breaks for the color scale
+        breaks <- seq(min_val, max_val, length.out = num_breaks)
+        labels <- round(seq(min_val, max_val, length.out = num_breaks - 1), 2)  # Adjust labels length
+        
+        colorbar(
+          breaks = breaks,
+          col = oro.nifti::hotmetal(),
+          labels = labels,
+          text.col = "black"
+        )
+   
+    
+        # Add labels only at specified indices
+      #  mtext(text = labels, side = 4, at = breaks[label_indices], las = 1, cex = 0.8)
     })
 }
 
