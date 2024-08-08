@@ -128,9 +128,8 @@ ui <- fluidPage(
              selectInput("behaviour",
                          label = tagList("Behavioural correlation", icon("info-circle", id = "behaviour_icon")),
                          choices = c("All" = "*", unique(study[study$orig_stat_type=="r", "var2"])),
-                         multiple = TRUE,
-                         selected = c("*")),
-             bsTooltip("behaviour_icon", "Select behavioral variables for correlation analysis.", "right", options = list(container = "body"))
+                         multiple = TRUE, selected = NULL),
+             bsTooltip("behaviour_icon", "Select behavioural variables for correlation analysis.", "right", options = list(container = "body"))
            ),
            
            selectInput("spatial_scale",
@@ -243,60 +242,68 @@ ui <- fluidPage(
 # Server logic ----
 server <- function(input, output, session) {
   
-  
-  
   # Dynamic panel output
   output$dynamicPanel <- renderUI({
     # Create a list of messages for each input
-    messages <- list()
+    messages <- c()
     
     # Dataset message
-    if (input$dataset == "*") {
-      messages$dataset <- "You are looking at all datasets."
+    if (is.null(input$dataset) || input$dataset == "*") {
+      messages$dataset <- "• All datasets."
     } else {
-      messages$dataset <- paste("You are looking at the <b>", input$dataset, "</b> dataset.")
+      messages$dataset <- paste("• The <b>", input$dataset, "</b> dataset(s).")
     }
     
     # Map type message
-    if (input$measurement_type == "*") {
-      messages$measurement_type <- "You are viewing all map types."
+    if (is.null(input$measurement_type) || input$measurement_type == "*") {
+      messages$measurement_type <- "• All map types."
     } else {
-      messages$measurement_type <- paste("You are viewing the <b>", input$measurement_type, "</b> map type.")
+      messages$measurement_type <- paste("• <b>", input$measurement_type, "</b> map type.")
     }
     
     # Task message
-    if (length(input$task) == length(unique(study[["var1"]]))) {
-      messages$task <- "You are viewing all tasks."
-    } else if (length(input$task) > 0) {
-      messages$task <- paste("You are viewing tasks: <b>", paste(input$task, collapse = ", "), "</b>.")
+    if (is.null(input$task) || length(input$task) == 0) {
+      messages$task <- "• No specific tasks are selected."
+    } else if (length(input$task) == length(unique(study[["var1"]]))) {
+      messages$task <- "• All tasks."
     } else {
-      messages$task <- "No specific tasks are selected."
+      messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
     }
     
     # Test type message
-    if (input$test_type == "*") {
-      messages$test_type <- "All test types are selected."
+    if (is.null(input$test_type) || input$test_type == "*") {
+      messages$test_type <- "• All test types."
     } else {
-      messages$test_type <- paste("Test type selected: <b>", input$test_type, "</b>.")
+      messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
     }
     
-    # Test type message
-    #if (input$behaviour == "*") {
-    #  messages$behaviour <- "All behavioral tasks are selected."
-    #} else {
-    #  messages$behaviour <- paste("Behavioral task selected: <b>", input$test_type, "</b>.")
-    #}
+    # behaviour message
+    if (is.null(input$behaviour) || length(input$behaviour) == 0) {
+      messages$behaviour <- "• No specific behaviours are selected."
+    } else if (length(input$behaviour) == length(unique(study[["var2"]])) || input$behaviour == "*") {
+      messages$behaviour <- "• All behaviours."
+    } else {
+      print(input$behaviour)
+      messages$behaviour <- paste("• The <b>", paste(input$behaviour, collapse = ", "), "</b> behavioural variable(s).")
+    }
     
     # Group by message
-    if (input$group_by != "None") {
-      messages$group_by <- paste("The results are grouped by <b>", input$group_by, "</b>.")
+    if (!is.null(input$group_by) && input$group_by != "None") {
+      messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
     }
+    
+    # Debugging print statement
+    print(messages)
+    
+    # Combine messages into a single string with a heading
+    message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
+    
     
     # Combine messages into a single paragraph
     tags$div(
       style = "background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;",
       tags$p(
-        HTML(paste(unlist(messages), collapse = " "))
+        HTML(message_text)
       )
     )
   })
@@ -336,6 +343,14 @@ server <- function(input, output, session) {
     }
   }, ignoreInit = TRUE)
   
+  # # Observer to handle default behaviour display
+  observeEvent(input$behaviour, {
+    if (is.null(input$behaviour) || length(input$behaviour) == 0) {
+      # Update the selectizeInput to show all tasks if none are selected
+      updateSelectizeInput(session, "behaviour", selected = unique(v$beh_choices))
+    }
+  }, ignoreInit = TRUE)
+
   
 # set reactive parameters for plotting based on options chosen by user
     v <- reactiveValues()
@@ -405,7 +420,7 @@ server <- function(input, output, session) {
                          (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
 
           if (input$test_type == "r") {
-            updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(v$beh_choices)))
+            updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
           }
           print("measurement type changed")
           
@@ -430,7 +445,8 @@ server <- function(input, output, session) {
                          (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
 
           if (input$test_type != "r") {
-            updateSelectInput(session, "behaviour", selected = "*", choices = v$beh_choices)
+            updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+            
           }
         })
 
