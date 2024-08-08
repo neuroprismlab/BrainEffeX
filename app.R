@@ -94,6 +94,8 @@ ui <- fluidPage(
     )
   ),
   
+  
+  
   hr(), # space
   
   fluidRow( # top row
@@ -112,7 +114,7 @@ ui <- fluidPage(
            
            selectizeInput("task",
                           label = tagList("Task", icon("info-circle", id = "task_icon")),
-                          choices = unique(study["var1"]),
+                          choices = c("All" = "*", unique(study["var1"])),
                           multiple = TRUE, selected = NULL),
            bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available task options will be displayed by default.", "right", options = list(container = "body")),
            
@@ -155,11 +157,14 @@ ui <- fluidPage(
     ),
     
     column(5, align = "centre", # simCI plots
+           uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
            h4("The plots below visualize all edges or voxels in each study."),
            helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
            
            wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))
     ),
+    
+    
     
     column(4, align = "center", # effect size matrices)
            wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
@@ -238,20 +243,71 @@ ui <- fluidPage(
 # Server logic ----
 server <- function(input, output, session) {
   
-  # Observer to handle default task display
-  observeEvent(input$task, {
-    if (is.null(input$task) || length(input$task) == 0) {
-      # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "task", selected = unique(study[["var1"]]))
+  
+  
+  # Dynamic panel output
+  output$dynamicPanel <- renderUI({
+    # Create a list of messages for each input
+    messages <- list()
+    
+    # Dataset message
+    if (input$dataset == "*") {
+      messages$dataset <- "You are looking at all datasets."
+    } else {
+      messages$dataset <- paste("You are looking at the <b>", input$dataset, "</b> dataset.")
     }
-  }, ignoreInit = TRUE)
+    
+    # Map type message
+    if (input$measurement_type == "*") {
+      messages$measurement_type <- "You are viewing all map types."
+    } else {
+      messages$measurement_type <- paste("You are viewing the <b>", input$measurement_type, "</b> map type.")
+    }
+    
+    # Task message
+    if (length(input$task) == length(unique(study[["var1"]]))) {
+      messages$task <- "You are viewing all tasks."
+    } else if (length(input$task) > 0) {
+      messages$task <- paste("You are viewing tasks: <b>", paste(input$task, collapse = ", "), "</b>.")
+    } else {
+      messages$task <- "No specific tasks are selected."
+    }
+    
+    # Test type message
+    if (input$test_type == "*") {
+      messages$test_type <- "All test types are selected."
+    } else {
+      messages$test_type <- paste("Test type selected: <b>", input$test_type, "</b>.")
+    }
+    
+    # Test type message
+    #if (input$behaviour == "*") {
+    #  messages$behaviour <- "All behavioral tasks are selected."
+    #} else {
+    #  messages$behaviour <- paste("Behavioral task selected: <b>", input$test_type, "</b>.")
+    #}
+    
+    # Group by message
+    if (input$group_by != "None") {
+      messages$group_by <- paste("The results are grouped by <b>", input$group_by, "</b>.")
+    }
+    
+    # Combine messages into a single paragraph
+    tags$div(
+      style = "background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;",
+      tags$p(
+        HTML(paste(unlist(messages), collapse = " "))
+      )
+    )
+  })
+  
   
   # Show modal when 'How to Use This App' button is clicked
   observeEvent(input$showInstructions, {
     toggleModal(session, "instructionsModal1", toggle = "open")
   })
   
-  # Modal navigation
+# Modal navigation
   observeEvent(input$nextToPage2, {
     toggleModal(session, "instructionsModal1", toggle = "close")
     toggleModal(session, "instructionsModal2", toggle = "open")
@@ -272,8 +328,16 @@ server <- function(input, output, session) {
     toggleModal(session, "instructionsModal2", toggle = "open")
   })
   
+  # Observer to handle default task display
+  observeEvent(input$task, {
+    if (is.null(input$task) || length(input$task) == 0) {
+      # Update the selectizeInput to show all tasks if none are selected
+      updateSelectizeInput(session, "task", selected = unique(study[["var1"]]))
+    }
+  }, ignoreInit = TRUE)
   
-    # set reactive parameters
+  
+# set reactive parameters for plotting based on options chosen by user
     v <- reactiveValues()
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
@@ -301,31 +365,34 @@ server <- function(input, output, session) {
 
         observeEvent(ignoreInit = TRUE, input$dataset, {
           v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-          updateSelectInput(session, "test_type", selected = "*", choices = c("All" = "*", unique(v$test_choices)))
+          updateSelectInput(session, "test_type", selected = unique(study[["var1"]]))
         })
 
-        observeEvent(ignoreInit = TRUE, input$dataset, {
-          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"var1"]
+        # observeEvent(ignoreInit = TRUE, input$dataset, {
+        #   v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+        #                  grepl(input$measurement_type, study$map_type)),"var1"]
 
-          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
-
-          updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
-        })
-
-        observeEvent(ignoreInit = TRUE, input$dataset, {
-          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"var1"]
-
-          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
-
-          updateSelectInput(session, "behaviour", selected = "*", choices = c("All" = "*", unique(v$beh_choices)))
-        })
+        # Observe the dataset input
+        observeEvent(input$dataset,ignoreInit = TRUE,{
+          # Retrieve the available tasks for the selected dataset
+          available_tasks <- unique(study[study$dataset == input$dataset, "var1"])
+          
+          # Update the task selection input with available tasks but do not pre-select any
+          updateSelectizeInput(session, "task",choices = available_tasks, selected = character(0) # Ensure no tasks are selected by default
+          )
         
+        
+          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+
+        #  updateSelectInput(session, "task", selected = unique(study[["var1"]]))
+          # Update the beh selection input with available behs but do not pre-select any
+          updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+          
+        })
+
+       
         # constrain parameters
         # update behaviour selections to only be the available constrained selections... 
         observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
@@ -341,7 +408,14 @@ server <- function(input, output, session) {
             updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(v$beh_choices)))
           }
           print("measurement type changed")
-          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+          
+          
+          # Update the task selection input with available tasks but do not pre-select any
+          updateSelectizeInput(session, "task",choices = unique(v$task_choices), selected = character(0)) # Ensure no tasks are selected by default
+          # Update the beh selection input with available behs but do not pre-select any
+          updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+          
+         # updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
         }) 
 
 
