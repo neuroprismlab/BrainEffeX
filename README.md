@@ -2,5 +2,7 @@
 Effect size explorer shiny app
 
 ### Instructions for contibuting to the app:
-- fork the repository
-- download the effect map data by running the download_data.R script in the scripts directory locally (the data is too large to store on github)
+1. Fork the repository
+2. Download the effect map data (`effect_maps_public.RData`) by
+   - running the `download_data.R` script in the scripts directory locally
+   - going to https://osf.io/cwnjd and downloading the `effect_maps_public.RData` file. 
