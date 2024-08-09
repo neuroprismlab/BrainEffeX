@@ -97,17 +97,17 @@ ui <- fluidPage(
              
       ),
       column(4, 
-             tags$img(src = "nplogo.png", class = "logo", style = "float: right; height: 100px;"))
-      ),
+             tags$div(style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%;", 
+                      tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
+                      h5("The NeuroPrism Lab", style = "margin-top: 5px;"))
+             ),
+
              
       actionButton(
         "showInstructions",
         "How to Use This App",
-        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-
-  
-  
-  
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
+    ),
   
   hr(), # space
   
