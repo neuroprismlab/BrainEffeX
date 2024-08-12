@@ -73,6 +73,12 @@ ui <- fluidPage(
  # theme = shinytheme("spacelab"),
   useShinyjs(),
   
+  
+  # Include the custom CSS file
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+  ),
+  
   # JavaScript to trigger the modal on app load
   tags$script(HTML("
     $(document).ready(function(){
@@ -82,22 +88,26 @@ ui <- fluidPage(
     });
   ")),
   
-  titlePanel(
+# titlePanel(
     fluidRow(
-      column(12,
+      column(8,
              h1("BrainEffeX"),
+             #hr(), #space
              h4("A tool for exploring effect sizes in typical neuroimaging study designs"),
-       
-             actionButton(
-               "showInstructions",
-               "How to Use This App",
-               style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
-             )
-      )
-    )
-  ),
-  
-  
+             
+      ),
+      column(4, 
+             tags$div(style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%;", 
+                      tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
+                      h5("The NeuroPrism Lab", style = "margin-top: 5px;"))
+             ),
+
+             
+      actionButton(
+        "showInstructions",
+        "How to Use This App",
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
+    ),
   
   hr(), # space
   
