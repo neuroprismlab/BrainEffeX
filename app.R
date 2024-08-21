@@ -210,7 +210,7 @@ ui <- fluidPage(
         tags$li("Available Tasks"),
         tags$li("Test type"),
         tags$li("Behavioral correlations (if applicable)"),
-        tags$li("Spatial scale."),
+        tags$li("Spatial scale"),
        # tags$li("Select a dataset from the 'Dataset' dropdown."),
       #  tags$li("Choose a map type that matches your analysis needs."),
       #  tags$li("Use the 'Task' dropdown to specify tasks you are interested in."),
@@ -220,7 +220,7 @@ ui <- fluidPage(
      #   tags$li("Decide how to group results using 'Group by'."),
      #   tags$li("Visualize results in plots and download data if needed."),
       ),
-     tags$p("Refer to the",tags$b(tags$i("tooltips")),"next to each input for additional guidance!"),
+     tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
       tags$div(style = "text-align: center;",
                actionButton("nextToPage2", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
       )
@@ -251,8 +251,8 @@ ui <- fluidPage(
       tags$p("How to download effect maps from BrainEffeX:"),
       tags$ul(
         tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
-        tags$li("After downloading, you can use this to decide how you want to power your study. For example, you could power the study to detect the maximum conservative effect size (the largest absolute value of the lower bounds of the confidence intervals), to detect an estimated effect size in a region of interest, etc. "),
-        tags$li("Or, continue to explore different effect sizes!")),
+        tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
+        #tags$li("Or, continue to explore different effect sizes!")),
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
