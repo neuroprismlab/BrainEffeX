@@ -25,30 +25,28 @@ source("helpers.R")
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # load data
-
+data_file = "combined_data_2024-09-06.RData"
 #load("data/sim_ci.RData") 
-load("data/effect_maps_public.RData")
+load(paste0("data/", data_file))
 
-d_clean <- d
+# loads brain_masks as list, sim_ci as list, and study as table
 
-phen_study <- study #TODO: just remove phen_study, it's the same as study now and can be interchangeable
-
-# temporary fix for removing IMAGEN data for now from study, phen_study, and effect_maps #TODO: either remove this or update the data to include IMAGEN data
-d_clean <- d_clean[!grepl("IMAGEN", study$dataset)]
-phen_study <- phen_study[!grepl("IMAGEN", phen_study$dataset),]
-study <- study[!grepl("IMAGEN", study$dataset),]
+d_clean <- sim_ci$d_maps
 
 # d_clean is a list that includes the effect maps, 
-# and "study" is a table that contains study information
+# and "study" is a table that contains study information, 
+# and "brain_masks" is a list that contains the brain masks
 
-### d_clean is a list of studies, each study contains: 
-# sample size as n, n1, and/or n2
+### d_clean is a list of studies, each study contains all combinations of motion and pooling.
+# each combination of motion and pooling contains:
+# sample size as n
 # p-value as p
 # effect size as d
-# std as std.x and std.y
-# original statistic values as orig_stat
-# cohen's d values as d
+# std as std.brain and std.score
+# original statistic values as b.standardized
 # bound of simultaneous confidence intervals as sim_ci_lb and sim_ci_ub
+# pooling method as pooling.method
+# motion method as motion.method
 
 #### study is a data frame that contains information about each study, including:
 # basefile
@@ -58,10 +56,10 @@ study <- study[!grepl("IMAGEN", study$dataset),]
 # dataset
 # map_type
 # orig_stat_type
-# var1
-# var2
-# ref
-# code (as the phenotype category)
+# test_component_1
+# test_component_2
+# category
+# ref # TODO: do we need this still? Not currently in study...
 
 # options for spinner
 options(spinner.color = "#9ecadb",
@@ -127,7 +125,7 @@ ui <- fluidPage(
            
            selectizeInput("task",
                           label = tagList("Task", icon("info-circle", id = "task_icon")),
-                          choices = c("All" = "*", unique(study["var1"])),
+                          choices = c("All" = "*", unique(tolower(study["test_component_1"]))),
                           multiple = TRUE, selected = NULL),
            bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
            
@@ -139,15 +137,22 @@ ui <- fluidPage(
            conditionalPanel(
              condition = "input.test_type.indexOf('r') > -1",
              selectInput("behaviour",
-                         label = tagList("Behavioural correlation", icon("info-circle", id = "behaviour_icon")),
-                         choices = c("All" = "*", unique(study[study$orig_stat_type=="r", "var2"])),
+                         label = tagList("Correlation", icon("info-circle", id = "behaviour_icon")),
+                         choices = c("All" = "*", unique(study[study$orig_stat_type=="r", "test_component_2"])),
                          multiple = TRUE, selected = NULL),
              bsTooltip("behaviour_icon", "Select behavioural variables for correlation analysis. If no behavioural variables are selected, all available options will be displayed by default.", "right", options = list(container = "body"))
            ),
            
+           selectInput("motion",
+                       label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                       choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
+                       selected = 'none'),
+           bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
+           
+           
            selectInput("spatial_scale",
                        label = tagList("Spatial scale", icon("info-circle", id = "spatial_scale_icon")),
-                       choices = c("Univariate", "Network-level", "whole-brain")),
+                       choices = c("Univariate" = 'none', "Network-level" = 'net')),
            bsTooltip("spatial_scale_icon", "Select the spatial scale for the analysis.", "right", options = list(container = "body")),
            
            selectInput("group_by", 
@@ -305,10 +310,10 @@ server <- function(input, output, session) {
     if (is.null(input$behaviour) || length(input$behaviour) == 0) {
       messages$behaviour <- "• No specific behaviours are selected."
     } else if (length(input$behaviour) == length(unique(study[["var2"]])) || input$behaviour == "*") {
-      messages$behaviour <- "• All behaviours."
+      messages$behaviour <- "• All correlations"
     } else {
       print(input$behaviour)
-      messages$behaviour <- paste("• The <b>", paste(input$behaviour, collapse = ", "), "</b> behavioural variable(s).")
+      messages$behaviour <- paste("• The <b>", paste(input$behaviour, collapse = ", "), "</b> correlation(s).")
     }
     
     # Group by message
@@ -367,7 +372,7 @@ server <- function(input, output, session) {
   observeEvent(input$task, {
     if (is.null(input$task) || length(input$task) == 0) {
       # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "task", selected = unique(study[["var1"]]))
+      updateSelectizeInput(session, "task", selected = unique(study[["test_component_1"]]))
     }
   }, ignoreInit = TRUE)
   
@@ -385,30 +390,23 @@ server <- function(input, output, session) {
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
         v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
-                             (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+                             (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                             grepl(paste(input$behaviour, collapse="|"), study$var2)]
+                             grepl(paste(input$behaviour, collapse="|"), study$test_component_2)]
       
         # also filter study by the same parameters
         v$study <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) & 
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1)) & 
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
                          (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                         grepl(paste(input$behaviour, collapse="|"), study$var2)),]
+                         grepl(paste(input$behaviour, collapse="|"), study$test_component_2)),]
 
-        v$task_choices <- unique(v$study$var1)
-            
-        # filter phen_study the same way
-        v$phen_study <- phen_study[grepl(input$dataset, phen_study$dataset) & 
-                  grepl(input$measurement_type, phen_study$map_type) & 
-                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), phen_study$var1)) & 
-                  (input$test_type == "*" | (phen_study$orig_stat_type == input$test_type)) &
-                  grepl(paste(input$behaviour, collapse="|"), phen_study$var2),]
+        v$task_choices <- unique(v$study$test_component_1)
     })
 
         observeEvent(ignoreInit = TRUE, input$dataset, {
           v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-          updateSelectInput(session, "test_type", selected = unique(study[["var1"]]))
+          updateSelectInput(session, "test_type", selected = unique(study[["test_component_1"]]))
         })
 
         # observeEvent(ignoreInit = TRUE, input$dataset, {
@@ -418,7 +416,7 @@ server <- function(input, output, session) {
         # Observe the dataset input
         observeEvent(input$dataset,ignoreInit = TRUE,{
           # Retrieve the available tasks for the selected dataset
-          available_tasks <- unique(study[study$dataset == input$dataset, "var1"])
+          available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
           
           # Update the task selection input with available tasks but do not pre-select any
           updateSelectizeInput(session, "task",choices = available_tasks, selected = character(0) # Ensure no tasks are selected by default
@@ -427,7 +425,7 @@ server <- function(input, output, session) {
         
           v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
 
         #  updateSelectInput(session, "task", selected = unique(study[["var1"]]))
           # Update the beh selection input with available behs but do not pre-select any
@@ -445,7 +443,7 @@ server <- function(input, output, session) {
 
           v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
 
           if (input$test_type == "r") {
             updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -466,11 +464,11 @@ server <- function(input, output, session) {
         # when test type is changed from r to another test type, reset behaviour to all 
         observeEvent(ignoreInit = TRUE, list(input$test_type), {
           v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"var1"]
+                         grepl(input$measurement_type, study$map_type)),"test_component_1"]
 
           v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"var2"]
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
 
           if (input$test_type != "r") {
             updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -493,7 +491,7 @@ server <- function(input, output, session) {
           v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
           v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-          v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
+          #v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
 })
 
 
@@ -517,7 +515,7 @@ server <- function(input, output, session) {
             #print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
-              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
+              matching_d_idx <- which(names(v$d_clean) %in% matching_names)
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
@@ -551,10 +549,10 @@ server <- function(input, output, session) {
         # initialize a new study dataframe to store the info for the groupings
         v$study_phen <- data.frame(phen_category = character(0), ref = character(0), name = character(0))
         # for each phenotype category
-        for (phen in unique(v$study$code)) {
+        for (phen in unique(v$study$category)) {
 
           for (ref in unique(v$study$ref)) {
-            matching_idx <- which(v$study$code == phen & v$study$ref == ref)
+            matching_idx <- which(v$study$category == phen & v$study$ref == ref)
             phen_clean <- gsub("\\(", "_", phen)
             phen_clean <- gsub("\\)", "", phen_clean)
             phen_clean <- gsub(" ", "", phen_clean)
@@ -592,7 +590,7 @@ server <- function(input, output, session) {
       pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
       matching_file <- grep(pattern, file_list, value = TRUE)
       v$effect_map <- readnii(matching_file)
-      }
+      } # TODO: update effect map brain plotting for new data format
     })
 
     ###### plot simCI plots:
@@ -650,7 +648,7 @@ server <- function(input, output, session) {
             plotname <- paste0("plot", my_i, sep="")
 
             output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean)[my_i], v$study[my_i,])
+              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], input$spatial_scale, input$motion)
             })
           })
         }
