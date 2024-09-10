@@ -25,13 +25,13 @@ source("helpers.R")
 effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # load data
-data_file = "combined_data_2024-09-06.RData"
+data_file = "combined_data_2024-09-09.RData"
 #load("data/sim_ci.RData") 
 load(paste0("data/", data_file))
 
 # loads brain_masks as list, sim_ci as list, and study as table
 
-d_clean <- sim_ci$d_maps
+d_clean <- data
 
 # d_clean is a list that includes the effect maps, 
 # and "study" is a table that contains study information, 
@@ -491,14 +491,17 @@ server <- function(input, output, session) {
           v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
           v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-          #v$phen_study_fc <- v$phen_study[grepl("_FC_", v$phen_study$name),]
+          v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
+
+          v$study_fc <- v$study[grepl("_fc_", v$study$name),]
+          v$study_act <- v$study[grepl("_act_", v$study$name),]
 })
 
 
     ##### Group_by ######
 
     toListen <- reactive({
-      list(input$group_by, input$dataset, input$map_type, input$task, input$test_type)
+      list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
     })
 
     observeEvent(toListen(), {
@@ -519,13 +522,13 @@ server <- function(input, output, session) {
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
-              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
-              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d))
+              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
+              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
               for (i in matching_d_idx) {
-                d_total <- d_total + v$d_clean[[i]]$d
-                ci_lb_total <- ci_lb_total + v$d_clean[[i]]$sim_ci_lb
-                ci_ub_total <- ci_ub_total + v$d_clean[[i]]$sim_ci_ub
+                d_total <- d_total + v$d_clean[[i]][[v$combo_name]]$d
+                ci_lb_total <- ci_lb_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
+                ci_ub_total <- ci_ub_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
               }
               d_avg <- d_total / length(matching_d_idx)
               ci_lb_avg <- ci_lb_total / length(matching_d_idx)
@@ -661,7 +664,7 @@ server <- function(input, output, session) {
             plotname <- paste0("plot", my_i, sep="")
 
             output[[plotname]] <- renderPlot({
-              plot_sim_ci_stat(v$d_stat[[my_i]], names(v$d_stat)[my_i], v$study_stat[my_i,])
+              plot_sim_ci_stat(v$d_stat[[my_i]], names(v$d_stat[my_i]), v$study_stat[my_i,], input$spatial_scale, input$motion)
             })
           })
         }
@@ -687,8 +690,8 @@ server <- function(input, output, session) {
     # and height should be equal to width when there is only one plot (when all studies are of the same parcellation type)
     
     observe({
-      v$num_268_studies <- sum(v$phen_study_fc$ref == "Shen_268")
-      v$num_55_studies <- sum(v$phen_study_fc$ref == "UKB_55")
+      v$num_268_studies <- sum(v$study_fc$ref == "shen_268")
+      v$num_55_studies <- sum(v$study_fc$ref == "ukb_55")
       if (v$num_268_studies > 0 & v$num_55_studies > 0) {
         v$h <- 700
         v$w <- 500
@@ -706,23 +709,32 @@ server <- function(input, output, session) {
       
       # create a vector to store the data for if there is more than one study
       t_total_268 <- rep(0, 35778) 
+      t_total_268_pooled <- rep(0, 55)
       t_total_55 <-  rep(0 , 1485)
 
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
+      n_268_studies_pooled <- 0
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
 
       for (i in 1:length(v$d_clean_fc)) {
-        t <- v$d_clean_fc[[i]]$d
+        t <- v$d_clean_fc[[i]][[v$combo_name]]$d
 
-        phen_study_idx <- which(toupper(v$phen_study_fc$name) == toupper(names(v$d_clean_fc)[i]))
-        if (v$phen_study_fc$ref[phen_study_idx] == "Shen_268") { # TODO: create a v$study_fc table to store just fc studies
+        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        if (v$study_fc$ref[study_idx] == "shen_268"){ # TODO: create a v$study_fc table to store just fc studies
           
-          # add t to the total vector as the sum of t_total and t
-          t_total_268 <- t_total_268 + t
-          n_268_studies <- n_268_studies + 1
+          if (input$spatial_scale == "net") {
+            t_total_268_pooled <- t_total_268_pooled + t
+            n_268_studies_pooled <- n_268_studies_pooled + 1
+          }
+          else {
+            print(c(dim(t), v$study_fc$name[study_idx]))
+            
+            t_total_268 <- t_total_268 + t
+            n_268_studies <- n_268_studies + 1
+          }
         }
         
-        else if (v$phen_study_fc$ref[phen_study_idx] == "UKB_55") {
+        else if (v$study_fc$ref[study_idx] == "ukb_55") {
           
           # add the data to the total vector
           t_total_55 <- t_total_55 + t
@@ -740,6 +752,14 @@ server <- function(input, output, session) {
         t_avg_268 <- t_total_268
       }
 
+      if (n_268_studies_pooled > 1) {
+        t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
+      }
+
+      if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
+        t_avg_268_pooled <- t_total_268_pooled
+      }
+
       if (n_55_studies > 1) {
         t_avg_55 <- t_total_55 / n_55_studies
       }
@@ -752,6 +772,11 @@ server <- function(input, output, session) {
       if (n_268_studies > 0) {
         plot_268 <- plot_full_mat(t_avg_268, "data/map268_subnetwork.csv")
       }
+
+      # only plot the 268 pooled plot if n_268_studies_pooled > 0
+      if (n_268_studies_pooled > 0) {
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, "data/map268_subnetwork.csv")
+      }
       
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
@@ -759,16 +784,22 @@ server <- function(input, output, session) {
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
-      if ((n_268_studies == 0) & (n_55_studies > 0)) {
+      if (((n_268_studies == 0) & (n_268_studies_pooled == 0)) & (n_55_studies > 0)) {
         grid.arrange(plot_55, ncol = 1)
       }
-      else if ((n_55_studies == 0) & (n_268_studies > 0)) {
+      else if ((n_55_studies == 0) & ((n_268_studies > 0))) {
         grid.arrange(plot_268, ncol = 1)
+      }
+      else if ((n_55_studies == 0) & ((n_268_studies_pooled > 0))) {
+        grid.arrange(plot_268_pooled, ncol = 1)
       }
       else if ((n_55_studies > 0) & (n_268_studies > 0)) {
         grid.arrange(plot_268, plot_55, ncol = 1)
       }
-    }, height = reactive(v$h))#, width = reactive(v$w))
+      else if ((n_55_studies > 0) & (n_268_studies_pooled > 0)) {
+        grid.arrange(plot_268_pooled, plot_55, ncol = 1)
+      }}
+    , height = reactive(v$h))#, width = reactive(v$w))
     
 
     # plotting brain images:

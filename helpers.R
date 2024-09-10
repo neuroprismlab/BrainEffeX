@@ -106,7 +106,7 @@ plot_sim_ci <- function(data, name, study_details, pooling, motion) {
 
 
 ##### plotting the confidence intervals for group_by == statistic:
-plot_sim_ci_stat <- function(data, name, study_details) {
+plot_sim_ci_stat <- function(data, name, study_details, pooling, motion) {
 
   # remove na
   na_idx <- is.na(data$d_avg) | is.na(data$ci_lb_avg) | is.na(data$ci_ub_avg)
@@ -122,7 +122,7 @@ plot_sim_ci_stat <- function(data, name, study_details) {
 
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
-  if (downsample == 0) {
+  if (downsample < 1) {
     downsample = 1
   }
   sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
@@ -210,7 +210,7 @@ plot_sim_ci_phen <- function(data, name, study_details) {
 
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
-  if (downsample == 0) {
+  if (downsample < 1) {
     downsample = 1
   }
   sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
