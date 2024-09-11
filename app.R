@@ -1,6 +1,6 @@
 # load libraries
 library(shiny)
-library(shinythemes)
+library(shinythemes) #TODO: list what we need each package for!
 library(ggplot2)
 library(oro.nifti)
 library(neurobase)
@@ -22,16 +22,37 @@ library(osfr)
 source("helpers.R")
 
 #TODO: this is a temporary fix because we don't have the data for the other studies yet and treat activation maps differently
-effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
+# effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # load data
-data_file = "combined_data_2024-09-09.RData"
+data_file = "combined_data_2024-09-11.RData"
 #load("data/sim_ci.RData") 
 load(paste0("data/", data_file))
+# load template nifti file
+template <- readNIfTI("data/template_nifti")
+# load anatomical nifti file
+anatomical <- readNIfTI("data/anatomical.nii")
 
 # loads brain_masks as list, sim_ci as list, and study as table
 
 d_clean <- data
+
+# make study all lowercase
+study <- data.frame(lapply(study, function(x) {
+  if (is.character(x)) {
+    return(tolower(x))
+  } else {
+    return(x)
+  }
+}))
+
+# also make the names of each list in d_clean all lowercase
+names(d_clean) <- tolower(names(d_clean))
+
+# and the names of each list in brain_masks
+names(brain_masks) <- tolower(names(brain_masks))
+
+effect_maps_available <- study[study$map_type == "act", "name"]
 
 # d_clean is a list that includes the effect maps, 
 # and "study" is a table that contains study information, 
@@ -125,7 +146,7 @@ ui <- fluidPage(
            
            selectizeInput("task",
                           label = tagList("Task", icon("info-circle", id = "task_icon")),
-                          choices = c("All" = "*", unique(tolower(study["test_component_1"]))),
+                          choices = c("All" = "*", unique((study["test_component_1"]))),
                           multiple = TRUE, selected = NULL),
            bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
            
@@ -293,7 +314,7 @@ server <- function(input, output, session) {
     # Task message
     if (is.null(input$task) || length(input$task) == 0) {
       messages$task <- "• No specific tasks are selected."
-    } else if (length(input$task) == length(unique(study[["var1"]]))) {
+    } else if (length(input$task) == length(unique(study[["var1"]]))) { #TODO:
       messages$task <- "• All tasks."
     } else {
       messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
@@ -322,7 +343,7 @@ server <- function(input, output, session) {
     }
     
     # Debugging print statement
-    print(messages)
+    # print(messages)
     
     # Combine messages into a single string with a heading
     message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
@@ -372,7 +393,7 @@ server <- function(input, output, session) {
   observeEvent(input$task, {
     if (is.null(input$task) || length(input$task) == 0) {
       # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "task", selected = unique(study[["test_component_1"]]))
+      updateSelectizeInput(session, "task", choices = unique(study[["test_component_1"]]))
     }
   }, ignoreInit = TRUE)
   
@@ -380,7 +401,7 @@ server <- function(input, output, session) {
   observeEvent(input$behaviour, {
     if (is.null(input$behaviour) || length(input$behaviour) == 0) {
       # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "behaviour", selected = unique(v$beh_choices))
+      updateSelectizeInput(session, "behaviour", choices = unique(v$beh_choices))
     }
   }, ignoreInit = TRUE)
 
@@ -406,7 +427,7 @@ server <- function(input, output, session) {
 
         observeEvent(ignoreInit = TRUE, input$dataset, {
           v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-          updateSelectInput(session, "test_type", selected = unique(study[["test_component_1"]]))
+          updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
         })
 
         # observeEvent(ignoreInit = TRUE, input$dataset, {
@@ -416,16 +437,16 @@ server <- function(input, output, session) {
         # Observe the dataset input
         observeEvent(input$dataset,ignoreInit = TRUE,{
           # Retrieve the available tasks for the selected dataset
-          available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
+          v$available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
           
           # Update the task selection input with available tasks but do not pre-select any
-          updateSelectizeInput(session, "task",choices = available_tasks, selected = character(0) # Ensure no tasks are selected by default
+          updateSelectizeInput(session, "task",choices = v$task_choices, selected = character(0) # Ensure no tasks are selected by default
           )
-        
+        # TODO: test above
         
           v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
 
         #  updateSelectInput(session, "task", selected = unique(study[["var1"]]))
           # Update the beh selection input with available behs but do not pre-select any
@@ -439,11 +460,11 @@ server <- function(input, output, session) {
         observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
 
           v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"var1"]
+                         grepl(input$measurement_type, study$map_type)),"test_component_1"]
 
           v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
 
           if (input$test_type == "r") {
             updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -495,8 +516,30 @@ server <- function(input, output, session) {
 
           v$study_fc <- v$study[grepl("_fc_", v$study$name),]
           v$study_act <- v$study[grepl("_act_", v$study$name),]
+
+          # if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task, effect_maps_available, ignore.case = TRUE)))) {
+          #   # v$study_name as the name column from study that matches the task input and has map type activation
+          #   v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
+          #   print("creating nifti for: ", v$study_name)
+          #   v$nifti <- create_nifti(template, d_clean, v$study_name, brain_masks)
+          #   print("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti))
+          # }
+          # else {
+          #    print("no nifti created")
+          # }
 })
 
+  observeEvent(input$task, {
+    print("checking if task is in effect maps available")
+    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE)))) {
+            # v$study_name as the name column from study that matches the task input and has map type activation
+            print(paste("task: ", input$task, " is in effect maps available"))
+            v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
+            print(paste("creating nifti for: ", v$study_name))
+            v$nifti <- create_nifti(template, d_clean, v$study_name, brain_masks)
+            print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
+          }
+  }, ignoreNULL = TRUE)
 
     ##### Group_by ######
 
@@ -587,14 +630,19 @@ server <- function(input, output, session) {
           }}}
     
       # load effect map to plot when only one task selected
-      if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
-      file_list <- list.files(path = "data/", full.names = TRUE)
-      v$case_task <- toupper(input$task)
-      pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
-      matching_file <- grep(pattern, file_list, value = TRUE)
-      v$effect_map <- readnii(matching_file)
-      } # TODO: update effect map brain plotting for new data format
-    })
+      # if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
+      # file_list <- list.files(path = "data/", full.names = TRUE)
+      # v$case_task <- toupper(input$task)
+      # pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
+      # matching_file <- grep(pattern, file_list, value = TRUE)
+      # v$effect_map <- readnii(matching_file)
+      #} # TODO: update effect map brain plotting for new data format
+
+      # load effect map to plot when only one task selected
+      # effect_maps_available is a list of all study names with the map_type act
+      
+      
+})
 
     ###### plot simCI plots:
     
@@ -806,38 +854,43 @@ server <- function(input, output, session) {
     ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
     output$brain <- renderPlot({
     # load template brain image: ** TODO: WILL NEED TO CHANGE **
-    template <- readnii('data/anatomical.nii')
+    
       validate(
       need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
       need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available)))
     )
-    
-        ortho2(
-            x = template,
-            y = v$effect_map,
-            crosshairs = FALSE,
-            bg = 'white',
-            NA.x = TRUE,
-            col.y = oro.nifti::hotmetal(),
-            xyz = c(input$xCoord, input$yCoord, input$zCoord),
-            text.color = 'black',
-            ybreaks = seq(min(v$effect_map), max(v$effect_map), length.out = 65),
-            ycolorbar = TRUE,
-            mfrow = c(3, 1)
-        )
-        # Add a colorbar with labels
-        min_val <- min(v$effect_map, na.rm = TRUE)
-        max_val <- max(v$effect_map, na.rm = TRUE)
-        num_breaks <- 65  # Number of breaks for the color scale
-        breaks <- seq(min_val, max_val, length.out = num_breaks)
-        labels <- round(seq(min_val, max_val, length.out = num_breaks - 1), 2)  # Adjust labels length
+      #print(paste("study name to plot brain of: " , v$study_name))
+      #print(paste("dims of nifti: ", dim(v$nifti)))
+      #print(paste("attributes of nifti:", attributes(v$nifti)))
+      #print(class(v$nifti))
+
+      plot_brain(v$nifti, anatomical)
+        # ortho2(
+        #     x = anatomical,
+        #     y = v$nifti,
+        #     crosshairs = FALSE,
+        #     bg = 'white',
+        #     NA.x = TRUE,
+        #     col.y = oro.nifti::hotmetal(),
+        #     xyz = c(input$xCoord, input$yCoord, input$zCoord),
+        #     text.color = 'black',
+        #     ybreaks = seq(min(v$nifti, na.rm = TRUE), max(v$nifti, na.rm = TRUE), length.out = 65),
+        #     ycolorbar = TRUE,
+        #     mfrow = c(3, 1)
+        # )
+        # # Add a colorbar with labels
+        # min_val <- min(v$nifti, na.rm = TRUE)
+        # max_val <- max(v$nifti, na.rm = TRUE)
+        # num_breaks <- 65  # Number of breaks for the color scale
+        # breaks <- seq(min_val, max_val, length.out = num_breaks)
+        # labels <- round(seq(min_val, max_val, length.out = num_breaks - 1), 2)  # Adjust labels length
         
-        colorbar(
-          breaks = breaks,
-          col = oro.nifti::hotmetal(),
-          labels = labels,
-          text.col = "black"
-        )
+        # colorbar(
+        #   breaks = breaks,
+        #   col = oro.nifti::hotmetal(),
+        #   labels = labels,
+        #   text.col = "black"
+        # )
    
     
         # Add labels only at specified indices
