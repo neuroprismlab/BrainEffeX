@@ -25,7 +25,7 @@ source("helpers.R")
 # effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
 
 # load data
-data_file = "combined_data_2024-09-11.RData"
+data_file = "combined_data_2024-09-13.RData"
 #load("data/sim_ci.RData") 
 load(paste0("data/", data_file))
 # load template nifti file
@@ -405,22 +405,27 @@ server <- function(input, output, session) {
     }
   }, ignoreInit = TRUE)
 
+print(paste("dims of d_clean : ", length(d_clean)))
+print(paste("dims of study : ", dim(study)))
   
 # set reactive parameters for plotting based on options chosen by user
     v <- reactiveValues()
-    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour), priority = 1,{
-        v$d_clean <- d_clean[grepl(input$dataset, study$dataset) & 
+    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
+        v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                             grepl(paste(input$behaviour, collapse="|"), study$test_component_2)]
+                             grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
+                             # ensure that the combination of motion and spatial scale is included in d_clean
+                             unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
       
         # also filter study by the same parameters
         v$study <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) & 
                          (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
                          (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                         grepl(paste(input$behaviour, collapse="|"), study$test_component_2)),]
+                         grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
+                         unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
 
         v$task_choices <- unique(v$study$test_component_1)
     })
@@ -512,7 +517,7 @@ server <- function(input, output, session) {
           v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
           v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
 
-          v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
+          # v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
 
           v$study_fc <- v$study[grepl("_fc_", v$study$name),]
           v$study_act <- v$study[grepl("_act_", v$study$name),]
@@ -529,22 +534,27 @@ server <- function(input, output, session) {
           # }
 })
 
-  observeEvent(input$task, {
+  toListen <- reactive({
+        list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
+      })
+
+  observeEvent(toListen(), {
     print("checking if task is in effect maps available")
-    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE)))) {
+    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
+    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
             # v$study_name as the name column from study that matches the task input and has map type activation
             print(paste("task: ", input$task, " is in effect maps available"))
             v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
             print(paste("creating nifti for: ", v$study_name))
-            v$nifti <- create_nifti(template, d_clean, v$study_name, brain_masks)
+            v$nifti <- create_nifti(template, d_clean, v$study_name, v$combo_name, brain_masks)
             print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
           }
   }, ignoreNULL = TRUE)
 
     ##### Group_by ######
 
-    toListen <- reactive({
-      list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
+    observe({
+      v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
     })
 
     observeEvent(toListen(), {
@@ -657,8 +667,12 @@ server <- function(input, output, session) {
         )
       }
       else if (input$group_by == "None") {
+        # v$num_plots as the number of 
+        # v$num_plots <- sum(sapply(v$d_clean, function(sublist) any(grepl(v$combo_name, names(sublist)))))
+        # print(paste0("num plots: round 1:", v$num_plots))
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
+          #print(plotname)
           plotOutput(plotname, height = "200px", width = "100%")
         })
 
@@ -667,6 +681,8 @@ server <- function(input, output, session) {
       }
       
       else if (input$group_by == "Statistic") {
+        # v$num_plots <- sum(sapply(v$d_clean, function(sublist) any(grepl(v$combo_name, names(sublist)))))
+
         plot_output_list <- lapply(1:length(v$d_stat), function(i) {
           plotname <- paste0("plot", i)
           plotOutput(plotname, height = "200px", width = "100%")
@@ -692,11 +708,20 @@ server <- function(input, output, session) {
     # plots are only actually generated when they are visible on the web page
     observe({
       if (input$group_by == "None") {
+        # print(paste0("num plots: ", v$num_plots))
         for (i in 1:length(v$d_clean)) {
           # create a local variable to hold the value of i
+          print(i)
           local({
             my_i <- i
             plotname <- paste0("plot", my_i, sep="")
+
+            # print(paste0("Processing plot: ", plotname))
+            # print(v$d_clean[[my_i]])
+            # print(names(v$d_clean[my_i]))
+            # print(v$study[my_i,])
+            # print(input$spatial_scale)
+            # print(input$motion)
 
             output[[plotname]] <- renderPlot({
               plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], input$spatial_scale, input$motion)
@@ -857,8 +882,10 @@ server <- function(input, output, session) {
     
       validate(
       need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
-      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available)))
-    )
+      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available))),
+      need(dim(v$nifti != NA), "")
+      )
+    
       #print(paste("study name to plot brain of: " , v$study_name))
       #print(paste("dims of nifti: ", dim(v$nifti)))
       #print(paste("attributes of nifti:", attributes(v$nifti)))
