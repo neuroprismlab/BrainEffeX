@@ -390,12 +390,12 @@ server <- function(input, output, session) {
   })
   
   # Observer to handle default task display
-  observeEvent(input$task, {
-    if (is.null(input$task) || length(input$task) == 0) {
-      # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "task", choices = unique(study[["test_component_1"]]))
-    }
-  }, ignoreInit = TRUE)
+  # observeEvent(input$task, {
+  #   if (is.null(input$task) || length(input$task) == 0) {
+  #     # Update the selectizeInput to show all tasks if none are selected
+  #     updateSelectizeInput(session, "task", choices = unique(study[["test_component_1"]]))
+  #   }
+  # }, ignoreInit = TRUE)
   
   # # Observer to handle default behaviour display
   observeEvent(input$behaviour, {
@@ -426,38 +426,53 @@ print(paste("dims of study : ", dim(study)))
                          (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                          grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
                          unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
-
-        v$task_choices <- unique(v$study$test_component_1)
     })
 
-        observeEvent(ignoreInit = TRUE, input$dataset, {
-          v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-          updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
-        })
+      observeEvent(input$dataset, {
+        v$task_choices <- unique(v$study$test_component_1)
+        updateSelectizeInput(session, "task",choices = v$task_choices) # Ensure no tasks are selected by default
+      })
+
+      observeEvent(input$measurement_type, {
+        v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                         grepl(input$measurement_type, study$map_type) &
+                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
+        updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+      })
+
+      observeEvent(input$dataset, {
+        v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
+        updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
+      })
+
+        # observeEvent(ignoreInit = TRUE, input$dataset, {
+          # v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
+          # updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
+        # })
 
         # observeEvent(ignoreInit = TRUE, input$dataset, {
         #   v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
         #                  grepl(input$measurement_type, study$map_type)),"var1"]
 
         # Observe the dataset input
-        observeEvent(input$dataset,ignoreInit = TRUE,{
-          # Retrieve the available tasks for the selected dataset
-          v$available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
+        # observeEvent(input$dataset,ignoreInit = TRUE,{
+        #   # Retrieve the available tasks for the selected dataset
+        #   # v$available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
           
-          # Update the task selection input with available tasks but do not pre-select any
-          updateSelectizeInput(session, "task",choices = v$task_choices, selected = character(0) # Ensure no tasks are selected by default
-          )
+        #   # Update the task selection input with available tasks but do not pre-select any
+        #   # updateSelectizeInput(session, "task",choices = v$task_choices, selected = character(0) # Ensure no tasks are selected by default
+        #   )
         # TODO: test above
         
-          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
+          # v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+          #                grepl(input$measurement_type, study$map_type) &
+          #                (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
 
         #  updateSelectInput(session, "task", selected = unique(study[["var1"]]))
           # Update the beh selection input with available behs but do not pre-select any
-          updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+          # updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
           
-        })
+        # })
 
        
         # constrain parameters
@@ -478,29 +493,29 @@ print(paste("dims of study : ", dim(study)))
           
           
           # Update the task selection input with available tasks but do not pre-select any
-          updateSelectizeInput(session, "task",choices = unique(v$task_choices), selected = character(0)) # Ensure no tasks are selected by default
+          #updateSelectizeInput(session, "task",choices = unique(v$task_choices), selected = character(0)) # Ensure no tasks are selected by default
           # Update the beh selection input with available behs but do not pre-select any
           updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
           
-         # updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+         updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
         }) 
 
 
 
         # when test type is changed from r to another test type, reset behaviour to all 
-        observeEvent(ignoreInit = TRUE, list(input$test_type), {
-          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"test_component_1"]
+        # observeEvent(ignoreInit = TRUE, list(input$test_type), {
+        #   v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+        #                  grepl(input$measurement_type, study$map_type)),"test_component_1"]
 
-          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$var1))),"test_component_2"]
+        #   v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+        #                  grepl(input$measurement_type, study$map_type) &
+        #                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
 
-          if (input$test_type != "r") {
-            updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+        #   if (input$test_type != "r") {
+        #     updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
             
-          }
-        })
+        #   }
+        # })
 
 
       # Download button
@@ -514,25 +529,12 @@ print(paste("dims of study : ", dim(study)))
     )
 
   observe({
-          v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
-          v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
+    v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
+    v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
+    v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
+    v$study_act <- v$study[grepl("_act_", v$study$name), ]
 
-          # v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
-
-          v$study_fc <- v$study[grepl("_fc_", v$study$name),]
-          v$study_act <- v$study[grepl("_act_", v$study$name),]
-
-          # if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task, effect_maps_available, ignore.case = TRUE)))) {
-          #   # v$study_name as the name column from study that matches the task input and has map type activation
-          #   v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-          #   print("creating nifti for: ", v$study_name)
-          #   v$nifti <- create_nifti(template, d_clean, v$study_name, brain_masks)
-          #   print("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti))
-          # }
-          # else {
-          #    print("no nifti created")
-          # }
-})
+  })
 
   toListen <- reactive({
         list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
@@ -793,14 +795,14 @@ print(paste("dims of study : ", dim(study)))
         t <- v$d_clean_fc[[i]][[v$combo_name]]$d
 
         study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
-        if (v$study_fc$ref[study_idx] == "shen_268"){ # TODO: create a v$study_fc table to store just fc studies
+        if (v$study_fc$ref[study_idx] == "shen_268"){ 
           
           if (input$spatial_scale == "net") {
             t_total_268_pooled <- t_total_268_pooled + t
             n_268_studies_pooled <- n_268_studies_pooled + 1
           }
           else {
-            print(c(dim(t), v$study_fc$name[study_idx]))
+            #print(c(dim(t), v$study_fc$name[study_idx]))
             
             t_total_268 <- t_total_268 + t
             n_268_studies <- n_268_studies + 1
@@ -848,7 +850,7 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, "data/map268_subnetwork.csv")
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled)
       }
       
       # only plot the 55 plot if n_55_studies > 0
