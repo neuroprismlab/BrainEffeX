@@ -18,7 +18,7 @@ plot_sim_ci <- function(data, name, study_details, pooling, motion) {
   
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
-  if (downsample == 0) {
+  if (downsample < 1) {
     downsample = 1
   }
   sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
@@ -108,17 +108,19 @@ plot_sim_ci <- function(data, name, study_details, pooling, motion) {
 ##### plotting the confidence intervals for group_by == statistic:
 plot_sim_ci_stat <- function(data, name, study_details, pooling, motion) {
 
+  # get name of combo to plot
+  combo_name <- paste0('pooling.', pooling, '.motion.', motion)
   # remove na
-  na_idx <- is.na(data$d_avg) | is.na(data$ci_lb_avg) | is.na(data$ci_ub_avg)
-  data$d_avg <- data$d_avg[!na_idx]
-  data$ci_lb_avg <- data$ci_lb_avg[!na_idx]
-  data$ci_ub_avg <- data$ci_ub_avg[!na_idx]
+  na_idx <- is.na(data[[combo_name]]$d_avg) | is.na(data[[combo_name]]$ci_lb_avg) | is.na(data[[combo_name]]$ci_ub_avg)
+  data[[combo_name]]$d_avg <- data[[combo_name]]$d_avg[!na_idx]
+  data[[combo_name]]$ci_lb_avg <- data[[combo_name]]$ci_lb_avg[!na_idx]
+  data[[combo_name]]$ci_ub_avg <- data[[combo_name]]$ci_ub_avg[!na_idx]
   # sort data from smallest to largest d
-  sorted_indices <- order(data$d_avg)
-  sorted_d <- data$d_avg[sorted_indices]
+  sorted_indices <- order(data[[combo_name]]$d_avg)
+  sorted_d <- data[[combo_name]]$d_avg[sorted_indices]
   # sort confidence intervals by the same order
-  sorted_upper_bounds <- data$ci_ub_avg[sorted_indices]
-  sorted_lower_bounds <- data$ci_lb_avg[sorted_indices]
+  sorted_upper_bounds <- data[[combo_name]]$ci_ub_avg[sorted_indices]
+  sorted_lower_bounds <- data[[combo_name]]$ci_lb_avg[sorted_indices]
 
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
@@ -168,10 +170,10 @@ plot_sim_ci_stat <- function(data, name, study_details, pooling, motion) {
        ), 
        bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
   legend("bottomright", inset = c(0, -0.4), legend = c(bquote(bold("Maximum conservative effect size: ")), 
-                                   ifelse((abs(max(data$ci_lb_avg, na.rm = TRUE)) > abs(min(data$ci_ub_avg, na.rm = TRUE))), 
-                                          ifelse((max(data$ci_lb_avg, na.rm = TRUE) > 0),
-                                          round(abs(max(data$ci_lb_avg, na.rm = TRUE)), 2), 0),
-                                          ifelse((min(data$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+                                   ifelse((abs(max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE)) > abs(min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE))), 
+                                          ifelse((max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE) > 0),
+                                          round(abs(max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE)), 2), 0),
+                                          ifelse((min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
 
 
   # plot and shade the cofidence intervals:
@@ -194,19 +196,20 @@ plot_sim_ci_stat <- function(data, name, study_details, pooling, motion) {
 
 
 ##### plotting the confidence intervals for group_by == phenotype category:
-plot_sim_ci_phen <- function(data, name, study_details) {
+plot_sim_ci_phen <- function(data, name, study_details, pooling, motion) {
 
+  combo_name <- paste0('pooling.', pooling, '.motion.', motion)
   # remove na
-  na_idx <- is.na(data$d_avg) | is.na(data$ci_lb_avg) | is.na(data$ci_ub_avg)
-  data$d_avg <- data$d_avg[!na_idx]
-  data$ci_lb_avg <- data$ci_lb_avg[!na_idx]
-  data$ci_ub_avg <- data$ci_ub_avg[!na_idx]
+  na_idx <- is.na(data[[combo_name]]$d_avg) | is.na(data[[combo_name]]$ci_lb_avg) | is.na(data[[combo_name]]$ci_ub_avg)
+  data[[combo_name]]$d_avg <- data[[combo_name]]$d_avg[!na_idx]
+  data[[combo_name]]$ci_lb_avg <- data[[combo_name]]$ci_lb_avg[!na_idx]
+  data[[combo_name]]$ci_ub_avg <- data[[combo_name]]$ci_ub_avg[!na_idx]
   # sort data from smallest to largest d
-  sorted_indices <- order(data$d_avg)
-  sorted_d <- data$d_avg[sorted_indices]
+  sorted_indices <- order(data[[combo_name]]$d_avg)
+  sorted_d <- data[[combo_name]]$d_avg[sorted_indices]
   # sort confidence intervals by the same order
-  sorted_upper_bounds <- data$ci_ub_avg[sorted_indices]
-  sorted_lower_bounds <- data$ci_lb_avg[sorted_indices]
+  sorted_upper_bounds <- data[[combo_name]]$ci_ub_avg[sorted_indices]
+  sorted_lower_bounds <- data[[combo_name]]$ci_lb_avg[sorted_indices]
 
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
@@ -256,10 +259,10 @@ plot_sim_ci_phen <- function(data, name, study_details) {
        ), 
        bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
   legend("bottomright", inset = c(0, -0.4), legend = c(bquote(bold("Maximum conservative effect size: ")), 
-                                   ifelse((abs(max(data$ci_lb_avg, na.rm = TRUE)) > abs(min(data$ci_ub_avg, na.rm = TRUE))), 
-                                          ifelse((max(data$ci_lb_avg, na.rm = TRUE) > 0),
-                                          round(abs(max(data$ci_lb_avg, na.rm = TRUE)), 2), 0),
-                                          ifelse((min(data$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+                                   ifelse((abs(max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE)) > abs(min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE))), 
+                                          ifelse((max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE) > 0),
+                                          round(abs(max(data[[combo_name]]$ci_lb_avg, na.rm = TRUE)), 2), 0),
+                                          ifelse((min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$ci_ub_avg, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
 
 
   # plot and shade the cofidence intervals:

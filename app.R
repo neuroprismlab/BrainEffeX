@@ -587,9 +587,9 @@ print(paste("dims of study : ", dim(study)))
               ci_lb_avg <- ci_lb_total / length(matching_d_idx)
               ci_ub_avg <- ci_ub_total / length(matching_d_idx)
               # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$d_avg <- d_avg
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$ci_lb_avg <- ci_lb_avg
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]]$ci_ub_avg <- ci_ub_avg
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$d_avg <- d_avg
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$ci_lb_avg <- ci_lb_avg
+              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$ci_ub_avg <- ci_ub_avg
 
               # store the study info in the study_stat dataframe
               v$study_stat <- rbind(v$study_stat, data.frame(stat_type = stat, ref = ref, name = paste0("stat_", stat, "_reference_", ref)))
@@ -614,25 +614,25 @@ print(paste("dims of study : ", dim(study)))
             phen_clean <- gsub(" ", "", phen_clean)
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
-              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
+              matching_d_idx <- which(names(v$d_clean) %in% matching_names)
               # matching_d_idx is the idx of the studies in d that match the current phen category
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
-              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d)) # TODO: for now just averages across CIs, but make sure there isn't a diff way we should do this
-              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]]$d))
+              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
+              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just averages across CIs, but make sure there isn't a diff way we should do this
+              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
               for (i in matching_d_idx) {
-                d_total <- d_total + v$d_clean[[i]]$d
-                ci_lb_total <- ci_lb_total + v$d_clean[[i]]$sim_ci_lb
-                ci_ub_total <- ci_ub_total + v$d_clean[[i]]$sim_ci_ub
+                d_total <- d_total + v$d_clean[[i]][[v$combo_name]]$d
+                ci_lb_total <- ci_lb_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
+                ci_ub_total <- ci_ub_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
               }
               d_avg <- d_total / length(matching_d_idx)
               ci_lb_avg <- ci_lb_total / length(matching_d_idx)
               ci_ub_avg <- ci_ub_total / length(matching_d_idx)
               # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$d_avg <- d_avg
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$ci_lb_avg <- ci_lb_avg
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]]$ci_ub_avg <- ci_ub_avg
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$d_avg <- d_avg
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$ci_lb_avg <- ci_lb_avg
+              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$ci_ub_avg <- ci_ub_avg
 
               v$study_phen <- rbind(v$study_phen, data.frame(phen_category = phen_clean, ref = ref, name = paste0("phen_", phen_clean, "_reference_", ref)))
 
@@ -751,7 +751,7 @@ print(paste("dims of study : ", dim(study)))
             plotname <- paste0("plot", my_i, sep="")
 
             output[[plotname]] <- renderPlot({
-              plot_sim_ci_phen(v$d_phen[[my_i]], names(v$d_phen)[my_i], v$study_phen[my_i,])
+              plot_sim_ci_phen(v$d_phen[[my_i]], names(v$d_phen[my_i]), v$study_phen[my_i,], input$spatial_scale, input$motion)
             })
           })
         }
