@@ -445,35 +445,6 @@ print(paste("dims of study : ", dim(study)))
         updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
       })
 
-        # observeEvent(ignoreInit = TRUE, input$dataset, {
-          # v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-          # updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
-        # })
-
-        # observeEvent(ignoreInit = TRUE, input$dataset, {
-        #   v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-        #                  grepl(input$measurement_type, study$map_type)),"var1"]
-
-        # Observe the dataset input
-        # observeEvent(input$dataset,ignoreInit = TRUE,{
-        #   # Retrieve the available tasks for the selected dataset
-        #   # v$available_tasks <- unique(study[study$dataset == input$dataset, "test_component_1"])
-          
-        #   # Update the task selection input with available tasks but do not pre-select any
-        #   # updateSelectizeInput(session, "task",choices = v$task_choices, selected = character(0) # Ensure no tasks are selected by default
-        #   )
-        # TODO: test above
-        
-          # v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-          #                grepl(input$measurement_type, study$map_type) &
-          #                (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
-
-        #  updateSelectInput(session, "task", selected = unique(study[["var1"]]))
-          # Update the beh selection input with available behs but do not pre-select any
-          # updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-          
-        # })
-
        
         # constrain parameters
         # update behaviour selections to only be the available constrained selections... 
@@ -492,30 +463,11 @@ print(paste("dims of study : ", dim(study)))
           print("measurement type changed")
           
           
-          # Update the task selection input with available tasks but do not pre-select any
-          #updateSelectizeInput(session, "task",choices = unique(v$task_choices), selected = character(0)) # Ensure no tasks are selected by default
           # Update the beh selection input with available behs but do not pre-select any
           updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
           
          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
         }) 
-
-
-
-        # when test type is changed from r to another test type, reset behaviour to all 
-        # observeEvent(ignoreInit = TRUE, list(input$test_type), {
-        #   v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-        #                  grepl(input$measurement_type, study$map_type)),"test_component_1"]
-
-        #   v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-        #                  grepl(input$measurement_type, study$map_type) &
-        #                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
-
-        #   if (input$test_type != "r") {
-        #     updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-            
-        #   }
-        # })
 
 
       # Download button
@@ -640,18 +592,6 @@ print(paste("dims of study : ", dim(study)))
 
             }
           }}}
-    
-      # load effect map to plot when only one task selected
-      # if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (input$task) %in% effect_maps_available) {
-      # file_list <- list.files(path = "data/", full.names = TRUE)
-      # v$case_task <- toupper(input$task)
-      # pattern <- paste0(v$case_task, ".*\\.nii\\.gz")
-      # matching_file <- grep(pattern, file_list, value = TRUE)
-      # v$effect_map <- readnii(matching_file)
-      #} # TODO: update effect map brain plotting for new data format
-
-      # load effect map to plot when only one task selected
-      # effect_maps_available is a list of all study names with the map_type act
       
       
 })
@@ -845,12 +785,12 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, "data/map268_subnetwork.csv")
+        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/map268_subnetwork.csv")
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled)
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/map268_subnetwork.csv")
       }
       
       # only plot the 55 plot if n_55_studies > 0

@@ -287,25 +287,39 @@ plot_sim_ci_phen <- function(data, name, study_details, pooling, motion) {
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA) {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
     
-    nrow = (((-1 + sqrt(1 + 8 * length(triangle_ordered))) / 2) + 1)
+    if (!is.na(mapping_path)) {
+    # load mapping
+        mapping <- read.csv(mapping_path, header = TRUE)
+    }
+
+    # if the data is pooled, the number of nodes is determined from the map
+    if (pooled) {
+      nrow = length(unique(mapping$category))
+    }
+    else {
+      nrow = (((-1 + sqrt(1 + 8 * length(triangle_ordered))) / 2) + 1)
+    }
 
     # mirror the triangle across the x = y line to get full matrix
     # first fill in half the matrix with the triangle data
     mat <- matrix(0, nrow = nrow, ncol = nrow)
-    mat[upper.tri(mat)] <- triangle_ordered
+    mat[upper.tri(mat, diag = ifelse(pooled, TRUE, FALSE))] <- triangle_ordered
     full_mat <- mat + t(mat) #- diag(diag(triangle_ordered))
 
     # melt the matrix for ggplot
     melted <- melt(full_mat)
     colnames(melted) <- c("Var1", "Var2", "value")
+    
+    # determine the title of the plot based on the number of nodes
+    plot_title = ifelse((nrow == 268 | nrow == 10), "Studies with Shen 268 node atlas", ifelse(nrow == 55, "Studies with UKB 55 nodes", "Studies with unknown parcellation"))
 
     heatmap_plot <- ggplot(melted, aes(Var1, Var2, fill = value)) +
 
     labs(fill = "Cohen's d", 
-           title = ifelse(nrow == 268, "Studies with Shen 268 node atlas", ifelse(nrow == 55, "Studies with UKB 55 nodes", "Studies with unknown parcellation")),
+          title = plot_title,
            x = "", y = "") +
       
       geom_tile() +
@@ -324,9 +338,7 @@ plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
             plot.title = element_text(size = 16, face = "bold", hjust = 0.5))
 
     if (!is.na(mapping_path)) {
-        # load mapping
-        mapping <- read.csv(mapping_path, header = TRUE)
-
+      if (!pooled) {
         
         for (i in 1:(nrow(mapping) - 1)) {
             if (mapping$category[i] != mapping$category[i + 1]) {
@@ -343,8 +355,21 @@ plot_full_mat <- function(triangle_ordered, mapping_path = NA) {
         # Add labels to each mapping category
         heatmap_plot <- heatmap_plot + annotate("text", x = label_positions, y = -6, label = label_strings, angle = 90, hjust = 1, vjust=0.5, size=3.5) + coord_cartesian(clip="off")
         heatmap_plot <- heatmap_plot + annotate("text", x = -10, y = label_positions, label = label_strings, angle = 0, hjust = 0.5, vjust=1, size=3.5)
+      }
 
+      if (pooled) {
+        # for pooled data, add black lines to separate every cell of the matrix
+        # label each row and column as the networks
+        for (i in 1:(nrow)) {
+          heatmap_plot <- heatmap_plot + geom_vline(xintercept = i+0.5, color = "black", size = 0.3) +
+            geom_hline(yintercept = i+0.5, color = "black")
+
+          heatmap_plot <- heatmap_plot + annotate("text", x = i, y = -1, label = unique(mapping$label)[i], angle = 90, hjust = 1, vjust=0.5, size=3.5) + coord_cartesian(clip="off")
+          heatmap_plot <- heatmap_plot + annotate("text", x = -1, y = i, label = unique(mapping$label)[i], angle = 0, hjust = 0.5, vjust=1, size=3.5)
+        }
+      }
     }
+    
         
         # Add axis labels to the heatmap
         if (!is.na(mapping_path)) {
