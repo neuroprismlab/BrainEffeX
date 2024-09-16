@@ -1,9 +1,7 @@
 #########################################################################
 # helper function for plotting simultaneous confidence intervals: (when group_by is None)
-plot_sim_ci <- function(data, name, study_details, pooling, motion) {
+plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none') {
   
-  # get name of combo to plot
-  combo_name <- paste0('pooling.', pooling, '.motion.', motion)
   # remove na
   na_idx <- is.na(data[[combo_name]]$d) | is.na(data[[combo_name]]$sim_ci_lb) | is.na(data[[combo_name]]$sim_ci_ub)
   data[[combo_name]]$d <- data[[combo_name]]$d[!na_idx]
@@ -33,19 +31,13 @@ plot_sim_ci <- function(data, name, study_details, pooling, motion) {
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
   
-  if (study_details$orig_stat_type == "r" | study_details$orig_stat_type =="t" | study_details$orig_stat_type == "d") {
+  if (group_by == 'none') {
     n_title <- paste0("n = ", data[[combo_name]]$n)
-  } 
-  
-  # if the study is a two-way t-test, then we need n1 and n2, but we'll make the n variable include both in a string
-  if (study_details$orig_stat_type == "t2") {
-    n_title <- paste0("n1 = ", data[[combo_name]]$n1, ", n2 = ", data[[combo_name]]$n2)
   }
   
   # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
   percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
   percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
-  
   
   # if there are no values below zero, set the index to 1
   if (length(below_cross_idx) == 0) {
@@ -64,22 +56,42 @@ plot_sim_ci <- function(data, name, study_details, pooling, motion) {
   # add a horizontal line at y = 0
   abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
-  legend("topleft", inset = c(-0.1, -0.5),
-         legend = c(
-           bquote(bold("Dataset:")), 
-           paste(study_details$dataset, "  "),
-           bquote(bold("Map Type:")), 
-           paste(study_details$map_type, "  "),
-           bquote(bold("Test type:")), 
-           paste(study_details$orig_stat_type, "  "),
-           bquote(bold("Component 1:")), 
-           paste(study_details$test_component_1, "  "),
-           bquote(bold("Component 2:")), 
-           paste(study_details$test_component_2, "  "),
-           bquote(bold("Sample Size:")),
-           paste(n_title)
-         ), 
-         bty = "n", ncol = 6, cex = 1, text.width = c(15, 15, 15, 15, 25, 20), x.intersp = 0.0, xpd = TRUE)
+  if (group_by == 'none') {
+    legend("topleft", inset = c(-0.1, -0.5),
+          legend = c(
+            bquote(bold("Dataset:")), 
+            paste(study_details$dataset, "  "),
+            bquote(bold("Map Type:")), 
+            paste(study_details$map_type, "  "),
+            bquote(bold("Test type:")), 
+            paste(study_details$orig_stat_type, "  "),
+            bquote(bold("Component 1:")), 
+            paste(study_details$test_component_1, "  "),
+            bquote(bold("Component 2:")), 
+            paste(study_details$test_component_2, "  "),
+            bquote(bold("Sample Size:")),
+            paste(n_title)
+          ), 
+          bty = "n", ncol = 6, cex = 1, text.width = c(15, 15, 15, 15, 25, 20), x.intersp = 0.0, xpd = TRUE)
+  } else if (group_by == "orig_stat_type") {
+    legend("topleft", inset = c(-0.1, -0.5),
+       legend = c(
+         bquote(bold("Statistic:")), 
+         paste(study_details$group, "  "),
+         bquote(bold("Reference Space:")),
+          paste(study_details$ref, "  ")
+       ), 
+       bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
+  } else if (group_by == "category") {
+    legend("topleft", inset = c(-0.1, -0.5),
+       legend = c(
+         bquote(bold("Phenotype Category:")), 
+         paste(study_details$group, "  "),
+         bquote(bold("Reference Space:")),
+          paste(study_details$ref, "  ")
+       ), 
+       bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
+  }
   legend("bottomright", inset = c(0, -0.2), legend = c(bquote(bold("Maximum conservative effect size: ")), 
                                                        ifelse((abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)) > abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE))), 
                                                               ifelse((max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE) > 0),

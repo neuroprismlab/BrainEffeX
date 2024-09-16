@@ -178,7 +178,7 @@ ui <- fluidPage(
            
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                       choices = c("None", "Statistic", "Phenotype Category")), 
+                       choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
            bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
            
            downloadButton("downloadData", "Download Data"),
@@ -338,7 +338,7 @@ server <- function(input, output, session) {
     }
     
     # Group by message
-    if (!is.null(input$group_by) && input$group_by != "None") {
+    if (!is.null(input$group_by) && input$group_by != "none") {
       messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
     }
     
@@ -429,8 +429,8 @@ print(paste("dims of study : ", dim(study)))
     })
 
       observeEvent(input$dataset, {
-        v$task_choices <- unique(v$study$test_component_1)
-        updateSelectizeInput(session, "task",choices = v$task_choices) # Ensure no tasks are selected by default
+        v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))#unique(v$study$test_component_1)
+        updateSelectizeInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
       })
 
       observeEvent(input$measurement_type, {
@@ -511,17 +511,25 @@ print(paste("dims of study : ", dim(study)))
       v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
     })
 
-    observeEvent(toListen(), {
-      if (input$group_by == "Statistic") {
+      observeEvent(toListen(), {
+      if (input$group_by != "none") {
         # initialize a list to store the data for each stat type and ref type
-        v$d_stat <- list()
+        v$d_group <- list()
         # initialize a new study dataframe to store the info for the groupings
-        v$study_stat <- data.frame(stat_type = character(0), ref = character(0), name = character(0))
+        v$study_group <- data.frame(group = character(0), ref = character(0), name = character(0))
+
+        # variable of grouping
+        if (input$group_by == "orig_stat_type") {
+          group_var <- "orig_stat_type"
+        } else if (input$group_by == "category") {
+          group_var <- "category"
+        }
+
         # for each statistic type
-        for (stat in unique(v$study$orig_stat_type)) {
+        for (level in unique(v$study[[group_var]])) {
           # for each reference type
           for (ref in unique(v$study$ref)) {
-            matching_idx <- which(v$study$orig_stat_type == stat & v$study$ref == ref)
+            matching_idx <- which(v$study[[group_var]] == level & v$study$ref == ref)
             #print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
@@ -529,72 +537,68 @@ print(paste("dims of study : ", dim(study)))
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
-              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
-              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
+              if (v$study$map_type[matching_idx[1]] == "act") {
+                # if an activation study, create empty total vectors from mask instead of maps
+                d_total <- rep(0, length(c(brain_masks[[v$study$name[matching_idx[1]]]]$mask))) # initialize to the size of the largest matrix
+                ci_lb_total <- rep(0, length(c(brain_masks[[v$study$name[matching_idx[1]]]]$mask))) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+                ci_ub_total <- rep(0, length(c(brain_masks[[v$study$name[matching_idx[1]]]]$mask)))
+              } else {
+                d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
+                ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+                ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
+              }
+
               for (i in matching_d_idx) {
-                d_total <- d_total + v$d_clean[[i]][[v$combo_name]]$d
-                ci_lb_total <- ci_lb_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
-                ci_ub_total <- ci_ub_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
+                # if an activation study, then we need to first use the study's mask to fill in the values in the 
+                # appropriate spots in the effect size matrix
+                this_d <- v$d_clean[[i]][[v$combo_name]]$d
+                this_ci_lb <- v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
+                this_ci_ub <- v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
+
+                if (v$study$map_type[i] == "act") {
+                  # get the mask for this study
+                  d_mask <- brain_masks[[v$study$name[i]]]$mask
+                  ci_lb_mask <- brain_masks[[v$study$name[i]]]$mask
+                  ci_ub_mask <- brain_masks[[v$study$name[i]]]$mask
+                  # fill in the values in the effect size matrix
+                  d_mask[d_mask == 1] <- this_d
+                  ci_lb_mask[ci_lb_mask == 1] <- this_ci_lb
+                  ci_ub_mask[ci_ub_mask == 1] <- this_ci_ub
+                  # add to total
+                  d_total <- d_total + c(d_mask)
+                  ci_lb_total <- ci_lb_total + c(ci_lb_mask)
+                  ci_ub_total <- ci_ub_total + c(ci_ub_mask)
+                } else {
+                d_total <- d_total + this_d
+                ci_lb_total <- ci_lb_total + this_ci_lb
+                ci_ub_total <- ci_ub_total + this_ci_ub
+                }
               }
               d_avg <- d_total / length(matching_d_idx)
               ci_lb_avg <- ci_lb_total / length(matching_d_idx)
               ci_ub_avg <- ci_ub_total / length(matching_d_idx)
-              # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$d_avg <- d_avg
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$ci_lb_avg <- ci_lb_avg
-              v$d_stat[[paste0("stat_", stat, "_reference_", ref)]][[v$combo_name]]$ci_ub_avg <- ci_ub_avg
 
+              # if activation map, remove values from indices that are zero in d_total, ci_lb_total, and ci_ub_total
+              if (v$study$map_type[matching_idx[1]] == "act") {
+                zero_idx <- which((d_total == 0) & (ci_lb_total == 0) & (ci_ub_total == 0))
+                d_avg <- d_avg[-zero_idx]
+                ci_lb_avg <- ci_lb_avg[-zero_idx]
+                ci_ub_avg <- ci_ub_avg[-zero_idx]
+              }
+
+              # store d_avg, ci_lb_avg, and ci_ub_avg in d_group list as a list
+              v$d_group[[paste0(group_var, "_", level, "_reference_", ref)]][[v$combo_name]]$d <- d_avg
+              v$d_group[[paste0(group_var, "_", level, "_reference_", ref)]][[v$combo_name]]$sim_ci_lb <- ci_lb_avg
+              v$d_group[[paste0(group_var, "_", level, "_reference_", ref)]][[v$combo_name]]$sim_ci_ub <- ci_ub_avg
+          
               # store the study info in the study_stat dataframe
-              v$study_stat <- rbind(v$study_stat, data.frame(stat_type = stat, ref = ref, name = paste0("stat_", stat, "_reference_", ref)))
+              v$study_group <- rbind(v$study_group, data.frame(group = level, ref = ref, name = paste0(group_var, "_", level, "_reference_", ref)))
 
             }
           }
         }
       }
-
-      else if (input$group_by == "Phenotype Category") {
-        # initialize a list to store the data for each phenotype category
-        v$d_phen <- list()
-        # initialize a new study dataframe to store the info for the groupings
-        v$study_phen <- data.frame(phen_category = character(0), ref = character(0), name = character(0))
-        # for each phenotype category
-        for (phen in unique(v$study$category)) {
-
-          for (ref in unique(v$study$ref)) {
-            matching_idx <- which(v$study$category == phen & v$study$ref == ref)
-            phen_clean <- gsub("\\(", "_", phen)
-            phen_clean <- gsub("\\)", "", phen_clean)
-            phen_clean <- gsub(" ", "", phen_clean)
-            if (length(matching_idx) > 0) {
-              matching_names <- v$study$name[matching_idx]
-              matching_d_idx <- which(names(v$d_clean) %in% matching_names)
-              # matching_d_idx is the idx of the studies in d that match the current phen category
-              # average across all studies in matching_d_idx
-              # initialize an empty vector to store the sum across studies
-              d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
-              ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just averages across CIs, but make sure there isn't a diff way we should do this
-              ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
-              for (i in matching_d_idx) {
-                d_total <- d_total + v$d_clean[[i]][[v$combo_name]]$d
-                ci_lb_total <- ci_lb_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
-                ci_ub_total <- ci_ub_total + v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
-              }
-              d_avg <- d_total / length(matching_d_idx)
-              ci_lb_avg <- ci_lb_total / length(matching_d_idx)
-              ci_ub_avg <- ci_ub_total / length(matching_d_idx)
-              # store d_avg, ci_lb_avg, and ci_ub_avg in d_stat list as a list
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$d_avg <- d_avg
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$ci_lb_avg <- ci_lb_avg
-              v$d_phen[[paste0("phen_", phen_clean, "_ref_", ref)]][[v$combo_name]]$ci_ub_avg <- ci_ub_avg
-
-              v$study_phen <- rbind(v$study_phen, data.frame(phen_category = phen_clean, ref = ref, name = paste0("phen_", phen_clean, "_reference_", ref)))
-
-            }
-          }}}
-      
-      
-})
+    })
 
     ###### plot simCI plots:
     
@@ -602,16 +606,14 @@ print(paste("dims of study : ", dim(study)))
     # if d_clean is not empty, then plot. Check if d_clean is empty:
     observe({
     output$histograms <- renderUI({
-      if (is.null(v$d_clean) || length(v$d_clean) == 0) {
+      if (is.null(v$d_clean) || (length(v$d_clean) == 0 & length(v$d_group) == 0)) {
         # if there is no data, display a message
         tagList(
           h3("No data available for the selected parameters.")
         )
       }
-      else if (input$group_by == "None") {
-        # v$num_plots as the number of 
-        # v$num_plots <- sum(sapply(v$d_clean, function(sublist) any(grepl(v$combo_name, names(sublist)))))
-        # print(paste0("num plots: round 1:", v$num_plots))
+      
+      else if (input$group_by == "none") {
         plot_output_list <- lapply(1:length(v$d_clean), function(i) {
           plotname <- paste0("plot", i)
           #print(plotname)
@@ -620,12 +622,8 @@ print(paste("dims of study : ", dim(study)))
 
         # convert the list to a tagList, this is necessary for the list of items to display properly
         do.call(tagList, plot_output_list)
-      }
-      
-      else if (input$group_by == "Statistic") {
-        # v$num_plots <- sum(sapply(v$d_clean, function(sublist) any(grepl(v$combo_name, names(sublist)))))
-
-        plot_output_list <- lapply(1:length(v$d_stat), function(i) {
+      } else {
+        plot_output_list <- lapply(1:length(v$d_group), function(i) {
           plotname <- paste0("plot", i)
           plotOutput(plotname, height = "200px", width = "100%")
         })
@@ -633,23 +631,13 @@ print(paste("dims of study : ", dim(study)))
         # convert the list to a tagList, this is necessary for the list of items to display properly
         do.call(tagList, plot_output_list)
       }
-      
-      else if (input$group_by == "Phenotype Category") {
-        plot_output_list <- lapply(1:length(v$d_phen), function(i) {
-          plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "200px", width = "100%")
-        })
-
-        # convert the list to a tagList, this is necessary for the list of items to display properly
-        do.call(tagList, plot_output_list)
-      }
-    })
+      })
     })
 
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
-      if (input$group_by == "None") {
+      if (input$group_by == "none") {
         # print(paste0("num plots: ", v$num_plots))
         for (i in 1:length(v$d_clean)) {
           # create a local variable to hold the value of i
@@ -658,42 +646,21 @@ print(paste("dims of study : ", dim(study)))
             my_i <- i
             plotname <- paste0("plot", my_i, sep="")
 
-            # print(paste0("Processing plot: ", plotname))
-            # print(v$d_clean[[my_i]])
-            # print(names(v$d_clean[my_i]))
-            # print(v$study[my_i,])
-            # print(input$spatial_scale)
-            # print(input$motion)
-
             output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], input$spatial_scale, input$motion)
+              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, group_by = input$group_by)
             })
           })
         }
-      }
-      else if (input$group_by == "Statistic") {
-        for (i in 1:length(v$d_stat)) {
+      } else {
+        print(length(v$d_group))
+        for (i in 1:length(v$d_group)) {
           # create a local variable to hold the value of i
           local({
             my_i <- i
             plotname <- paste0("plot", my_i, sep="")
 
             output[[plotname]] <- renderPlot({
-              plot_sim_ci_stat(v$d_stat[[my_i]], names(v$d_stat[my_i]), v$study_stat[my_i,], input$spatial_scale, input$motion)
-            })
-          })
-        }
-      }
-
-      else if (input$group_by == "Phenotype Category") {
-        for (i in 1:length(v$d_phen)) {
-          # create a local variable to hold the value of i
-          local({
-            my_i <- i
-            plotname <- paste0("plot", my_i, sep="")
-
-            output[[plotname]] <- renderPlot({
-              plot_sim_ci_phen(v$d_phen[[my_i]], names(v$d_phen[my_i]), v$study_phen[my_i,], input$spatial_scale, input$motion)
+              plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, group_by = input$group_by)
             })
           })
         }
