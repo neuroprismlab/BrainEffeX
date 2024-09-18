@@ -389,14 +389,6 @@ server <- function(input, output, session) {
     toggleModal(session, "instructionsModal3", toggle = "close")
   })
   
-  # Observer to handle default task display
-  # observeEvent(input$task, {
-  #   if (is.null(input$task) || length(input$task) == 0) {
-  #     # Update the selectizeInput to show all tasks if none are selected
-  #     updateSelectizeInput(session, "task", choices = unique(study[["test_component_1"]]))
-  #   }
-  # }, ignoreInit = TRUE)
-  
   # # Observer to handle default behaviour display
   observeEvent(input$behaviour, {
     if (is.null(input$behaviour) || length(input$behaviour) == 0) {
@@ -443,6 +435,13 @@ print(paste("dims of study : ", dim(study)))
       observeEvent(input$dataset, {
         v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
         updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
+      })
+
+      # reset input$behavior to NULL if input$test_type is not "r"
+      observeEvent(input$test_type, {
+        if (input$test_type != "r") {
+          updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+        }
       })
 
        
@@ -606,7 +605,7 @@ print(paste("dims of study : ", dim(study)))
     # if d_clean is not empty, then plot. Check if d_clean is empty:
     observe({
     output$histograms <- renderUI({
-      if (is.null(v$d_clean) || (length(v$d_clean) == 0 & length(v$d_group) == 0)) {
+      if (length(v$d_clean) == 0 & length(v$d_group) == 0) {
         # if there is no data, display a message
         tagList(
           h3("No data available for the selected parameters.")
@@ -614,22 +613,26 @@ print(paste("dims of study : ", dim(study)))
       }
       
       else if (input$group_by == "none") {
-        plot_output_list <- lapply(1:length(v$d_clean), function(i) {
-          plotname <- paste0("plot", i)
-          #print(plotname)
-          plotOutput(plotname, height = "200px", width = "100%")
-        })
+        if (length(v$d_clean) > 0) {
+          plot_output_list <- lapply(1:length(v$d_clean), function(i) {
+            plotname <- paste0("plot", i)
+            #print(plotname)
+            plotOutput(plotname, height = "200px", width = "100%")
+          })
 
-        # convert the list to a tagList, this is necessary for the list of items to display properly
-        do.call(tagList, plot_output_list)
+          # convert the list to a tagList, this is necessary for the list of items to display properly
+          do.call(tagList, plot_output_list)
+        }
       } else {
-        plot_output_list <- lapply(1:length(v$d_group), function(i) {
-          plotname <- paste0("plot", i)
-          plotOutput(plotname, height = "200px", width = "100%")
-        })
+        if (length(v$d_group) > 0) {
+          plot_output_list <- lapply(1:length(v$d_group), function(i) {
+            plotname <- paste0("plot", i)
+            plotOutput(plotname, height = "200px", width = "100%")
+          })
 
-        # convert the list to a tagList, this is necessary for the list of items to display properly
-        do.call(tagList, plot_output_list)
+          # convert the list to a tagList, this is necessary for the list of items to display properly
+          do.call(tagList, plot_output_list)
+        }
       }
       })
     })
@@ -637,32 +640,38 @@ print(paste("dims of study : ", dim(study)))
     # call renderPlot for ecah one
     # plots are only actually generated when they are visible on the web page
     observe({
+      
       if (input$group_by == "none") {
-        # print(paste0("num plots: ", v$num_plots))
-        for (i in 1:length(v$d_clean)) {
-          # create a local variable to hold the value of i
-          print(i)
-          local({
-            my_i <- i
-            plotname <- paste0("plot", my_i, sep="")
+        # check if v$d_clean is empty
+        if (length(v$d_clean) > 0) {
+          # print(paste0("num plots: ", v$num_plots))
+          for (i in 1:length(v$d_clean)) {
+            # create a local variable to hold the value of i
+            print(i)
+            local({
+              my_i <- i
+              plotname <- paste0("plot", my_i, sep="")
 
-            output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+              output[[plotname]] <- renderPlot({
+                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+              })
             })
-          })
+          }
         }
       } else {
         print(length(v$d_group))
-        for (i in 1:length(v$d_group)) {
-          # create a local variable to hold the value of i
-          local({
-            my_i <- i
-            plotname <- paste0("plot", my_i, sep="")
+        if (length(v$d_group) > 0) {
+          for (i in 1:length(v$d_group)) {
+            # create a local variable to hold the value of i
+            local({
+              my_i <- i
+              plotname <- paste0("plot", my_i, sep="")
 
-            output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+              output[[plotname]] <- renderPlot({
+                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+              })
             })
-          })
+          }
         }
       }
     })
