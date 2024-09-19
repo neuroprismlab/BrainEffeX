@@ -667,7 +667,7 @@ print(paste("dims of study : ", dim(study)))
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
       n_268_studies_pooled <- 0
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
-
+ 
       for (i in 1:length(v$d_clean_fc)) {
         t <- v$d_clean_fc[[i]][[v$combo_name]]$d
 

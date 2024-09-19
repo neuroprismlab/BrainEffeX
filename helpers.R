@@ -38,6 +38,7 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
   # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
   percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
   percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
+  percent_not_zero = percent_below_zero + percent_above_zero
   
   # if there are no values below zero, set the index to 1
   if (length(below_cross_idx) == 0) {
@@ -50,29 +51,33 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
   } 
   
   # plot a line for d
-  par(mar=c(2, 4, 5, 2))
+  par(mar=c(3, 4, 5, 2))
   plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
        xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
   # add a horizontal line at y = 0
   abline(h = 0, col = "#ba2d25", lty = 3)
   axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
   if (group_by == 'none') {
-    legend("topleft", inset = c(-0.1, -0.5),
-          legend = c(
-            bquote(bold("Dataset:")), 
-            paste(study_details$dataset, "  "),
-            bquote(bold("Map Type:")), 
-            paste(study_details$map_type, "  "),
-            bquote(bold("Test type:")), 
-            paste(study_details$orig_stat_type, "  "),
-            bquote(bold("Component 1:")), 
-            paste(study_details$test_component_1, "  "),
-            bquote(bold("Component 2:")), 
-            paste(study_details$test_component_2, "  "),
-            bquote(bold("Sample Size:")),
-            paste(n_title)
-          ), 
-          bty = "n", ncol = 6, cex = 1, text.width = c(15, 15, 15, 15, 25, 20), x.intersp = 0.0, xpd = TRUE)
+          # legend = c(
+          #   bquote(bold("Dataset:")), 
+          #   paste(study_details$dataset, "  "),
+          #   bquote(bold("Map:")), 
+          #   paste(study_details$map_type, "  "),
+          #   bquote(bold("Sample Size:")),
+          #   paste(n_title),
+          #   bquote(bold("Test:")), 
+          #   paste(study_details$orig_stat_type, ": ", study_details$test_component_1, ", ", study_details$test_component_2)
+          # ),
+
+          legend("topleft", inset = c(-0.1, -0.5), 
+            legend = c(bquote(bold("Test: ") ~ .(study_details$orig_stat_type) ~ ": " ~ .(study_details$test_component_1) ~ ", " ~ .(study_details$test_component_2)),
+                      bquote(bold("Dataset: ") ~ .(study_details$dataset)), 
+                      "",
+                      bquote(bold("Map: ") ~ .(study_details$map_type)),
+                      "",
+                      bquote(bold("Sample Size: ") ~ .(n_title))),
+                      col = 2, bty = "n", cex = 1, text.width = 25, xpd = TRUE, ncol = 3)
+
   } else if (group_by == "orig_stat_type") {
     legend("topleft", inset = c(-0.1, -0.5),
        legend = c(
@@ -92,12 +97,14 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
        ), 
        bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
   }
-  legend("bottomright", inset = c(0, -0.2), legend = c(bquote(bold("Maximum conservative effect size: ")), 
-                                                       ifelse((abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)) > abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE))), 
+  max_cons_effect = ifelse((abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)) > abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE))), 
                                                               ifelse((max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE) > 0),
                                                                      round(abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)), 2), 0),
-                                                              ifelse((min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE)), 2), 0))), xjust = 1, yjust = 1, col = 2, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
-  
+                                                              ifelse((min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE)), 2), 0))
+
+  legend("bottomleft", inset = c(0, -0.4), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+                                                          bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%")), col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+ 
   
   # plot and shade the cofidence intervals:
   # green for intervals that are entirely below zero
