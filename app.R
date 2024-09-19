@@ -21,23 +21,20 @@ library(osfr)
 # source helper functions
 source("helpers.R")
 
-#TODO: this is a temporary fix because we don't have the data for the other studies yet and treat activation maps differently
-# effect_maps_available = c("emotion", "gambling", "relational", "social", "wm")
-
 # load data
 data_file = "combined_data_2024-09-13.RData"
-#load("data/sim_ci.RData") 
-load(paste0("data/", data_file))
+load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
+
 # load template nifti file
 template <- readNIfTI("data/template_nifti")
+
 # load anatomical nifti file
 anatomical <- readNIfTI("data/anatomical.nii")
 
-# loads brain_masks as list, sim_ci as list, and study as table
-
+# rename data to d_clean #TODO: could change combine_gl to just name data d_clean, or change everything here to data instead of d_clean
 d_clean <- data
 
-# make study all lowercase
+# make study all lowercase TODO: could move this to combine_gl as well
 study <- data.frame(lapply(study, function(x) {
   if (is.character(x)) {
     return(tolower(x))
@@ -58,17 +55,6 @@ effect_maps_available <- study[study$map_type == "act", "name"]
 # and "study" is a table that contains study information, 
 # and "brain_masks" is a list that contains the brain masks
 
-### d_clean is a list of studies, each study contains all combinations of motion and pooling.
-# each combination of motion and pooling contains:
-# sample size as n
-# p-value as p
-# effect size as d
-# std as std.brain and std.score
-# original statistic values as b.standardized
-# bound of simultaneous confidence intervals as sim_ci_lb and sim_ci_ub
-# pooling method as pooling.method
-# motion method as motion.method
-
 #### study is a data frame that contains information about each study, including:
 # basefile
 # folder
@@ -80,7 +66,7 @@ effect_maps_available <- study[study$map_type == "act", "name"]
 # test_component_1
 # test_component_2
 # category
-# ref # TODO: do we need this still? Not currently in study...
+# ref 
 
 # options for spinner
 options(spinner.color = "#9ecadb",
@@ -91,7 +77,6 @@ options(spinner.color = "#9ecadb",
 ui <- fluidPage(
  # theme = shinytheme("spacelab"),
   useShinyjs(),
-  
   
   # Include the custom CSS file
   tags$head(
@@ -119,9 +104,8 @@ ui <- fluidPage(
              tags$div(style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%;", 
                       tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
                       h5("The NeuroPrism Lab", style = "margin-top: 5px;"))
-             ),
-
-             
+      ),
+      
       actionButton(
         "showInstructions",
         "How to Use This App",
@@ -192,8 +176,7 @@ ui <- fluidPage(
                      helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
                      ),
            h1(" "),
-           h6(paste("Version 1.3; Last updated", Sys.Date()))
-           
+           h6(paste("Version 1.3; Last updated", Sys.Date()))      
     ),
     
     column(5, align = "centre", # simCI plots
@@ -202,8 +185,6 @@ ui <- fluidPage(
         
            wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))
     ),
-    
-    
     
     column(4, align = "center", # effect size matrices)
            wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
@@ -221,7 +202,6 @@ ui <- fluidPage(
     )
   ), # end of fluidRow
   
-  
   # Modal Dialogs
   bsModal(
     id = "instructionsModal1", title = "Getting Started", trigger = NULL,
@@ -237,14 +217,6 @@ ui <- fluidPage(
         tags$li("Test type"),
         tags$li("Behavioral correlations (if applicable)"),
         tags$li("Spatial scale"),
-       # tags$li("Select a dataset from the 'Dataset' dropdown."),
-      #  tags$li("Choose a map type that matches your analysis needs."),
-      #  tags$li("Use the 'Task' dropdown to specify tasks you are interested in."),
-      #  tags$li("Set the 'Test Type' to define the statistical analysis."),
-      #  tags$li("If applicable, select 'Behavioural correlation' variables."),
-     #   tags$li("Choose the 'Spatial scale' to determine analysis granularity."),
-     #   tags$li("Decide how to group results using 'Group by'."),
-     #   tags$li("Visualize results in plots and download data if needed."),
       ),
      tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
       tags$div(style = "text-align: center;",
@@ -278,16 +250,15 @@ ui <- fluidPage(
       tags$ul(
         tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
         tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
-        #tags$li("Or, continue to explore different effect sizes!")),
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
                actionButton("closePage2", "Close", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
-               
       )
     )
   )
 )
+
 ########################################################################################
 # Server logic ----
 server <- function(input, output, session) {
@@ -342,12 +313,8 @@ server <- function(input, output, session) {
       messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
     }
     
-    # Debugging print statement
-    # print(messages)
-    
     # Combine messages into a single string with a heading
     message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
-    
     
     # Combine messages into a single paragraph
     tags$div(
@@ -357,7 +324,6 @@ server <- function(input, output, session) {
       )
     )
   })
-  
   
   # Show modal when 'How to Use This App' button is clicked
   observeEvent(input$showInstructions, {
@@ -444,7 +410,6 @@ print(paste("dims of study : ", dim(study)))
         }
       })
 
-       
         # constrain parameters
         # update behaviour selections to only be the available constrained selections... 
         observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
@@ -461,13 +426,10 @@ print(paste("dims of study : ", dim(study)))
           }
           print("measurement type changed")
           
-          
           # Update the beh selection input with available behs but do not pre-select any
           updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-          
-         updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
         }) 
-
 
       # Download button
       output$downloadData <- downloadHandler(
@@ -693,7 +655,6 @@ print(paste("dims of study : ", dim(study)))
       }
     })
 
-    
     output$maps <- renderPlot({
       validate(
       need((0 < length(v$d_clean_fc)), "We do not have FC data for the selected parameters"))
@@ -792,54 +753,17 @@ print(paste("dims of study : ", dim(study)))
       }}
     , height = reactive(v$h))#, width = reactive(v$w))
     
-
     # plotting brain images:
     ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
     output$brain <- renderPlot({
-    # load template brain image: ** TODO: WILL NEED TO CHANGE **
     
       validate(
       need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
-      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters. The maps we have available are:", effect_maps_available))),
+      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
       need(dim(v$nifti != NA), "")
       )
-    
-      #print(paste("study name to plot brain of: " , v$study_name))
-      #print(paste("dims of nifti: ", dim(v$nifti)))
-      #print(paste("attributes of nifti:", attributes(v$nifti)))
-      #print(class(v$nifti))
 
       plot_brain(v$nifti, anatomical)
-        # ortho2(
-        #     x = anatomical,
-        #     y = v$nifti,
-        #     crosshairs = FALSE,
-        #     bg = 'white',
-        #     NA.x = TRUE,
-        #     col.y = oro.nifti::hotmetal(),
-        #     xyz = c(input$xCoord, input$yCoord, input$zCoord),
-        #     text.color = 'black',
-        #     ybreaks = seq(min(v$nifti, na.rm = TRUE), max(v$nifti, na.rm = TRUE), length.out = 65),
-        #     ycolorbar = TRUE,
-        #     mfrow = c(3, 1)
-        # )
-        # # Add a colorbar with labels
-        # min_val <- min(v$nifti, na.rm = TRUE)
-        # max_val <- max(v$nifti, na.rm = TRUE)
-        # num_breaks <- 65  # Number of breaks for the color scale
-        # breaks <- seq(min_val, max_val, length.out = num_breaks)
-        # labels <- round(seq(min_val, max_val, length.out = num_breaks - 1), 2)  # Adjust labels length
-        
-        # colorbar(
-        #   breaks = breaks,
-        #   col = oro.nifti::hotmetal(),
-        #   labels = labels,
-        #   text.col = "black"
-        # )
-   
-    
-        # Add labels only at specified indices
-      #  mtext(text = labels, side = 4, at = breaks[label_indices], las = 1, cex = 0.8)
     })
 }
 
