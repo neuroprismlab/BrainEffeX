@@ -26,7 +26,7 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
   
   # for coloring of confidence intervals:
   below_zero <- sorted_upper_bounds < 0
-  below_cross_idx <- which(diff(below_zero) == -1) # the last TRUE before switch
+  below_cross_idx <- which(diff(below_zero) == -1) + 1# the last TRUE before switch
   
   above_zero <- sorted_lower_bounds > 0
   above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
