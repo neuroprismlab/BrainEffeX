@@ -1,4 +1,4 @@
-# effect_size_shiny
+# Brain EffeX
 Effect size explorer shiny app
 
 ### Instructions for contibuting to the app:
