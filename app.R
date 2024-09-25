@@ -729,10 +729,10 @@ print(paste("dims of study : ", dim(study)))
       if (n_268_studies_pooled > 0) {
         plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/map268_subnetwork.csv")
       }
-      
+       
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55) #TODO: need to get the real 55 node map file!
+        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/map55_ukb.csv")
       }
 
       # if there is only one plot, only plot that one, otherwise plot both

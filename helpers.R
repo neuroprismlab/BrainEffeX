@@ -306,12 +306,16 @@ plot_sim_ci_phen <- function(data, name, study_details, pooling, motion) {
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA) {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = FALSE) {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
+    
+    #TODO: look into heatmaply package for plotly interactive heatmap!
+    # https://cran.r-project.org/web/packages/heatmaply/vignettes/heatmaply.html
     
     if (!is.na(mapping_path)) {
     # load mapping
         mapping <- read.csv(mapping_path, header = TRUE)
+        
     }
 
     # if the data is pooled, the number of nodes is determined from the map
@@ -327,6 +331,11 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA) {
     mat <- matrix(0, nrow = nrow, ncol = nrow)
     mat[upper.tri(mat, diag = ifelse(pooled, TRUE, FALSE))] <- triangle_ordered
     full_mat <- mat + t(mat) #- diag(diag(triangle_ordered))
+
+    # rearrange if necessary
+    if (rearrange) {
+      full_mat <- full_mat[mapping$oldroi, mapping$oldroi]
+    }
 
     # melt the matrix for ggplot
     melted <- melt(full_mat)
@@ -553,12 +562,130 @@ plot_brain <- function(nifti, anatomical) {
     crosshairs = FALSE,
     bg = 'white',
     NA.x = TRUE,
-    col.y = colorRamps::blue2red(30),
+    col.y = colorspace::diverge_hsv(30),
     #xyz = c(input$xCoord, input$yCoord, input$zCoord),
     text.color = 'black',
-    clabels = seq(-5, 5, length.out = 30),
-    ybreaks = seq(-5, 5, length.out = 31),
+    clabels = seq(-2, 2, length.out = 30),
+    ybreaks = seq(-2, 2, length.out = 31),
     ycolorbar = TRUE,
     mfrow = c(3, 1)
   )
+}
+
+
+
+### IN PROGRESS:
+
+plotly_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA) {
+
+    if (!is.na(mapping_path)) {
+    # load mapping
+        mapping <- read.csv(mapping_path, header = TRUE)
+    }
+
+    # if the data is pooled, the number of nodes is determined from the map
+    if (pooled) {
+      nrow = length(unique(mapping$category))
+    } else {
+      nrow = (((-1 + sqrt(1 + 8 * length(triangle_ordered))) / 2) + 1)
+    }
+
+    # mirror the triangle across the x = y line to get full matrix
+    # first fill in half the matrix with the triangle data
+    mat <- matrix(0, nrow = nrow, ncol = nrow)
+    mat[upper.tri(mat, diag = ifelse(pooled, TRUE, FALSE))] <- triangle_ordered
+    full_mat <- mat + t(mat) #- diag(diag(triangle_ordered))
+
+    # transpose then rotate the matrix counterclockwise 90 degrees
+    # rotate <- function(x) t(apply(x, 2, rev))
+    # full_mat <- rotate(rotate(rotate(full_mat)))
+    # full_mat <- t(full_mat)
+    # # reflect along the y = 0 line
+    # full_mat <- full_mat[, nrow(full_mat):1]
+    
+
+    # Reverse the category labels for rows and columns to match the transposed matrix
+    transposed_row_colors <- rev(mapping$category)
+    transposed_col_colors <- rev(mapping$category)
+
+    # # melt the matrix for ggplot
+    # melted <- melt(full_mat)
+    # colnames(melted) <- c("Var1", "Var2", "value")
+    
+    # determine the title of the plot based on the number of nodes
+    plot_title = ifelse((nrow == 268 | nrow == 10), "Studies with Shen 268 node atlas", ifelse(nrow == 55, "Studies with UKB 55 nodes", "Studies with unknown parcellation"))
+
+    category_boundaries <- which(diff(as.numeric(as.factor(mapping$category))) != 0)
+
+    # takes a full matrix
+    heatmap_plot <- heatmaply(full_mat, xlab = "Node", ylab = "Node", main = plot_title, 
+            dendrogram = "none",
+            show_dendrogram = c(FALSE,FALSE),
+            showticklabels = c(FALSE,FALSE),
+            row_side_colors = rev(mapping$category),
+            col_side_colors = rev(mapping$category),
+            #colorbar_thickness = 10,
+            limits = c(min(full_mat), max(full_mat)),
+            col = colorRampPalette(c("blue", "white", "red"))(100),
+            plot_method = 'ggplot',
+            subplot_widths = c(0.9, 0.1),
+            symm = TRUE,
+            colorbar_xanchor = "left",
+            colorbar_yanchor = "bottom"
+            #col_side_colors=data.frame(a=seq_len(length(category_boundaries))),
+            #heatmap_layers = list(geom_vline(xintercept = category_boundaries[1] - 0.5, color = "black", size = 20)))
+                #lapply(seq_len(length(category_boundaries)+1), function(i) geom_hline(yintercept = category_boundaries[i] - 0.5, color = "black", size = 3))
+    )
+    # heatmap_plot <- heatmap_plot %>%
+    #     add_segments(x = 5, xend = 5, y = 0.5, yend = 260, line = list(color = "black")) %>%
+    #     add_lines(x = c(0, nrow), y = category_boundaries[1], line = list(color = "black", width = 2))
+
+    # heatmap_plot$x$layout$shapes <- list(
+    #     if (is.null(p$x$layout$shapes)) list() else p$x$layout$shapes,
+    #     list(
+    #         type = "line",
+    #         x0 = 0.5,
+    #         x1 = nrow + 0.5,
+    #         y0 = category_boundaries[1] - 0.5,
+    #         y1 = category_boundaries[1] - 0.5,
+    #         line = list(color = "black", width = 2)
+    #     )
+    # )
+
+shapes_list <- if (is.null(heatmap_plot$x$layout$shapes)) list() else heatmap_plot$x$layout$shapes
+
+# Loop through condition_boundaries to add lines for each boundary
+for (boundary in category_boundaries) {
+  boundary_pos <- boundary + 0.5  # Adjust boundary position for the lines
+
+  # Add the horizontal and vertical lines at the boundary
+  shapes_list <- append(shapes_list, list(
+    list(
+      type = "line",
+      x0 = 0.5,
+      x1 = nrow(full_mat) + 0.5,
+      y0 = boundary_pos,
+      y1 = boundary_pos,
+      xref = "y1",
+      yref = "y2",
+      line = list(color = "black", width = 1)
+    ),
+    list(
+      type = "line",
+      x0 = boundary_pos,
+      x1 = boundary_pos,
+      y0 = 0.5,
+      y1 = ncol(full_mat) + 0.5,
+      xref = "y1",
+      yref = "y2",
+      line = list(color = "black", width = 1)
+    )
+  ))
+}
+
+# Update the plot layout with the new shapes
+heatmap_plot$x$layout$shapes <- shapes_list
+
+return(heatmap_plot)
+
 }
