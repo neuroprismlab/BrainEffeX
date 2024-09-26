@@ -51,6 +51,9 @@ names(brain_masks) <- tolower(names(brain_masks))
 
 effect_maps_available <- study[study$map_type == "act", "name"]
 
+# TODO: temporary fix for not including test_component_2 in activation studies
+study$test_component_2[study$map_type == "act"] <- "rest"
+
 # d_clean is a list that includes the effect maps, 
 # and "study" is a table that contains study information, 
 # and "brain_masks" is a list that contains the brain masks
@@ -373,7 +376,7 @@ print(paste("dims of study : ", dim(study)))
   
 # set reactive parameters for plotting based on options chosen by user
     v <- reactiveValues()
-    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
+    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$pooling), priority = 1,{
         v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 

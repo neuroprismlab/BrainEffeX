@@ -573,8 +573,8 @@ plot_brain <- function(nifti, anatomical) {
     col.y = colorspace::diverge_hsv(30),
     #xyz = c(input$xCoord, input$yCoord, input$zCoord),
     text.color = 'black',
-    clabels = seq(-2, 2, length.out = 30),
-    ybreaks = seq(-2, 2, length.out = 31),
+    clabels = seq(-0.1, 0.1, length.out = 30),
+    ybreaks = seq(-0.1, 0.1, length.out = 31),
     ycolorbar = TRUE,
     mfrow = c(3, 1)
   )
