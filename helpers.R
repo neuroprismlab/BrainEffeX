@@ -1,7 +1,10 @@
 #########################################################################
 # helper function for plotting simultaneous confidence intervals: (when group_by is None)
-plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none') {
+plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none') {
   
+  # find the full combo name for this multivariate test #TODO: fix the code that creates the data to assign the rest test statistic to the combos
+  full_mv_combo_name <- names(data)[grepl(mv_combo_name, names(data))]
+
   # remove na
   na_idx <- is.na(data[[combo_name]]$d) | is.na(data[[combo_name]]$sim_ci_lb) | is.na(data[[combo_name]]$sim_ci_ub)
   data[[combo_name]]$d <- data[[combo_name]]$d[!na_idx]
@@ -11,10 +14,13 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
   # unlist sim CIs if list
   if (is.list(data[[combo_name]]$sim_ci_lb)) {
     data[[combo_name]]$sim_ci_lb <- unlist(data[[combo_name]]$sim_ci_lb)
+    data[[full_mv_combo_name]]$sim_ci_lb <- unlist(data[[full_mv_combo_name]]$sim_ci_lb)
   }
   if (is.list(data[[combo_name]]$sim_ci_ub)) {
     data[[combo_name]]$sim_ci_ub <- unlist(data[[combo_name]]$sim_ci_ub)
+    data[[full_mv_combo_name]]$sim_ci_ub <- unlist(data[[full_mv_combo_name]]$sim_ci_ub)
   }
+
   # sort data from smallest to largest d
   sorted_indices <- order(data[[combo_name]]$d)
   sorted_d <- data[[combo_name]]$d[sorted_indices]
@@ -110,8 +116,9 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
                                                                      round(abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)), 2), 0),
                                                               ifelse((min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE)), 2), 0))
 
-  legend("bottomleft", inset = c(0, -0.4), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
-                                                          bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%")), col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+  legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+                                                          bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%"),
+                                                          bquote(bold("Multivariate effect size: ") ~.(round(data[[full_mv_combo_name]]$d, 2)) ~ "  [" ~.(round(data[[full_mv_combo_name]]$sim_ci_lb, 2)) ~ ", " ~.(round(data[[full_mv_combo_name]]$sim_ci_ub, 2)) ~ "]")), col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
  
   
   # plot and shade the cofidence intervals:

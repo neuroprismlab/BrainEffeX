@@ -163,10 +163,10 @@ ui <- fluidPage(
                        choices = c("None" = 'none', "Network-level" = 'net')),
            bsTooltip("spatial_scale_icon", "Choose to pool the data.", "right", options = list(container = "body")),
            
-           radioButtons("dimensionality",
-                       label = tagList("Dimensionality", icon("info-circle", id = "dimensionality_icon")),
-                       choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
-           bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
+          #  radioButtons("dimensionality",
+          #              label = tagList("Dimensionality", icon("info-circle", id = "dimensionality_icon")),
+          #              choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
+          #  bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
 
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
@@ -376,7 +376,7 @@ print(paste("dims of study : ", dim(study)))
   
 # set reactive parameters for plotting based on options chosen by user
     v <- reactiveValues()
-    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$pooling), priority = 1,{
+    observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
         v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
@@ -462,8 +462,7 @@ print(paste("dims of study : ", dim(study)))
       })
 
   observeEvent(toListen(), {
-    v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
-    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.', v$multi_ext)
+    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
             # v$study_name as the name column from study that matches the task input and has map type activation
             print(paste("task: ", input$task, " is in effect maps available"))
@@ -477,8 +476,9 @@ print(paste("dims of study : ", dim(study)))
     ##### Group_by ######
 
     observe({
-      v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
-      v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.', v$multi_ext)
+      # v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
+      v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
+      v$mv_combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.multi')
     })
 
       observeEvent(toListen(), {
@@ -624,7 +624,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by)
               })
             })
           }
@@ -639,7 +639,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, group_by = input$group_by)
+                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by)
               })
             })
           }
