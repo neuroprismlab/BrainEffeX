@@ -22,7 +22,7 @@ library(osfr)
 source("helpers.R")
 
 # load data
-data_file = "combined_data_2024-09-13.RData"
+data_file = "combined_data_2024-09-25.RData"
 load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
 
 # load template nifti file
@@ -156,10 +156,15 @@ ui <- fluidPage(
            
            
            selectInput("spatial_scale",
-                       label = tagList("Spatial scale", icon("info-circle", id = "spatial_scale_icon")),
-                       choices = c("Univariate" = 'none', "Network-level" = 'net')),
-           bsTooltip("spatial_scale_icon", "Select the spatial scale for the analysis.", "right", options = list(container = "body")),
+                       label = tagList("Pooling", icon("info-circle", id = "spatial_scale_icon")),
+                       choices = c("None" = 'none', "Network-level" = 'net')),
+           bsTooltip("spatial_scale_icon", "Choose to pool the data.", "right", options = list(container = "body")),
            
+           radioButtons("dimensionality",
+                       label = tagList("Dimensionality", icon("info-circle", id = "dimensionality_icon")),
+                       choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
+           bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
+
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
                        choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
@@ -454,8 +459,8 @@ print(paste("dims of study : ", dim(study)))
       })
 
   observeEvent(toListen(), {
-    print("checking if task is in effect maps available")
-    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
+    v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
+    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.', v$multi_ext)
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
             # v$study_name as the name column from study that matches the task input and has map type activation
             print(paste("task: ", input$task, " is in effect maps available"))
@@ -469,7 +474,8 @@ print(paste("dims of study : ", dim(study)))
     ##### Group_by ######
 
     observe({
-      v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion)
+      v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
+      v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.', v$multi_ext)
     })
 
       observeEvent(toListen(), {

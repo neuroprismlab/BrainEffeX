@@ -7,6 +7,14 @@ plot_sim_ci <- function(data, name, study_details, combo_name, group_by = 'none'
   data[[combo_name]]$d <- data[[combo_name]]$d[!na_idx]
   data[[combo_name]]$sim_ci_lb <- data[[combo_name]]$sim_ci_lb[!na_idx]
   data[[combo_name]]$sim_ci_ub <- data[[combo_name]]$sim_ci_ub[!na_idx]
+
+  # unlist sim CIs if list
+  if (is.list(data[[combo_name]]$sim_ci_lb)) {
+    data[[combo_name]]$sim_ci_lb <- unlist(data[[combo_name]]$sim_ci_lb)
+  }
+  if (is.list(data[[combo_name]]$sim_ci_ub)) {
+    data[[combo_name]]$sim_ci_ub <- unlist(data[[combo_name]]$sim_ci_ub)
+  }
   # sort data from smallest to largest d
   sorted_indices <- order(data[[combo_name]]$d)
   sorted_d <- data[[combo_name]]$d[sorted_indices]
