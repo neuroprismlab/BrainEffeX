@@ -321,7 +321,7 @@ plot_sim_ci_phen <- function(data, name, study_details, pooling, motion) {
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = FALSE) {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = TRUE) {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
     
     #TODO: look into heatmaply package for plotly interactive heatmap!

@@ -26,10 +26,10 @@ data_file = "combined_data_2024-09-25.RData"
 load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
 
 # load template nifti file
-template <- readNIfTI("data/template_nifti")
+template <- readNIfTI("data/plotting/template_nifti")
 
 # load anatomical nifti file
-anatomical <- readNIfTI("data/anatomical.nii")
+anatomical <- readNIfTI("data/plotting/anatomical.nii")
 
 # rename data to d_clean #TODO: could change combine_gl to just name data d_clean, or change everything here to data instead of d_clean
 d_clean <- data
@@ -379,7 +379,8 @@ print(paste("dims of study : ", dim(study)))
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
         v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
-                             (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
+                             ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
+                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
                              # ensure that the combination of motion and spatial scale is included in d_clean
@@ -388,7 +389,8 @@ print(paste("dims of study : ", dim(study)))
         # also filter study by the same parameters
         v$study <- study[(grepl(input$dataset, study$dataset) & 
                          grepl(input$measurement_type, study$map_type) & 
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) & 
+                           ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
+                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
                          (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                          grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
                          unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
@@ -731,17 +733,17 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/map268_subnetwork.csv")
+        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv")
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/map268_subnetwork.csv")
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv")
       }
        
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/map55_ukb.csv")
+        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv")
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
