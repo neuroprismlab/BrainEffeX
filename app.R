@@ -17,6 +17,7 @@ library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 library(shinycssloaders)
 library(osfr)
+library(heatmaply)
 
 # source helper functions
 source("helpers.R")
@@ -196,7 +197,7 @@ ui <- fluidPage(
     
     column(4, align = "center", # effect size matrices)
            wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
-                     withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1)),
+                     withSpinner(plotlyOutput("maps", width = "100%", height = "100%"), type = 1)),
            h1(" "),
            h1(""),
            h1(""),
@@ -666,7 +667,7 @@ print(paste("dims of study : ", dim(study)))
       }
     })
 
-    output$maps <- renderPlot({
+    output$maps <- renderPlotly({
       validate(
       need((0 < length(v$d_clean_fc)), "We do not have FC data for the selected parameters"))
       
@@ -733,36 +734,36 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv")
+        plot_268 <- plotly_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv")
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv")
+        plot_268_pooled <- plotly_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv")
       }
        
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv")
+        plot_55 <- plotly_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv")
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
       if (((n_268_studies == 0) & (n_268_studies_pooled == 0)) & (n_55_studies > 0)) {
-        grid.arrange(plot_55, ncol = 1)
+        plot_55
       }
       else if ((n_55_studies == 0) & ((n_268_studies > 0))) {
-        grid.arrange(plot_268, ncol = 1)
+        plot_258 #grid.arrange(plot_268, ncol = 1)
       }
       else if ((n_55_studies == 0) & ((n_268_studies_pooled > 0))) {
-        grid.arrange(plot_268_pooled, ncol = 1)
+        plot_268_pooled #grid.arrange(plot_268_pooled, ncol = 1)
       }
       else if ((n_55_studies > 0) & (n_268_studies > 0)) {
-        grid.arrange(plot_268, plot_55, ncol = 1)
+        subplot(plot_268, plot_55, nrows = 2)
       }
       else if ((n_55_studies > 0) & (n_268_studies_pooled > 0)) {
-        grid.arrange(plot_268_pooled, plot_55, ncol = 1)
+        subplot(plot_268_pooled, plot_55, nrows = 2)
       }}
-    , height = reactive(v$h))#, width = reactive(v$w))
+    )#, width = reactive(v$w))
     
     # plotting brain images:
     ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types

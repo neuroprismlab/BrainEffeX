@@ -591,7 +591,7 @@ plot_brain <- function(nifti, anatomical) {
 
 ### IN PROGRESS:
 
-plotly_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA) {
+plotly_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = TRUE) {
 
     if (!is.na(mapping_path)) {
     # load mapping
@@ -610,6 +610,11 @@ plotly_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA)
     mat <- matrix(0, nrow = nrow, ncol = nrow)
     mat[upper.tri(mat, diag = ifelse(pooled, TRUE, FALSE))] <- triangle_ordered
     full_mat <- mat + t(mat) #- diag(diag(triangle_ordered))
+    
+    # rearrange if necessary
+    if (rearrange) {
+      full_mat <- full_mat[mapping$oldroi, mapping$oldroi]
+    }
 
     # transpose then rotate the matrix counterclockwise 90 degrees
     # rotate <- function(x) t(apply(x, 2, rev))
