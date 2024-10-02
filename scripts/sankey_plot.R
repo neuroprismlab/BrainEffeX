@@ -1,3 +1,21 @@
+# load packages
+library(networkD3)
+
+# load study
+path_to_data = "~/Desktop/effect_size_shiny/data/combined_data_2024-09-25.RData"
+load(path_to_data)
+
+
+# add sample size category
+study$n_cat <- NA
+study$n_cat[study$dataset == "abcd"] <- ">1500"
+study$n_cat[study$dataset == "hbn"] <- ">400"
+study$n_cat[study$dataset == "pnc"] <- ">400"
+study$n_cat[study$dataset == "ukb"] <- ">10000"
+study$n_cat[study$dataset == "hcp"] <- ">1000"
+
+datasets = unique(study$dataset)
+
 # Create an empty dataframe for the Sankey plot data
 df <- data.frame(dataset = character(), sample_size= character(), map_type= character(), stat= character())
 
