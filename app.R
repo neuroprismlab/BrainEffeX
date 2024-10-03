@@ -178,6 +178,7 @@ ui <- fluidPage(
            downloadButton("downloadData", "Download Data"),
            # Button to download the plot as PNG
            downloadButton("downloadPlots", "Download Plots"),
+           downloadButton("downloadMatrices", "Download Matrices"),
            h1(" "),
            h5("Helpful reminders"),
            wellPanel(style = "background-color: #ffffff;", 
@@ -445,6 +446,13 @@ print(paste("dims of study : ", dim(study)))
           updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
         }) 
 
+        observe({
+          v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
+          v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
+          v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
+          v$study_act <- v$study[grepl("_act_", v$study$name), ]
+        })
+
       # Download button
       output$downloadData <- downloadHandler(
       filename = function() {
@@ -529,71 +537,119 @@ print(paste("dims of study : ", dim(study)))
       contentType = "application/zip"
     )
 
-    # output$downloadMatrices <- downloadHandler(
-    #   filename = function() {
-    #     paste("Effex_matrices", ".zip", sep="")
-    #   },
-    #   content = function(file) {
-    #     tmpdir <- tempdir()
-    #      message("Temporary directory: ", tmpdir)
+    output$downloadMatrices <- downloadHandler(
+      filename = function() {
+        paste("Effex_matrices", ".zip", sep="")
+      },
+      content = function(file) {
+        tmpdir <- tempdir()
+         message("Temporary directory: ", tmpdir)
 
-    #     plot_files <- c()
+        t_total_268 <- rep(0, 35778) 
+        t_total_268_pooled <- rep(0, 55)
+        t_total_55 <-  rep(0 , 1485)
 
-    #     if (n_268_studies > 0) {
-    #       plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix.png')
-    #     }
+      n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
+      n_268_studies_pooled <- 0
+      n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
+ 
+      for (i in 1:length(v$d_clean_fc)) {
+        t <- v$d_clean_fc[[i]][[v$combo_name]]$d
 
-    #     # only plot the 268 pooled plot if n_268_studies_pooled > 0
-    #     if (n_268_studies_pooled > 0) {
-    #       plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
-    #     }
-       
-    #     # only plot the 55 plot if n_55_studies > 0
-    #     if (n_55_studies > 0) {
-    #       plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix.png')
-    #     }
-
-    #         # Add the saved plot file to the list of plot files
-    #         if (file.exists(plotpath)) {
-    #           plot_files <- c(plot_files, plotpath)
-    #         } else {
-    #           message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
-    #         }
-    #       }
-    #     }
-    #     }
+        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        if (v$study_fc$ref[study_idx] == "shen_268"){ 
+          
+          if (input$spatial_scale == "net") {
+            t_total_268_pooled <- t_total_268_pooled + t
+            n_268_studies_pooled <- n_268_studies_pooled + 1
+          }
+          else {
+            #print(c(dim(t), v$study_fc$name[study_idx]))
+            
+            t_total_268 <- t_total_268 + t
+            n_268_studies <- n_268_studies + 1
+          }
+        }
         
-    #     # Zip all the saved plot files
-    #     zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
-    #   },
-    #   contentType = "application/zip"
-    # )
-      # } else {
-      #   print(length(v$d_group))
-      #   if (length(v$d_group) > 0) {
-      #     for (i in 1:length(v$d_group)) {
-      #       # create a local variable to hold the value of i
-      #       local({
-      #         my_i <- i
-      #         plotname <- paste0("plot", my_i, sep="")
+        else if (v$study_fc$ref[study_idx] == "ukb_55") {
+          
+          # add the data to the total vector
+          t_total_55 <- t_total_55 + t
 
-      #         output[[plotname]] <- renderPlot({
-      #           plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
-      #         })
-      #       })
-      #     }
-      #   }
-      #   # zip the pngs
-      #   zip(file, paste0("plots/", v$combo_name, "/"), recursive = TRUE)
-      # }
+          n_55_studies <- n_55_studies + 1
+        }
+      }
 
-  observe({
-    v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
-    v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
-    v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
-    v$study_act <- v$study[grepl("_act_", v$study$name), ]
+      # if d_clean_fc is longer than 1, find the average of the matrices
+      if (n_268_studies > 1) {
+        t_avg_268 <- t_total_268 / n_268_studies
+      }
 
-  })
+      if (n_268_studies == 1 | n_268_studies == 0) {
+        t_avg_268 <- t_total_268
+      }
+
+      if (n_268_studies_pooled > 1) {
+        t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
+      }
+
+      if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
+        t_avg_268_pooled <- t_total_268_pooled
+      }
+
+      if (n_55_studies > 1) {
+        t_avg_55 <- t_total_55 / n_55_studies
+      }
+
+      if (n_55_studies == 1 | n_55_studies == 0) {
+        t_avg_55 <- t_total_55
+      }
+
+        plot_files <- c()
+
+        if (n_268_studies > 0) {
+          plotpath <- file.path(tmpdir, 'Shen_matrix.png')
+          plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix.png')
+          if (file.exists(plotpath)) {
+            plot_files <- c(plot_files, plotpath)
+          } else {
+            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+        }
+        }
+
+        # only plot the 268 pooled plot if n_268_studies_pooled > 0
+        if (n_268_studies_pooled > 0) {
+          plotpath <- file.path(tmpdir, 'Shen_matrix_pooled.png')
+          plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix_pooled.png')
+          if (file.exists(plotpath)) {
+            plot_files <- c(plot_files, plotpath)
+          } else {
+            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+          }
+        }
+       
+        # only plot the 55 plot if n_55_studies > 0
+        if (n_55_studies > 0) {
+          plotpath <- file.path(tmpdir, 'UKB_matrix.png')
+          plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = TRUE, out_path = tmpdir, plot_name = 'UKB_matrix.png')
+          if (file.exists(plotpath)) {
+            plot_files <- c(plot_files, plotpath)
+          } else {
+            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+          }
+        }
+        
+        
+        # Zip all the saved plot files
+        if (length(plot_files) > 0) {
+          zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+      } else {
+        message("No plots to zip")
+      }
+      },
+      contentType = "application/zip"
+    )
+    
 
   toListen <- reactive({
         list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
