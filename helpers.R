@@ -128,9 +128,15 @@ plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, gr
                                                                      round(abs(max(data[[combo_name]]$sim_ci_lb, na.rm = TRUE)), 2), 0),
                                                               ifelse((min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE) < 0), round(abs(min(data[[combo_name]]$sim_ci_ub, na.rm = TRUE)), 2), 0))
 
-  legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+  if (group_by == 'none') {
+    legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
                                                           bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%"),
                                                           bquote(bold("Multivariate effect size: ") ~.(round(data[[full_mv_combo_name]]$d, 2)) ~ "  [" ~.(round(data[[full_mv_combo_name]]$sim_ci_lb, 2)) ~ ", " ~.(round(data[[full_mv_combo_name]]$sim_ci_ub, 2)) ~ "]")), col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+  } else {
+    legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+                                                          bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%")),
+                                                          col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+  }
  
   
   # plot and shade the cofidence intervals:

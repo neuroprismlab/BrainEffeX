@@ -495,13 +495,72 @@ print(paste("dims of study : ", dim(study)))
             }
           }
         }
+      } else {
+        if (length(v$d_group) > 0) {
+          for (i in 1:length(v$d_group)) {
+              # Create a unique filename for each plot
+              plotname <- paste0(names(v$d_group[i]), '.png')
+              plotpath <- file.path(tmpdir, plotname)
+              
+              plot_sim_ci(v$d_group[[my_i]], 
+                names(v$d_group[my_i]), 
+                v$study_group[my_i,], 
+                combo_name = v$combo_name, 
+                mv_combo_name = v$mv_combo_name, 
+                group_by = input$group_by, 
+                save = TRUE,
+                out_path = tmpdir,
+                file_name = plotname
+              )
+          }
         }
+      }
         
-        # Zip all the saved plot files
-        zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+      # Zip all the saved plot files
+      zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
       },
       contentType = "application/zip"
     )
+
+    # output$downloadMatrices <- downloadHandler(
+    #   filename = function() {
+    #     paste("Effex_matrices", ".zip", sep="")
+    #   },
+    #   content = function(file) {
+    #     tmpdir <- tempdir()
+    #      message("Temporary directory: ", tmpdir)
+
+    #     plot_files <- c()
+
+    #     if (n_268_studies > 0) {
+    #       plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix.png')
+    #     }
+
+    #     # only plot the 268 pooled plot if n_268_studies_pooled > 0
+    #     if (n_268_studies_pooled > 0) {
+    #       plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
+    #     }
+       
+    #     # only plot the 55 plot if n_55_studies > 0
+    #     if (n_55_studies > 0) {
+    #       plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix.png')
+    #     }
+
+    #         # Add the saved plot file to the list of plot files
+    #         if (file.exists(plotpath)) {
+    #           plot_files <- c(plot_files, plotpath)
+    #         } else {
+    #           message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+    #         }
+    #       }
+    #     }
+    #     }
+        
+    #     # Zip all the saved plot files
+    #     zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+    #   },
+    #   contentType = "application/zip"
+    # )
       # } else {
       #   print(length(v$d_group))
       #   if (length(v$d_group) > 0) {
@@ -575,7 +634,7 @@ print(paste("dims of study : ", dim(study)))
             #print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
-              matching_d_idx <- which(names(v$d_clean) %in% matching_names)
+              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
@@ -596,6 +655,11 @@ print(paste("dims of study : ", dim(study)))
                 this_d <- v$d_clean[[i]][[v$combo_name]]$d
                 this_ci_lb <- v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
                 this_ci_ub <- v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
+
+                if (is.list(this_ci_lb)) { # unlist confidence intervals if list
+                  this_ci_lb <- unlist(this_ci_lb)
+                  this_ci_ub <- unlist(this_ci_ub)
+                }
 
                 if (v$study$map_type[i] == "act") {
                   # get the mask for this study
