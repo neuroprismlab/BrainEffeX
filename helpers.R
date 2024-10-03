@@ -1,6 +1,18 @@
 #########################################################################
 # helper function for plotting simultaneous confidence intervals: (when group_by is None)
-plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none') {
+plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none', save = FALSE, out_path = 'output/') {
+  # input:
+  # data: the effect size data in the format v$d_clean[[i]] where i is an index number
+  # name: the name of the study in the format names(v$d_clean[i])
+  # study_details: a list of study details in the format v$study[i,]
+  # combo_name: the name of the combo to plot as a string, e.g., paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
+  # mv_combo_name: the name of the multivariate combo to plot as a string, e.g., paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.multi') #TODO: this could be simplified
+  # group_by: the variable to group by, either 'none', 'orig_stat_type', or 'category'
+  
+  if (save) {
+    out_name = paste0(out_path, name, '.png')
+    png(out_name)
+  }
   
   # find the full combo name for this multivariate test #TODO: fix the code that creates the data to assign the rest test statistic to the combos
   full_mv_combo_name <- names(data)[grepl(mv_combo_name, names(data))]
@@ -136,17 +148,25 @@ plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, gr
   polygon(c(above_cross_idx:length(above_zero), rev(above_cross_idx:length(above_zero))), 
           c(sorted_upper_bounds[above_cross_idx:length(above_zero)], rev(sorted_lower_bounds[above_cross_idx:length(above_zero)])), 
           col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
+  
+  if (save) {
+    dev.off()
+  }
 }
 
 #########################################################################
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = TRUE) {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output/', plot_name = 'matrix.png') {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
     
     #TODO: look into heatmaply package for plotly interactive heatmap!
     # https://cran.r-project.org/web/packages/heatmaply/vignettes/heatmaply.html
+  
+    if (save) {
+      out_name = paste0(out_path, plot_name)
+    }
     
     if (!is.na(mapping_path)) {
     # load mapping
@@ -157,8 +177,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, r
     # if the data is pooled, the number of nodes is determined from the map
     if (pooled) {
       nrow = length(unique(mapping$category))
-    }
-    else {
+    } else {
       nrow = (((-1 + sqrt(1 + 8 * length(triangle_ordered))) / 2) + 1)
     }
 
@@ -238,11 +257,17 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, r
         # Add axis labels to the heatmap
         if (!is.na(mapping_path)) {
           heatmap_plot <- heatmap_plot + labs(x = "Network", y = "Network")
-        }
-        else if (is.na(mapping_path)) {
+        } else if (is.na(mapping_path)) {
           heatmap_plot <- heatmap_plot + labs(x = "UKB 55 Node", y = "UKB 55 Node")
         }
+    
+    if (save) {
+      ggsave(out_name)
+    }
+    
     return(heatmap_plot)
+    
+    
 }
 
 

@@ -21,6 +21,8 @@ library(osfr)
 # source helper functions
 source("helpers.R")
 
+save_plots = TRUE # set to TRUE to save plots as pngs, this makes the app glitch though
+
 # load data
 data_file = "combined_data_2024-09-25.RData"
 load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
@@ -626,7 +628,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by)
+                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = save_plots)
               })
             })
           }
@@ -641,7 +643,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by)
+                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = save_plots)
               })
             })
           }
@@ -733,17 +735,17 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv")
+        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = save_plots, plot_name = 'Shen_matrix.png')
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv")
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = save_plots, plot_name = 'Shen_matrix_pooled.png')
       }
        
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv")
+        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = save_plots, plot_name = 'UKB_matrix.png')
       }
 
       # if there is only one plot, only plot that one, otherwise plot both
