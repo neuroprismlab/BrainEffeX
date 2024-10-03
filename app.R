@@ -176,6 +176,8 @@ ui <- fluidPage(
            bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
            
            downloadButton("downloadData", "Download Data"),
+           # Button to download the plot as PNG
+           downloadButton("downloadPlots", "Download Plots"),
            h1(" "),
            h5("Helpful reminders"),
            wellPanel(style = "background-color: #ffffff;", 
@@ -453,6 +455,72 @@ print(paste("dims of study : ", dim(study)))
       }
     )
 
+    output$downloadPlots <- downloadHandler(
+      filename = function() {
+        paste("Effex_plots", ".zip", sep="")
+      },
+      content = function(file) {
+        tmpdir <- tempdir()
+         message("Temporary directory: ", tmpdir)
+
+        plot_files <- c()
+
+        # save the plots as pngs
+        if (input$group_by == "none") {
+        # check if v$d_clean is empty
+        if (length(v$d_clean) > 0) {
+          for (i in 1:length(v$d_clean)) {
+            # Create a unique filename for each plot
+            plotname <- paste0(names(v$d_clean[i]), '.png')
+            plotpath <- file.path(tmpdir, plotname)
+            
+            # Save the plot using plot_sim_ci function
+            plot_sim_ci(
+              v$d_clean[[i]], 
+              names(v$d_clean[i]), 
+              v$study[i, ], 
+              combo_name = v$combo_name, 
+              mv_combo_name = v$mv_combo_name, 
+              group_by = input$group_by, 
+              save = TRUE, 
+              out_path = tmpdir, 
+              file_name = plotname
+            )
+
+            # Add the saved plot file to the list of plot files
+            if (file.exists(plotpath)) {
+              plot_files <- c(plot_files, plotpath)
+            } else {
+              message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+            }
+          }
+        }
+        }
+        
+        # Zip all the saved plot files
+        zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+      },
+      contentType = "application/zip"
+    )
+      # } else {
+      #   print(length(v$d_group))
+      #   if (length(v$d_group) > 0) {
+      #     for (i in 1:length(v$d_group)) {
+      #       # create a local variable to hold the value of i
+      #       local({
+      #         my_i <- i
+      #         plotname <- paste0("plot", my_i, sep="")
+
+      #         output[[plotname]] <- renderPlot({
+      #           plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
+      #         })
+      #       })
+      #     }
+      #   }
+      #   # zip the pngs
+      #   zip(file, paste0("plots/", v$combo_name, "/"), recursive = TRUE)
+      # }
+
   observe({
     v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
     v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
@@ -628,7 +696,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = save_plots)
+                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
               })
             })
           }
@@ -643,7 +711,7 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = save_plots)
+                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
               })
             })
           }
@@ -735,17 +803,17 @@ print(paste("dims of study : ", dim(study)))
 
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = save_plots, plot_name = 'Shen_matrix.png')
+        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix.png')
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = save_plots, plot_name = 'Shen_matrix_pooled.png')
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
       }
        
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = save_plots, plot_name = 'UKB_matrix.png')
+        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix.png')
       }
 
       # if there is only one plot, only plot that one, otherwise plot both

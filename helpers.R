@@ -1,6 +1,6 @@
 #########################################################################
 # helper function for plotting simultaneous confidence intervals: (when group_by is None)
-plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none', save = FALSE, out_path = 'output/') {
+plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none', save = FALSE, out_path = 'output', file_name = 'plot') {
   # input:
   # data: the effect size data in the format v$d_clean[[i]] where i is an index number
   # name: the name of the study in the format names(v$d_clean[i])
@@ -10,7 +10,7 @@ plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, gr
   # group_by: the variable to group by, either 'none', 'orig_stat_type', or 'category'
   
   if (save) {
-    out_name = paste0(out_path, name, '.png')
+    out_name = paste0(out_path, '/', file_name)
     png(out_name)
   }
   
