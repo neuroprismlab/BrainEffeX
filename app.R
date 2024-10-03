@@ -463,7 +463,7 @@ print(paste("dims of study : ", dim(study)))
         tmpdir <- tempdir()
          message("Temporary directory: ", tmpdir)
 
-        plot_files <- c()
+        v$plot_files <- c()
 
         # save the plots as pngs
         if (input$group_by == "none") {
@@ -489,7 +489,7 @@ print(paste("dims of study : ", dim(study)))
 
             # Add the saved plot file to the list of plot files
             if (file.exists(plotpath)) {
-              plot_files <- c(plot_files, plotpath)
+              v$plot_files <- c(v$plot_files, plotpath)
             } else {
               message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
             }
@@ -502,9 +502,9 @@ print(paste("dims of study : ", dim(study)))
               plotname <- paste0(names(v$d_group[i]), '.png')
               plotpath <- file.path(tmpdir, plotname)
               
-              plot_sim_ci(v$d_group[[my_i]], 
-                names(v$d_group[my_i]), 
-                v$study_group[my_i,], 
+              plot_sim_ci(v$d_group[[i]], 
+                names(v$d_group[i]), 
+                v$study_group[i,], 
                 combo_name = v$combo_name, 
                 mv_combo_name = v$mv_combo_name, 
                 group_by = input$group_by, 
@@ -512,12 +512,19 @@ print(paste("dims of study : ", dim(study)))
                 out_path = tmpdir,
                 file_name = plotname
               )
+
+              # Add the saved plot file to the list of plot files
+            if (file.exists(plotpath)) {
+              v$plot_files <- c(v$plot_files, plotpath)
+            } else {
+              message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+            }
           }
         }
       }
         
       # Zip all the saved plot files
-      zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+      zip(file, v$plot_files, flags = "-j")  # -j flag to ignore folder structure
       },
       contentType = "application/zip"
     )
