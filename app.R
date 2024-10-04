@@ -177,8 +177,6 @@ ui <- fluidPage(
            
            downloadButton("downloadData", "Download Data"),
            # Button to download the plot as PNG
-           downloadButton("downloadPlots", "Download Plots"),
-           downloadButton("downloadMatrices", "Download Matrices"),
            h1(" "),
            h5("Helpful reminders"),
            wellPanel(style = "background-color: #ffffff;", 
@@ -195,13 +193,14 @@ ui <- fluidPage(
     column(5, align = "centre", # simCI plots
            uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
            h4("The plots below visualize all edges or voxels in each study."),
-        
+          downloadButton("downloadPlots", "Download Plots"),
            wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))
     ),
     
     column(4, align = "center", # effect size matrices)
            wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
-                     withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1)),
+                     withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
+                     downloadButton("downloadMatrices", "Download Matrices")),
            h1(" "),
            h1(""),
            h1(""),
@@ -210,9 +209,11 @@ ui <- fluidPage(
                      fluidRow( # second row: plots of activation maps for activation studies 
                        column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
                        column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1))
-                     )
+                     ),
+                    downloadButton("downloadBrain", "Download Brain Image"),
            )
-    )
+    ),
+    
   ), # end of fluidRow
   
   # Modal Dialogs
@@ -460,6 +461,18 @@ print(paste("dims of study : ", dim(study)))
       },
       content = function(file) {
         saveRDS(v$d_clean, file)
+      }
+    )
+
+    # Download brain button
+    output$downloadBrain <- downloadHandler(
+      filename = function() {
+        paste("Effex_brain", ".png", sep="")
+      },
+      content = function(file) {
+        png(file)
+        plot_brain(v$nifti, anatomical)
+        dev.off()
       }
     )
 
