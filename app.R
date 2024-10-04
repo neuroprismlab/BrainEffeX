@@ -609,7 +609,7 @@ print(paste("dims of study : ", dim(study)))
 
         if (n_268_studies > 0) {
           plotpath <- file.path(tmpdir, 'Shen_matrix.png')
-          plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix.png')
+          plot_full_mat(t_avg_268, rearrange = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix.png')
           if (file.exists(plotpath)) {
             plot_files <- c(plot_files, plotpath)
           } else {
@@ -620,7 +620,7 @@ print(paste("dims of study : ", dim(study)))
         # only plot the 268 pooled plot if n_268_studies_pooled > 0
         if (n_268_studies_pooled > 0) {
           plotpath <- file.path(tmpdir, 'Shen_matrix_pooled.png')
-          plot_full_mat(t_avg_268_pooled, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix_pooled.png')
+          plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix_pooled.png')
           if (file.exists(plotpath)) {
             plot_files <- c(plot_files, plotpath)
           } else {
