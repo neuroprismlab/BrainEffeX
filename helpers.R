@@ -323,7 +323,7 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
 
 
 # plot the nifti
-plot_brain <- function(nifti, anatomical) {
+plot_brain <- function(nifti, anatomical, x, y, z) {
   nifti[nifti == 0] <- NA
   ortho2(
     x = anatomical,
@@ -332,7 +332,7 @@ plot_brain <- function(nifti, anatomical) {
     bg = 'white',
     NA.x = TRUE,
     col.y = colorspace::diverge_hsv(30),
-    #xyz = c(input$xCoord, input$yCoord, input$zCoord),
+    xyz = c(x, y, z),
     text.color = 'black',
     clabels = seq(-0.1, 0.1, length.out = 30),
     ybreaks = seq(-0.1, 0.1, length.out = 31),

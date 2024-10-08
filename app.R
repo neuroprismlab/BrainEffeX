@@ -31,7 +31,7 @@ load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, an
 template <- readNIfTI("data/plotting/template_nifti")
 
 # load anatomical nifti file
-anatomical <- readNIfTI("data/plotting/anatomical.nii")
+anatomical <- readNIfTI("data/plotting/MNI152_T1_2mm_Brain.nii.gz")
 
 # rename data to d_clean #TODO: could change combine_gl to just name data d_clean, or change everything here to data instead of d_clean
 d_clean <- data
@@ -471,7 +471,7 @@ print(paste("dims of study : ", dim(study)))
       },
       content = function(file) {
         png(file)
-        plot_brain(v$nifti, anatomical)
+        plot_brain(v$nifti, anatomical, input$xCoord, input$yCoord, input$zCoord)
         dev.off()
       }
     )
@@ -976,15 +976,18 @@ print(paste("dims of study : ", dim(study)))
     
     # plotting brain images:
     ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
-    output$brain <- renderPlot({
-    
-      validate(
-      need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
-      need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
-      need(dim(v$nifti != NA), "")
-      )
 
-      plot_brain(v$nifti, anatomical)
+    observe({
+      output$brain <- renderPlot({
+      
+        validate(
+        need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
+        need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
+        need(dim(v$nifti != NA), "")
+        )
+
+        plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+      })
     })
 }
 
