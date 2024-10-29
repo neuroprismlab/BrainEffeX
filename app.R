@@ -24,7 +24,7 @@ source("helpers.R")
 save_plots = TRUE # set to TRUE to save plots as pngs, this makes the app glitch though
 
 # load data
-data_file = "combined_data_2024-09-25.RData"
+data_file <- list.files(path = "data/", pattern = "combined_data_", recursive = TRUE)
 load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
 
 # load template nifti file
