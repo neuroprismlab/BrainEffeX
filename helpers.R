@@ -325,6 +325,9 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
 # plot the nifti
 plot_brain <- function(nifti, anatomical, x, y, z) {
   nifti[nifti == 0] <- NA
+  nifti[nifti > 0.1] <- 0.1
+  nifti[nifti < -0.1] <- -0.1
+  
   ortho2(
     x = anatomical,
     y = nifti,
