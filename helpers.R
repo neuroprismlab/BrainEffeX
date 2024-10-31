@@ -328,6 +328,7 @@ plot_brain <- function(nifti, anatomical, x, y, z) {
   nifti[nifti > 0.1] <- 0.1
   nifti[nifti < -0.1] <- -0.1
   
+  par(mar = c(1, 1, 1, 4))
   ortho2(
     x = anatomical,
     y = nifti,
@@ -337,10 +338,23 @@ plot_brain <- function(nifti, anatomical, x, y, z) {
     col.y = colorspace::diverge_hsv(30),
     xyz = c(x, y, z),
     text.color = 'black',
-    clabels = seq(-0.1, 0.1, length.out = 30),
+    #clabels = seq(-0.1, 0.1, length.out = 30),
     ybreaks = seq(-0.1, 0.1, length.out = 31),
     ycolorbar = TRUE,
     mfrow = c(3, 1)
+  )
+
+  min_val = -0.1
+  max_val = 0.1
+  num_breaks = 31
+  breaks = seq(min_val, max_val, length.out = num_breaks)
+  labels = round(seq(min_val, max_val, length.out = num_breaks-1), 2)
+  
+  colorbar(
+    breaks = breaks,
+    col = colorspace::diverge_hsv(30),
+    labels = labels,
+    text.col = 'black'
   )
 }
 

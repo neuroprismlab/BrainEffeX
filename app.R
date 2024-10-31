@@ -208,7 +208,7 @@ ui <- fluidPage(
                      h1(""),
                      fluidRow( # second row: plots of activation maps for activation studies 
                        column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-                       column(8, withSpinner(plotOutput("brain", width = "100%"), type = 1))
+                       column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
                      ),
                     downloadButton("downloadBrain", "Download Brain Image"),
            )
@@ -979,7 +979,7 @@ print(paste("dims of study : ", dim(study)))
 
     observe({
       output$brain <- renderPlot({
-      
+        par(mar = c(0, 0, 0, 5))
         validate(
         need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
         need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
