@@ -231,8 +231,8 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, mapping_path = NA, r
         
         for (i in 1:(nrow(mapping) - 1)) {
             if (mapping$category[i] != mapping$category[i + 1]) {
-            heatmap_plot <- heatmap_plot + geom_vline(xintercept = i, color = "black", size = 0.3) +
-                geom_hline(yintercept = i, color = "black")
+            heatmap_plot <- heatmap_plot + geom_vline(xintercept = i + 0.5, color = "black", size = 0.3) +
+                geom_hline(yintercept = i+0.5, color = "black")
             }
         }
         
