@@ -234,7 +234,6 @@ server <- function(input, output, session) {
   
   # Dynamic panel output
   output$dynamicPanel <- createDynamicPanel(input, study)
-
   createModalNavigationObservers(input, session)
   
   # # Observer to handle default behaviour display
@@ -244,11 +243,8 @@ server <- function(input, output, session) {
       updateSelectizeInput(session, "behaviour", choices = unique(v$beh_choices))
     }
   }, ignoreInit = TRUE)
-
-print(paste("dims of d_clean : ", length(d_clean)))
-print(paste("dims of study : ", dim(study)))
   
-# set reactive parameters for plotting based on options chosen by user
+# set reactive parameters for filtering based on options chosen by user
     v <- reactiveValues()
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
         v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
@@ -270,11 +266,13 @@ print(paste("dims of study : ", dim(study)))
                          unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
     })
 
+      # update the task selection input with available tasks but do not pre-select any
       observeEvent(input$dataset, {
         v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))#unique(v$study$test_component_1)
         updateSelectizeInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
       })
 
+      # update the behaviour selection input with available behaviours but do not pre-select any
       observeEvent(list(input$dataset, input$measurement_type, input$test_type), {
         # v$beh_choices <- v$study[(grepl(input$dataset, study$dataset) & 
         #                  grepl(input$measurement_type, study$map_type) &
@@ -284,11 +282,6 @@ print(paste("dims of study : ", dim(study)))
         updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
       })
 
-      observeEvent(input$dataset, {
-        v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-        updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
-      })
-
       # reset input$behavior to NULL if input$test_type is not "r"
       observeEvent(input$test_type, {
         if (input$test_type != "r") {
@@ -296,26 +289,31 @@ print(paste("dims of study : ", dim(study)))
         }
       })
 
-        # constrain parameters
-        # update behaviour selections to only be the available constrained selections... 
-        observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
+      # update the test type selection input with available test types
+      observeEvent(input$dataset, {
+        v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
+        updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
+      })
 
-          v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type)),"test_component_1"]
+      # update behaviour selections to only be the available constrained selections... 
+      observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
 
-          v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                         grepl(input$measurement_type, study$map_type) &
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
+        v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
+                        grepl(input$measurement_type, study$map_type)),"test_component_1"]
 
-          if (input$test_type == "r") {
-            updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-          }
-          print("measurement type changed")
-          
-          # Update the beh selection input with available behs but do not pre-select any
+        v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
+                        grepl(input$measurement_type, study$map_type) &
+                        (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
+
+        if (input$test_type == "r") {
           updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-          updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
-        }) 
+        }
+        print("measurement type changed")
+        
+        # Update the beh selection input with available behs but do not pre-select any
+        updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+        updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+      }) 
 
         observe({
           v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
@@ -325,26 +323,16 @@ print(paste("dims of study : ", dim(study)))
         })
 
       # Download button
-      output$downloadData <- downloadHandler(
-      filename = function() {
-        paste("EffeX_data", ".RData", sep="")
-      },
-      content = function(file) {
-        saveRDS(v$d_clean, file)
-      }
-    )
+      exportDownloadData(output, v)
 
     # Download brain button
-    output$downloadBrain <- downloadHandler(
-      filename = function() {
-        paste("Effex_brain", ".png", sep="")
-      },
-      content = function(file) {
-        png(file)
-        plot_brain(v$nifti, anatomical, input$xCoord, input$yCoord, input$zCoord)
-        dev.off()
-      }
-    )
+    exportDownloadBrain(output, v, input, anatomical)
+
+    # Download plots button
+    exportDownloadPlots(output, v, input)
+
+    # Download matrices button
+    exportDownloadMatrices(output, v, input)
 
     output$downloadPlots <- downloadHandler(
       filename = function() {
@@ -420,118 +408,118 @@ print(paste("dims of study : ", dim(study)))
       contentType = "application/zip"
     )
 
-    output$downloadMatrices <- downloadHandler(
-      filename = function() {
-        paste("Effex_matrices", ".zip", sep="")
-      },
-      content = function(file) {
-        tmpdir <- tempdir()
-         message("Temporary directory: ", tmpdir)
+    # output$downloadMatrices <- downloadHandler(
+    #   filename = function() {
+    #     paste("Effex_matrices", ".zip", sep="")
+    #   },
+    #   content = function(file) {
+    #     tmpdir <- tempdir()
+    #      message("Temporary directory: ", tmpdir)
 
-        t_total_268 <- rep(0, 35778) 
-        t_total_268_pooled <- rep(0, 55)
-        t_total_55 <-  rep(0 , 1485)
+    #     t_total_268 <- rep(0, 35778) 
+    #     t_total_268_pooled <- rep(0, 55)
+    #     t_total_55 <-  rep(0 , 1485)
 
-      n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
-      n_268_studies_pooled <- 0
-      n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
+    #   n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
+    #   n_268_studies_pooled <- 0
+    #   n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
  
-      for (i in 1:length(v$d_clean_fc)) {
-        t <- v$d_clean_fc[[i]][[v$combo_name]]$d
+    #   for (i in 1:length(v$d_clean_fc)) {
+    #     t <- v$d_clean_fc[[i]][[v$combo_name]]$d
 
-        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
-        if (v$study_fc$ref[study_idx] == "shen_268"){ 
+    #     study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+    #     if (v$study_fc$ref[study_idx] == "shen_268"){ 
           
-          if (input$spatial_scale == "net") {
-            t_total_268_pooled <- t_total_268_pooled + t
-            n_268_studies_pooled <- n_268_studies_pooled + 1
-          }
-          else {
-            #print(c(dim(t), v$study_fc$name[study_idx]))
+    #       if (input$spatial_scale == "net") {
+    #         t_total_268_pooled <- t_total_268_pooled + t
+    #         n_268_studies_pooled <- n_268_studies_pooled + 1
+    #       }
+    #       else {
+    #         #print(c(dim(t), v$study_fc$name[study_idx]))
             
-            t_total_268 <- t_total_268 + t
-            n_268_studies <- n_268_studies + 1
-          }
-        }
+    #         t_total_268 <- t_total_268 + t
+    #         n_268_studies <- n_268_studies + 1
+    #       }
+    #     }
         
-        else if (v$study_fc$ref[study_idx] == "ukb_55") {
+    #     else if (v$study_fc$ref[study_idx] == "ukb_55") {
           
-          # add the data to the total vector
-          t_total_55 <- t_total_55 + t
+    #       # add the data to the total vector
+    #       t_total_55 <- t_total_55 + t
 
-          n_55_studies <- n_55_studies + 1
-        }
-      }
+    #       n_55_studies <- n_55_studies + 1
+    #     }
+    #   }
 
-      # if d_clean_fc is longer than 1, find the average of the matrices
-      if (n_268_studies > 1) {
-        t_avg_268 <- t_total_268 / n_268_studies
-      }
+    #   # if d_clean_fc is longer than 1, find the average of the matrices
+    #   if (n_268_studies > 1) {
+    #     t_avg_268 <- t_total_268 / n_268_studies
+    #   }
 
-      if (n_268_studies == 1 | n_268_studies == 0) {
-        t_avg_268 <- t_total_268
-      }
+    #   if (n_268_studies == 1 | n_268_studies == 0) {
+    #     t_avg_268 <- t_total_268
+    #   }
 
-      if (n_268_studies_pooled > 1) {
-        t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
-      }
+    #   if (n_268_studies_pooled > 1) {
+    #     t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
+    #   }
 
-      if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
-        t_avg_268_pooled <- t_total_268_pooled
-      }
+    #   if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
+    #     t_avg_268_pooled <- t_total_268_pooled
+    #   }
 
-      if (n_55_studies > 1) {
-        t_avg_55 <- t_total_55 / n_55_studies
-      }
+    #   if (n_55_studies > 1) {
+    #     t_avg_55 <- t_total_55 / n_55_studies
+    #   }
 
-      if (n_55_studies == 1 | n_55_studies == 0) {
-        t_avg_55 <- t_total_55
-      }
+    #   if (n_55_studies == 1 | n_55_studies == 0) {
+    #     t_avg_55 <- t_total_55
+    #   }
 
-        plot_files <- c()
+    #     plot_files <- c()
 
-        if (n_268_studies > 0) {
-          plotpath <- file.path(tmpdir, 'Shen_matrix.png')
-          plot_full_mat(t_avg_268, rearrange = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix.png')
-          if (file.exists(plotpath)) {
-            plot_files <- c(plot_files, plotpath)
-          } else {
-            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
-        }
-        }
+    #     if (n_268_studies > 0) {
+    #       plotpath <- file.path(tmpdir, 'Shen_matrix.png')
+    #       plot_full_mat(t_avg_268, rearrange = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix.png')
+    #       if (file.exists(plotpath)) {
+    #         plot_files <- c(plot_files, plotpath)
+    #       } else {
+    #         message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+    #     }
+    #     }
 
-        # only plot the 268 pooled plot if n_268_studies_pooled > 0
-        if (n_268_studies_pooled > 0) {
-          plotpath <- file.path(tmpdir, 'Shen_matrix_pooled.png')
-          plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix_pooled.png')
-          if (file.exists(plotpath)) {
-            plot_files <- c(plot_files, plotpath)
-          } else {
-            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
-          }
-        }
+    #     # only plot the 268 pooled plot if n_268_studies_pooled > 0
+    #     if (n_268_studies_pooled > 0) {
+    #       plotpath <- file.path(tmpdir, 'Shen_matrix_pooled.png')
+    #       plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = TRUE, out_path = tmpdir, plot_name = 'Shen_matrix_pooled.png')
+    #       if (file.exists(plotpath)) {
+    #         plot_files <- c(plot_files, plotpath)
+    #       } else {
+    #         message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+    #       }
+    #     }
        
-        # only plot the 55 plot if n_55_studies > 0
-        if (n_55_studies > 0) {
-          plotpath <- file.path(tmpdir, 'UKB_matrix.png')
-          plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = TRUE, out_path = tmpdir, plot_name = 'UKB_matrix.png')
-          if (file.exists(plotpath)) {
-            plot_files <- c(plot_files, plotpath)
-          } else {
-            message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
-          }
-        }
+    #     # only plot the 55 plot if n_55_studies > 0
+    #     if (n_55_studies > 0) {
+    #       plotpath <- file.path(tmpdir, 'UKB_matrix.png')
+    #       plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = TRUE, out_path = tmpdir, plot_name = 'UKB_matrix.png')
+    #       if (file.exists(plotpath)) {
+    #         plot_files <- c(plot_files, plotpath)
+    #       } else {
+    #         message("Plot not found: ", plotpath)  # Debugging: Check if the plot was saved
+    #       }
+    #     }
         
         
-        # Zip all the saved plot files
-        if (length(plot_files) > 0) {
-          zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
-      } else {
-        message("No plots to zip")
-      }
-      },
-      contentType = "application/zip"
-    )
+    #     # Zip all the saved plot files
+    #     if (length(plot_files) > 0) {
+    #       zip(file, plot_files, flags = "-j")  # -j flag to ignore folder structure
+    #   } else {
+    #     message("No plots to zip")
+    #   }
+    #   },
+    #   contentType = "application/zip"
+    # )
     
 
   toListen <- reactive({
