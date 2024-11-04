@@ -332,7 +332,7 @@ plot_brain <- function(nifti, anatomical, x, y, z) {
   ortho2(
     x = anatomical,
     y = nifti,
-    crosshairs = FALSE,
+    crosshairs = TRUE,
     bg = 'white',
     NA.x = TRUE,
     col.y = colorspace::diverge_hsv(30),
