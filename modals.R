@@ -68,3 +68,95 @@ createDownloadingEffectMapsModal <- function() {
     )
   )
 }
+
+
+############################################
+
+# Function to create the dynamic panel content
+createDynamicPanel <- function(input, study) {
+  renderUI({
+    messages <- c()
+    
+    # Dataset message
+    if (is.null(input$dataset) || input$dataset == "*") {
+      messages$dataset <- "• All datasets."
+    } else {
+      messages$dataset <- paste("• The <b>", input$dataset, "</b> dataset(s).")
+    }
+    
+    # Map type message
+    if (is.null(input$measurement_type) || input$measurement_type == "*") {
+      messages$measurement_type <- "• All map types."
+    } else {
+      messages$measurement_type <- paste("• <b>", input$measurement_type, "</b> map type.")
+    }
+    
+    # Task message
+    if (is.null(input$task) || length(input$task) == 0) {
+      messages$task <- "• No specific tasks are selected."
+    } else if (length(input$task) == length(unique(study[["var1"]]))) { # TODO: Adjust if needed
+      messages$task <- "• All tasks."
+    } else {
+      messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
+    }
+    
+    # Test type message
+    if (is.null(input$test_type) || input$test_type == "*") {
+      messages$test_type <- "• All test types."
+    } else {
+      messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
+    }
+    
+    # Behaviour message
+    if (is.null(input$behaviour) || length(input$behaviour) == 0) {
+      messages$behaviour <- "• No specific behaviours are selected."
+    } else if (length(input$behaviour) == length(unique(study[["var2"]])) || input$behaviour == "*") {
+      messages$behaviour <- "• All correlations"
+    } else {
+      messages$behaviour <- paste("• The <b>", paste(input$behaviour, collapse = ", "), "</b> correlation(s).")
+    }
+    
+    # Group by message
+    if (!is.null(input$group_by) && input$group_by != "none") {
+      messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
+    }
+    
+    message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
+    
+    tags$div(
+      style = "background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;",
+      tags$p(HTML(message_text))
+    )
+  })
+}
+
+# Modal event observers for navigation
+createModalNavigationObservers <- function(input, session) {
+  observeEvent(input$showInstructions, {
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  observeEvent(input$nextToPage2, {
+    toggleModal(session, "instructionsModal1", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage1, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal1", toggle = "open")
+  })
+  
+  observeEvent(input$nextToPage3, {
+    toggleModal(session, "instructionsModal2", toggle = "close")
+    toggleModal(session, "instructionsModal3", toggle = "open")
+  })
+  
+  observeEvent(input$prevToPage2, {
+    toggleModal(session, "instructionsModal3", toggle = "close")
+    toggleModal(session, "instructionsModal2", toggle = "open")
+  })
+  
+  observeEvent(input$closePage2, {
+    toggleModal(session, "instructionsModal3", toggle = "close")
+  })
+}
