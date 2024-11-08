@@ -223,6 +223,9 @@ ui <- fluidPage(
     
   ), # end of fluidRow
 
+
+
+#if you want to create a new panel in the tutorials, you'll have to instiate the modal here
 createGettingStartedModal(),
 createUnderstandingPlotsModal1(),
 createUnderstandingPlotsModal2(),
@@ -466,7 +469,7 @@ server <- function(input, output, session) {
       if (length(v$d_clean) == 0 & length(v$d_group) == 0) {
         # if there is no data, display a message
         tagList(
-          h3("No data available for the selected parameters.")
+          h3("No data available for the selected parameters.") 
         )
       }
       

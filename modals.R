@@ -120,7 +120,7 @@ createDynamicPanel <- function(input, study) {
     # Task message
     if (is.null(input$task) || length(input$task) == 0) {
       messages$task <- "• No specific tasks are selected."
-    } else if (length(input$task) == length(unique(study[["var1"]]))) { # TODO: Adjust if needed
+    } else if (input$task == "*") { # TODO: Adjust if needed
       messages$task <- "• All tasks."
     } else {
       messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
