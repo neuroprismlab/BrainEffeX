@@ -1,6 +1,6 @@
 # Modal Dialogs
 
-# Modal 1: Getting started
+# Modal 1: Getting started and explain left panel
 
 createGettingStartedModal <- function() {
   bsModal(
@@ -16,7 +16,9 @@ createGettingStartedModal <- function() {
         tags$li("Available Tasks"),
         tags$li("Test type"),
         tags$li("Behavioral correlations (if applicable)"),
-        tags$li("Spatial scale"),
+        tags$li("Motion Method"),
+        tags$li("Pooling"),
+        tags$li("Group by"),
       ),
      tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
       tags$div(style = "text-align: center;",
@@ -28,18 +30,18 @@ createGettingStartedModal <- function() {
 
 # Modal 2: Understanding the Plots
 
-createUnderstandingPlotsModal <- function() {
+createUnderstandingPlotsModal1 <- function() {
   bsModal(
     id = "instructionsModal2", title = "Understanding the Plots", trigger = NULL,
     size = "large",
     tags$div(
       tags$p("Explore the expected effect sizes of the studies that match the provided filters."),
-      tags$p(tags$b(tags$i("The plots in the middle and right panels")),"visualize all edges or voxels in each study:"),
+      tags$p(tags$b(tags$i("The plots in the middle")),"visualize all edges or voxels in each study:"),
       tags$ul(
         tags$li("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
         tags$li(tags$i("Red")," indicates simultaneous CIs overlapping with 0,", tags$i("green"), "indicates no overlap."),
-        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters."),
-        tags$li("Activation Maps (Cohen's d) help you to visualize specific brain regions.")
+        tags$li(tags$i("Multivariate Effect sizes")," are displayed under the plots."),
+        
       ),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage1", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
@@ -49,21 +51,45 @@ createUnderstandingPlotsModal <- function() {
   )
 }
 
-# Modal 3: Downloading Effect Maps
+
+# Modal 3: Understanding the Plots
+
+createUnderstandingPlotsModal2 <- function() {
+  bsModal(
+    id = "instructionsModal3", title = "Understanding the Plots", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("Explore the expected effect sizes of the studies that match the provided filters."),
+      tags$p(tags$b(tags$i("The plots in the right panels")),"visualize all edges or voxels in each study:"),
+      tags$ul(
+        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters."),
+        tags$li("Activation Maps (Cohen's d) help you to visualize specific brain regions.")
+      ),
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("nextToPage4", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  )
+}
+
+# Modal 4: Downloading Effect Maps
 
 createDownloadingEffectMapsModal <- function() {
   bsModal(
-    id = "instructionsModal3", title = "Downloading Effect Maps", trigger = NULL,
+    id = "instructionsModal4", title = "Downloading Effect Maps", trigger = NULL,
     size = "large",
     tags$div(
       tags$p("How to download effect maps from BrainEffeX:"),
       tags$ul(
         tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
         tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
+      tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
+      
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
-               actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
-               actionButton("closePage2", "Close", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+               actionButton("prevToPage3", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("closePage4", "Close", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
       )
     )
   )
@@ -133,12 +159,12 @@ createDynamicPanel <- function(input, study) {
 # Modal event observers for navigation
 createModalNavigationObservers <- function(input, session) {
   observeEvent(input$showInstructions, {
-    toggleModal(session, "instructionsModal1", toggle = "open")
+    toggleModal(session, "instructionsModal1", toggle = 'open')
   })
   
   observeEvent(input$nextToPage2, {
-    toggleModal(session, "instructionsModal1", toggle = "close")
-    toggleModal(session, "instructionsModal2", toggle = "open")
+    toggleModal(session, "instructionsModal1", toggle = 'close')
+    toggleModal(session, "instructionsModal2", toggle = 'open')
   })
   
   observeEvent(input$prevToPage1, {
@@ -152,11 +178,20 @@ createModalNavigationObservers <- function(input, session) {
   })
   
   observeEvent(input$prevToPage2, {
-    toggleModal(session, "instructionsModal3", toggle = "close")
+    toggleModal(session, "instructionsModal3", toggle = 'close')
     toggleModal(session, "instructionsModal2", toggle = "open")
   })
   
-  observeEvent(input$closePage2, {
+  observeEvent(input$nextToPage4, {
     toggleModal(session, "instructionsModal3", toggle = "close")
+    toggleModal(session, "instructionsModal4", toggle = "open")
+  })
+  observeEvent(input$prevToPage3, {
+    toggleModal(session, "instructionsModal4", toggle = "close")
+    toggleModal(session, "instructionsModal3", toggle = "open")
+  })
+  
+  observeEvent(input$closePage4, {
+    toggleModal(session, "instructionsModal4", toggle = "close")
   })
 }

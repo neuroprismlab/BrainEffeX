@@ -160,7 +160,7 @@ ui <- fluidPage(
                        label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
                        choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
                        selected = 'none'),
-           bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
+           bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was either regressed from data. Thresholding: mean FD > 0.1 mm was removed from analysis.", "right", options = list(container = "body")),
            
            
            selectInput("spatial_scale",
@@ -224,7 +224,8 @@ ui <- fluidPage(
   ), # end of fluidRow
 
 createGettingStartedModal(),
-createUnderstandingPlotsModal(),
+createUnderstandingPlotsModal1(),
+createUnderstandingPlotsModal2(),
 createDownloadingEffectMapsModal()
 )
 
