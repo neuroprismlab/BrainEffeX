@@ -178,7 +178,7 @@ ui <- fluidPage(
                        choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
            bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
            
-           actionButton("submit", "Submit", icon = icon("play")),
+           #actionButton("submit", "Submit", icon = icon("play")),
            
            h1(" "),
 
