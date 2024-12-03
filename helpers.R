@@ -325,8 +325,8 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
 # plot the nifti
 plot_brain <- function(nifti, anatomical, x, y, z) {
   nifti[nifti == 0] <- NA
-  nifti[nifti > 0.1] <- 0.1
-  nifti[nifti < -0.1] <- -0.1
+  nifti[nifti > 1] <- 1
+  nifti[nifti < -1] <- -1
   
   par(mar = c(1, 1, 1, 4))
   ortho2(
@@ -339,13 +339,13 @@ plot_brain <- function(nifti, anatomical, x, y, z) {
     xyz = c(x, y, z),
     text.color = 'black',
     #clabels = seq(-0.1, 0.1, length.out = 30),
-    ybreaks = seq(-0.1, 0.1, length.out = 31),
+    ybreaks = seq(-1, 1, length.out = 31),
     ycolorbar = TRUE,
     mfrow = c(3, 1)
   )
 
-  min_val = -0.1
-  max_val = 0.1
+  min_val = -1
+  max_val = 1
   num_breaks = 31
   breaks = seq(min_val, max_val, length.out = num_breaks)
   labels = round(seq(min_val, max_val, length.out = num_breaks-1), 2)

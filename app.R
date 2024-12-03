@@ -4,9 +4,9 @@ library(shinythemes) #TODO: list what we need each package for!
 library(ggplot2)
 library(oro.nifti)
 library(neurobase)
-library(ggcorrplot)
-library(ggridges)
-library(pheatmap)
+#library(ggcorrplot)
+#library(ggridges)
+#library(pheatmap)
 library(shinycssloaders)
 library(shinyjs)
 library(fields)
@@ -16,7 +16,7 @@ library(reshape)
 library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 library(shinycssloaders)
-library(osfr)
+# library(osfr)
 
 # source helper functions
 source("helpers.R")
@@ -38,6 +38,7 @@ anatomical <- readNIfTI("data/plotting/MNI152_T1_2mm_Brain.nii.gz")
 
 # rename data to d_clean #TODO: could change combine_gl to just name data d_clean, or change everything here to data instead of d_clean
 d_clean <- data
+rm(data)
 
 # make study all lowercase TODO: could move this to combine_gl as well
 study <- data.frame(lapply(study, function(x) {
@@ -308,7 +309,7 @@ server <- function(input, output, session) {
         if (input$test_type == "r") {
           updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
         }
-        print("measurement type changed")
+        #print("measurement type changed")
         
         # Update the beh selection input with available behs but do not pre-select any
         updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -346,11 +347,11 @@ server <- function(input, output, session) {
     v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
             # v$study_name as the name column from study that matches the task input and has map type activation
-            print(paste("task: ", input$task, " is in effect maps available"))
+            #print(paste("task: ", input$task, " is in effect maps available"))
             v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-            print(paste("creating nifti for: ", v$study_name))
+            #print(paste("creating nifti for: ", v$study_name))
             v$nifti <- create_nifti(template, d_clean, v$study_name, v$combo_name, brain_masks)
-            print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
+            #print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
           }
   }, ignoreNULL = TRUE)
 
@@ -504,7 +505,7 @@ server <- function(input, output, session) {
           # print(paste0("num plots: ", v$num_plots))
           for (i in 1:length(v$d_clean)) {
             # create a local variable to hold the value of i
-            print(i)
+            #print(i)
             local({
               my_i <- i
               plotname <- paste0("plot", my_i, sep="")
@@ -516,7 +517,7 @@ server <- function(input, output, session) {
           }
         }
       } else {
-        print(length(v$d_group))
+        # print(length(v$d_group))
         if (length(v$d_group) > 0) {
           for (i in 1:length(v$d_group)) {
             # create a local variable to hold the value of i
