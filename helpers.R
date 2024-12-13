@@ -35,19 +35,31 @@ plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, gr
 
   # sort data from smallest to largest d
   sorted_indices <- order(data[[combo_name]]$d)
-  sorted_d <- data[[combo_name]]$d[sorted_indices]
+  sorted_d_whole <- data[[combo_name]]$d[sorted_indices]
   # sort confidence intervals by the same order
-  sorted_upper_bounds <- data[[combo_name]]$sim_ci_ub[sorted_indices]
-  sorted_lower_bounds <- data[[combo_name]]$sim_ci_lb[sorted_indices]
+  sorted_upper_bounds_whole <- data[[combo_name]]$sim_ci_ub[sorted_indices]
+  sorted_lower_bounds_whole <- data[[combo_name]]$sim_ci_lb[sorted_indices]
   
   # downsample data for plotting
   downsample <- length(sorted_indices) %/% 100
   if (downsample < 1) {
     downsample = 1
   }
-  sorted_d <- sorted_d[seq(1, length(sorted_d), by = downsample)]
-  sorted_upper_bounds <- sorted_upper_bounds[seq(1, length(sorted_upper_bounds), by = downsample)]
-  sorted_lower_bounds <- sorted_lower_bounds[seq(1, length(sorted_lower_bounds), by = downsample)]
+  sorted_d <- sorted_d_whole[seq(1, length(sorted_d_whole), by = downsample)]
+  # to include the last element of the sorted data, check if the last element of sorted_d is the same as the last element of sorted_d_whole
+  if (sorted_d[length(sorted_d)] != sorted_d_whole[length(sorted_d_whole)]) {
+    sorted_d <- c(sorted_d, sorted_d_whole[length(sorted_d_whole)])
+  }
+  sorted_upper_bounds <- sorted_upper_bounds_whole[seq(1, length(sorted_upper_bounds_whole), by = downsample)]
+  # check if the last element of sorted_upper_bounds is the same as the last element of sorted_upper_bounds_whole
+  if (sorted_upper_bounds[length(sorted_upper_bounds)] != sorted_upper_bounds_whole[length(sorted_upper_bounds_whole)]) {
+    sorted_upper_bounds <- c(sorted_upper_bounds, sorted_upper_bounds_whole[length(sorted_upper_bounds_whole)])
+  }
+  sorted_lower_bounds <- sorted_lower_bounds_whole[seq(1, length(sorted_lower_bounds_whole), by = downsample)]
+  # check if the last element of sorted_lower_bounds is the same as the last element of sorted_lower_bounds_whole
+  if (sorted_lower_bounds[length(sorted_lower_bounds)] != sorted_lower_bounds_whole[length(sorted_lower_bounds_whole)]) {
+    sorted_lower_bounds <- c(sorted_lower_bounds, sorted_lower_bounds_whole[length(sorted_lower_bounds_whole)])
+  }
   
   
   # for coloring of confidence intervals:
