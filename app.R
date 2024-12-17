@@ -9,13 +9,12 @@ library(neurobase)
 #library(pheatmap)
 library(shinycssloaders)
 library(shinyjs)
-library(fields)
+library(fields) #
 library(sass)
 library(bslib)
 library(reshape)
 library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
-library(shinycssloaders)
 # library(osfr)
 
 # source helper functions
@@ -24,10 +23,12 @@ source("helpers.R")
 # source modals for instructions
 source("modals.R")
 
-save_plots = TRUE # set to TRUE to save plots as pngs, this makes the app glitch though
+save_plots = FALSE # set to TRUE to save all plots as pngs, MUST BE OFF TO DEPLOY
 
 # load data
 data_file <- list.files(path = "data/", pattern = "combined_data_", recursive = TRUE)
+print("Loading data...")
+print(str(data_file))
 load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
 
 # load template nifti file
@@ -36,9 +37,9 @@ template <- readNIfTI("data/plotting/template_nifti")
 # load anatomical nifti file
 anatomical <- readNIfTI("data/plotting/MNI152_T1_2mm_Brain.nii.gz")
 
-# rename data to d_clean #TODO: could change combine_gl to just name data d_clean, or change everything here to data instead of d_clean
-d_clean <- data
-rm(data)
+# rename d_clean to data #TODO: could change combine_gl to just name data data, or change everything here to data instead of d_clean
+#d_clean <- data
+#rm(data)
 
 # make study all lowercase TODO: could move this to combine_gl as well
 study <- data.frame(lapply(study, function(x) {
@@ -49,8 +50,8 @@ study <- data.frame(lapply(study, function(x) {
   }
 }))
 
-# also make the names of each list in d_clean all lowercase
-names(d_clean) <- tolower(names(d_clean))
+# also make the names of each list in data all lowercase
+names(data) <- tolower(names(data))
 
 # and the names of each list in brain_masks
 names(brain_masks) <- tolower(names(brain_masks))
@@ -60,7 +61,7 @@ effect_maps_available <- study[study$map_type == "act", "name"]
 # TODO: temporary fix for not including test_component_2 in activation studies
 study$test_component_2[study$map_type == "act"] <- "rest"
 
-# d_clean is a list that includes the effect maps, 
+# data is a list that includes the effect maps, 
 # and "study" is a table that contains study information, 
 # and "brain_masks" is a list that contains the brain masks
 
@@ -174,6 +175,9 @@ ui <- fluidPage(
           #              choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
           #  bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
 
+          selectInput("Effect Size Measure",
+                      label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                      choices = c("Cohen's d" = 'd', "Pearson's r" = 'r'), selected = 'd'),
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
                        choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
@@ -248,14 +252,14 @@ server <- function(input, output, session) {
 # set reactive parameters for filtering based on options chosen by user
     v <- reactiveValues()
     observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
-        v$d_clean <- d_clean[(grepl(input$dataset, study$dataset) & 
+        v$data <- data[(grepl(input$dataset, study$dataset) & 
                              grepl(input$measurement_type, study$map_type) & 
                              ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
                               (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
                             (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                              grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
-                             # ensure that the combination of motion and spatial scale is included in d_clean
-                             unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
+                             # ensure that the combination of motion and spatial scale is included in data
+                             unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
       
         # also filter study by the same parameters
         v$study <- study[(grepl(input$dataset, study$dataset) & 
@@ -264,7 +268,7 @@ server <- function(input, output, session) {
                               (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
                          (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
                          grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
-                         unname(sapply(d_clean, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
+                         unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
     })
 
       # update the task selection input with available tasks but do not pre-select any
@@ -317,8 +321,8 @@ server <- function(input, output, session) {
       }) 
 
         observe({
-          v$d_clean_act <- v$d_clean[grepl("_act_", names(v$d_clean))]
-          v$d_clean_fc <- v$d_clean[grepl("_fc_", names(v$d_clean))]
+          v$data_act <- v$data[grepl("_act_", names(v$data))]
+          v$data_fc <- v$data[grepl("_fc_", names(v$data))]
           v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
           v$study_act <- v$study[grepl("_act_", v$study$name), ]
         })
@@ -350,7 +354,7 @@ server <- function(input, output, session) {
             #print(paste("task: ", input$task, " is in effect maps available"))
             v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
             #print(paste("creating nifti for: ", v$study_name))
-            v$nifti <- create_nifti(template, d_clean, v$study_name, v$combo_name, brain_masks)
+            v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks)
             #print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
           }
   }, ignoreNULL = TRUE)
@@ -385,7 +389,7 @@ server <- function(input, output, session) {
             #print(paste0("length of matching index: ", length(matching_idx)))
             if (length(matching_idx) > 0) {
               matching_names <- v$study$name[matching_idx]
-              matching_d_idx <- which(toupper(names(v$d_clean)) %in% toupper(matching_names))
+              matching_d_idx <- which(toupper(names(v$data)) %in% toupper(matching_names))
               # matching_d_idx is the idx of the studies in d that match the current stat and ref
               # average across all studies in matching_d_idx
               # initialize an empty vector to store the sum across studies
@@ -395,17 +399,17 @@ server <- function(input, output, session) {
                 ci_lb_total <- rep(0, length(c(brain_masks[[v$study$name[matching_idx[1]]]]$mask))) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
                 ci_ub_total <- rep(0, length(c(brain_masks[[v$study$name[matching_idx[1]]]]$mask)))
               } else {
-                d_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
-                ci_lb_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
-                ci_ub_total <- rep(0, length(v$d_clean[[matching_d_idx[1]]][[v$combo_name]]$d))
+                d_total <- rep(0, length(v$data[[matching_d_idx[1]]][[v$combo_name]]$d)) # initialize to the size of the largest matrix
+                ci_lb_total <- rep(0, length(v$data[[matching_d_idx[1]]][[v$combo_name]]$d)) # TODO: for now just average across CIs, but ask Steph how we should do this!!!
+                ci_ub_total <- rep(0, length(v$data[[matching_d_idx[1]]][[v$combo_name]]$d))
               }
 
               for (i in matching_d_idx) {
                 # if an activation study, then we need to first use the study's mask to fill in the values in the 
                 # appropriate spots in the effect size matrix
-                this_d <- v$d_clean[[i]][[v$combo_name]]$d
-                this_ci_lb <- v$d_clean[[i]][[v$combo_name]]$sim_ci_lb
-                this_ci_ub <- v$d_clean[[i]][[v$combo_name]]$sim_ci_ub
+                this_d <- v$data[[i]][[v$combo_name]]$d
+                this_ci_lb <- v$data[[i]][[v$combo_name]]$sim_ci_lb
+                this_ci_ub <- v$data[[i]][[v$combo_name]]$sim_ci_ub
 
                 if (is.list(this_ci_lb)) { # unlist confidence intervals if list
                   this_ci_lb <- unlist(this_ci_lb)
@@ -460,10 +464,10 @@ server <- function(input, output, session) {
     ###### plot simCI plots:
     
     # insert the right number of plot output objects into the web page
-    # if d_clean is not empty, then plot. Check if d_clean is empty:
+    # if data is not empty, then plot. Check if data is empty:
     observe({
     output$histograms <- renderUI({
-      if (length(v$d_clean) == 0 & length(v$d_group) == 0) {
+      if (length(v$data) == 0 & length(v$d_group) == 0) {
         # if there is no data, display a message
         tagList(
           h3("No data available for the selected parameters.")
@@ -471,8 +475,8 @@ server <- function(input, output, session) {
       }
       
       else if (input$group_by == "none") {
-        if (length(v$d_clean) > 0) {
-          plot_output_list <- lapply(1:length(v$d_clean), function(i) {
+        if (length(v$data) > 0) {
+          plot_output_list <- lapply(1:length(v$data), function(i) {
             plotname <- paste0("plot", i)
             #print(plotname)
             plotOutput(plotname, height = "200px", width = "100%")
@@ -500,10 +504,10 @@ server <- function(input, output, session) {
     observe({
       
       if (input$group_by == "none") {
-        # check if v$d_clean is empty
-        if (length(v$d_clean) > 0) {
+        # check if v$data is empty
+        if (length(v$data) > 0) {
           # print(paste0("num plots: ", v$num_plots))
-          for (i in 1:length(v$d_clean)) {
+          for (i in 1:length(v$data)) {
             # create a local variable to hold the value of i
             #print(i)
             local({
@@ -511,7 +515,7 @@ server <- function(input, output, session) {
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_clean[[my_i]], names(v$d_clean[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
+                plot_sim_ci(v$data[[my_i]], names(v$data[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
               })
             })
           }
@@ -553,7 +557,7 @@ server <- function(input, output, session) {
 
     output$maps <- renderPlot({
       validate(
-      need((0 < length(v$d_clean_fc)), "We do not have FC data for the selected parameters"))
+      need((0 < length(v$data_fc)), "We do not have FC data for the selected parameters"))
       
       # create a vector to store the data for if there is more than one study
       t_total_268 <- rep(0, 35778) 
@@ -564,10 +568,10 @@ server <- function(input, output, session) {
       n_268_studies_pooled <- 0
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
  
-      for (i in 1:length(v$d_clean_fc)) {
-        t <- v$d_clean_fc[[i]][[v$combo_name]]$d
+      for (i in 1:length(v$data_fc)) {
+        t <- v$data_fc[[i]][[v$combo_name]]$d
 
-        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
         if (v$study_fc$ref[study_idx] == "shen_268"){ 
           
           if (input$spatial_scale == "net") {
@@ -591,7 +595,7 @@ server <- function(input, output, session) {
         }
       }
 
-      # if d_clean_fc is longer than 1, find the average of the matrices
+      # if data_fc is longer than 1, find the average of the matrices
       if (n_268_studies > 1) {
         t_avg_268 <- t_total_268 / n_268_studies
       }
@@ -656,8 +660,8 @@ server <- function(input, output, session) {
       output$brain <- renderPlot({
         par(mar = c(0, 0, 0, 5))
         validate(
-        need(length(v$d_clean_act) == 1, "Please select exactly one task to visualize the activation map."),
-        need(length(v$d_clean_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
+        need(length(v$data_act) == 1, "Please select exactly one task to visualize the activation map."),
+        need(length(v$data_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
         need(dim(v$nifti != NA), "")
         )
 
