@@ -16,6 +16,7 @@ library(reshape)
 library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 # library(osfr)
+library(shinyscreenshot) # for screenshot functionality
 
 # source helper functions
 source("helpers.R")
@@ -186,9 +187,12 @@ ui <- fluidPage(
            #actionButton("submit", "Submit", icon = icon("play")),
            
            h1(" "),
-
+            # Button to download the plot as PNG
            downloadButton("downloadData", "Download Data"),
-           # Button to download the plot as PNG
+           
+            # Button to take a screenshot of the app
+           actionButton("screenshot", "Take a screenshot"),
+           
            h1(" "),
            h5("Helpful reminders"),
            wellPanel(style = "background-color: #ffffff;", 
@@ -339,6 +343,10 @@ server <- function(input, output, session) {
     # Download matrices button
     exportDownloadMatrices(output, v, input)
 
+    # Screenshot button
+    observeEvent(input$screenshot, {
+    screenshot()
+    })
     
 
     
