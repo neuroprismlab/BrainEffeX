@@ -17,6 +17,7 @@ library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 # library(osfr)
 library(shinyscreenshot) # for screenshot functionality
+library(EffeX)
 
 # source helper functions
 source("helpers.R")
@@ -27,35 +28,17 @@ source("modals.R")
 save_plots = FALSE # set to TRUE to save all plots as pngs, MUST BE OFF TO DEPLOY
 
 # load data
-data_file <- list.files(path = "data/", pattern = "combined_data_", recursive = TRUE)
-print("Loading data...")
-print(str(data_file))
-load(paste0("data/", data_file)) # loads brain_masks as list, sim_ci as list, and study as table
+data_list <- load_data()
 
-# load template nifti file
-template <- readNIfTI("data/plotting/template_nifti")
+# assign data to variables
+data <- data_list$data
+study <- data_list$study
+brain_masks <- data_list$brain_masks
+template <- data_list$template
+anatomical <- data_list$anatomical
 
-# load anatomical nifti file
-anatomical <- readNIfTI("data/plotting/MNI152_T1_2mm_Brain.nii.gz")
-
-# rename d_clean to data #TODO: could change combine_gl to just name data data, or change everything here to data instead of d_clean
-#d_clean <- data
-#rm(data)
-
-# make study all lowercase TODO: could move this to combine_gl as well
-study <- data.frame(lapply(study, function(x) {
-  if (is.character(x)) {
-    return(tolower(x))
-  } else {
-    return(x)
-  }
-}))
-
-# also make the names of each list in data all lowercase
-names(data) <- tolower(names(data))
-
-# and the names of each list in brain_masks
-names(brain_masks) <- tolower(names(brain_masks))
+# clear data_list
+rm(data_list)
 
 effect_maps_available <- study[study$map_type == "act", "name"]
 
