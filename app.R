@@ -338,7 +338,7 @@ server <- function(input, output, session) {
     
 
   toListen <- reactive({
-        list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$motion)
+        list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$estimate, input$motion)
       })
 
   observeEvent(toListen(), {
@@ -348,7 +348,7 @@ server <- function(input, output, session) {
             #print(paste("task: ", input$task, " is in effect maps available"))
             v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
             #print(paste("creating nifti for: ", v$study_name))
-            v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks)
+            v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
             #print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
           }
   }, ignoreNULL = TRUE)
@@ -650,7 +650,7 @@ server <- function(input, output, session) {
     # plotting brain images:
     ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
 
-    observe({
+    observeEvent(input$estimate, {
       output$brain <- renderPlot({
         par(mar = c(0, 0, 0, 5))
         validate(
@@ -659,7 +659,7 @@ server <- function(input, output, session) {
         need(dim(v$nifti != NA), "")
         )
 
-        plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord, estimate = input$estimate)
+        plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
       })
     })
 }
