@@ -132,7 +132,7 @@ create_nifti_template <- function(sample_nifti_path = '/Users/neuroprism/Desktop
 
 
 ## create a nifti file from a template and study name
-create_nifti <- function(nifti_template, data, study_name, combo_name, brain_masks, out_path = '/Users/neuroprism/Desktop/effect_size_shiny_neurohack/data/', export = FALSE) {
+create_nifti <- function(nifti_template, data, study_name, combo_name, brain_masks, estimate = 'd', out_path = '/Users/neuroprism/Desktop/effect_size_shiny_neurohack/data/', export = FALSE) {
   # INPUTS:
   # - study_name: string, the name of the study to use the mask from
   # - brain_masks: list of brain masks (from combined_gl output)
@@ -145,7 +145,7 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
   
   structured <- brain_masks[[study_name]]$mask
   
-  new_data <- data[[study_name]][[combo_name]]$d
+  new_data <- data[[study_name]][[combo_name]][[estimate]]
   
   structured[structured==1] <- new_data[1,]
   

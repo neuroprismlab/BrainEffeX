@@ -17,7 +17,7 @@ library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 # library(osfr)
 library(shinyscreenshot) # for screenshot functionality
-library(EffeX)
+library(EffeX) # to run locally, install the package from github with: devtools::install_github("halleeshearer/EffeX")
 
 # source helper functions
 source("helpers.R")
@@ -146,7 +146,8 @@ ui <- fluidPage(
                        label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
                        choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
                        selected = 'none'),
-           bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
+                       bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+           
            
            
            selectInput("spatial_scale",
@@ -159,9 +160,9 @@ ui <- fluidPage(
           #              choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
           #  bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
 
-          selectInput("Effect Size Measure",
+          selectInput("estimate",
                       label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                      choices = c("Cohen's d" = 'd', "Pearson's r" = 'r'), selected = 'd'),
+                      choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
                        choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
@@ -215,8 +216,10 @@ ui <- fluidPage(
     
   ), # end of fluidRow
 
+#if you want to create a new panel in the tutorials, you'll have to instiate the modal here
 createGettingStartedModal(),
-createUnderstandingPlotsModal(),
+createUnderstandingPlotsModal1(),
+createUnderstandingPlotsModal2(),
 createDownloadingEffectMapsModal()
 )
 
@@ -506,7 +509,7 @@ server <- function(input, output, session) {
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$data[[my_i]], names(v$data[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
+                plot_sim_ci(v$data[[my_i]], names(v$data[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, estimate = input$estimate, save = FALSE)
               })
             })
           }
@@ -521,7 +524,7 @@ server <- function(input, output, session) {
               plotname <- paste0("plot", my_i, sep="")
 
               output[[plotname]] <- renderPlot({
-                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, save = FALSE)
+                plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, estimate = input$estimate, save = FALSE)
               })
             })
           }
@@ -560,7 +563,7 @@ server <- function(input, output, session) {
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
  
       for (i in 1:length(v$data_fc)) {
-        t <- v$data_fc[[i]][[v$combo_name]]$d
+        t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
 
         study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
         if (v$study_fc$ref[study_idx] == "shen_268"){ 
@@ -656,7 +659,7 @@ server <- function(input, output, session) {
         need(dim(v$nifti != NA), "")
         )
 
-        plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+        plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord, estimate = input$estimate)
       })
     })
 }
