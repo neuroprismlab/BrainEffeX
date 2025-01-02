@@ -557,10 +557,12 @@ server <- function(input, output, session) {
       t_total_268 <- rep(0, 35778) 
       t_total_268_pooled <- rep(0, 55)
       t_total_55 <-  rep(0 , 1485)
+      t_total_55_pooled <- rep(0, 10)
 
       n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
       n_268_studies_pooled <- 0
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
+      n_55_studies_pooled <- 0
  
       for (i in 1:length(v$data_fc)) {
         t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
@@ -582,10 +584,16 @@ server <- function(input, output, session) {
         
         else if (v$study_fc$ref[study_idx] == "ukb_55") {
           
+          if (input$spatial_scale == "net") {
+            t_total_55_pooled <- t_total_55_pooled + t
+            n_55_studies_pooled <- n_55_studies_pooled + 1
+          }
+          else {
           # add the data to the total vector
           t_total_55 <- t_total_55 + t
 
           n_55_studies <- n_55_studies + 1
+          }
         }
       }
 
@@ -614,36 +622,56 @@ server <- function(input, output, session) {
         t_avg_55 <- t_total_55
       }
 
+      if (n_55_studies_pooled > 1) {
+        t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
+      }
+
       # only plot the 268 plot if n_268_studies > 0
       if (n_268_studies > 0) {
-        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix.png')
+        plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", ukb = FALSE, save = FALSE, plot_name = 'Shen_matrix.png')
       }
 
       # only plot the 268 pooled plot if n_268_studies_pooled > 0
       if (n_268_studies_pooled > 0) {
-        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
+        plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, ukb = FALSE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
       }
        
       # only plot the 55 plot if n_55_studies > 0
       if (n_55_studies > 0) {
-        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix.png')
+        plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, ukb = TRUE, plot_name = 'UKB_matrix.png')
       }
 
-      # if there is only one plot, only plot that one, otherwise plot both
-      if (((n_268_studies == 0) & (n_268_studies_pooled == 0)) & (n_55_studies > 0)) {
-        grid.arrange(plot_55, ncol = 1)
+      # only plot the 55 pooled plot if n_55_studies_pooled > 0
+      if (n_55_studies_pooled > 0) {
+        plot_55_pooled <- plot_full_mat(t_avg_55_pooled, rearrange = FALSE, pooled = TRUE, ukb = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix_pooled.png')
       }
-      else if ((n_55_studies == 0) & ((n_268_studies > 0))) {
-        grid.arrange(plot_268, ncol = 1)
+
+      # if not pooled, show the 268 and 55 matrices
+      if (input$spatial_scale == "none") {
+        # if there is only shen or only ukb, only plot one plot
+        if ((n_268_studies == 0) & (n_55_studies > 0)) {
+          grid.arrange(plot_55, ncol = 1)
+        }
+        else if ((n_55_studies == 0) & (n_268_studies > 0)) {
+          grid.arrange(plot_268, ncol = 1)
+        }
+        else if ((n_55_studies > 0) & (n_268_studies > 0)) {
+          grid.arrange(plot_268, plot_55, ncol = 1)
+        }
       }
-      else if ((n_55_studies == 0) & ((n_268_studies_pooled > 0))) {
-        grid.arrange(plot_268_pooled, ncol = 1)
-      }
-      else if ((n_55_studies > 0) & (n_268_studies > 0)) {
-        grid.arrange(plot_268, plot_55, ncol = 1)
-      }
-      else if ((n_55_studies > 0) & (n_268_studies_pooled > 0)) {
-        grid.arrange(plot_268_pooled, plot_55, ncol = 1)
+
+      # if pooled, show the pooled 268 and 55 matrices
+      if (input$spatial_scale == "net") {
+        # if there is only shen or only ukb, only plot one plot
+        if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
+          grid.arrange(plot_55_pooled, ncol = 1)
+        }
+        else if ((n_55_studies_pooled == 0) & (n_268_studies_pooled > 0)) {
+          grid.arrange(plot_268_pooled, ncol = 1)
+        }
+        else if ((n_55_studies_pooled > 0) & (n_268_studies_pooled > 0)) {
+          grid.arrange(plot_268_pooled, plot_55_pooled, ncol = 1)
+        }
       }}
     , height = reactive(v$h))#, width = reactive(v$w))
     
