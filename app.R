@@ -566,6 +566,11 @@ server <- function(input, output, session) {
  
       for (i in 1:length(v$data_fc)) {
         t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
+        
+        # if study is hcp_ep, then transform from lower to upper triangle
+        if (grepl("hcp_ep", v$study_fc$name[i])) {
+          t <- lower_to_upper_triangle(t)
+        }
 
         study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
         if (v$study_fc$ref[study_idx] == "shen_268"){ 

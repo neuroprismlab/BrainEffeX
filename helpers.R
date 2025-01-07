@@ -503,3 +503,15 @@ exportDownloadMatrices <- function(output, v, input) {
       contentType = "application/zip"
     )
 }
+
+# for transforming lower triangle data (e.g. hcp_ep data) to upper triangle
+# this is more complex than just transposing the matrix because we want the data as a vector
+# that when reshaped into a matrix, will be the same as the transpose of the lower triangle
+lower_to_upper_triangle <- function(data) {
+  nrow = (((-1 + sqrt(1 + 8 * length(data))) / 2) + 1)
+  m <- matrix(0, nrow ,nrow)
+  m[lower.tri(m)] <- data
+  t_m <- t(m)
+  new_data <- c(t_m[upper.tri(t_m)])
+  return(new_data)
+}
