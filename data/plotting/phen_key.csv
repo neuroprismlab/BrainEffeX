@@ -1,0 +1,45 @@
+Variable,Description
+cbcl_scr_syn_aggressive_t_FU1,Aggressive CBCL Syndrome Scale (t-score) at follow-up 1
+cbcl_scr_syn_aggressive_t,Aggressive CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_anxdep_t_FU1,AnxDep CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_attention_t_FU1,Attention CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_attention_t,Attention CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_external_t_FU1,External CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_external_t,External CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_internal_t_FU1,Internal CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_internal_t,Internal CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_rulebreak_t_FU1,RuleBreak CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_rulebreak_t,RuleBreak CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_social_t_FU1,Social CBCL Syndrome Scale (t-score) at follow-up 1
+cbcl_scr_syn_somatic_t_FU1,Somatic CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_thought_t_FU1,Thought CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_thought_t,Thought CBCL Syndrome Scale (t-score)
+cbcl_scr_syn_withdep_t_FU1,WithDep CBCL Syndrome Scale (t-score)
+nihtbx_fluidcomp_fc,Cognition Fluid Composite Fully-Corrected T-score
+pea_wiscv_tss,WISC-V Matrix Reasoning Total Scaled Score
+diag,Diagnosis
+card,Dimensional Change Card Sort Age 3+ Age-adjusted Scale Score
+flanker,Flanker Inhibitory Control and Attention Age 3+ Age-adjusted Score
+list,List Sorting Working Memory Age 7+ Age-adjusted Score
+process,Pattern Comparison Process Speed 7+ Age-adjusted Score
+srs,Social Responsiveness  Scale
+panss_gps_score,Positive and negative syndrom scale: general score
+panss_neg_score,Positive and negative syndrom scale: negative score
+panss_pos_score,Positive and negative syndrom scale: positive score
+panss_total_score,Positive and negative syndrom scale: total score
+PMAT24_A_CR,Fluid Intelligence (Penn Progressive Matrices): number of correct responses
+ProcSpeed_AgeAdj,Processing Speed (Pattern Completion Processing Speed): age adjusted scale score
+EMOTION,HCP Emotion task
+GAMBLING,HCP Gambling task
+RELATIONAL,HCP Relational task
+SOCIAL,HCP Social task
+WM,HCP Working memory task
+ADD011,"Attention Deficit Disorder: Did you often have trouble paying attention or keeping your mind on your school, work, chores, or other activities that you were doing?"
+DEP001,Depression: Has there ever been a time when you felt sad or depressed most of the time?
+EAT001,"Eating Disorder: Was there ever a time when you felt really fat or heavy, but other people said that you were too thin?"
+GAD001,Generalized Anxiety Disorder: Have you ever been a worrier?
+MAN001,"Mania/ Hypomania: Have there been times when you were much more active, excited or energetic than usual, had problems sitting still, or needed to move around a lot?"
+OCD018,Obsessive Compulsive Disorder: Have you ever saved up so many things that people complained or they got in the way?
+PAN001,Panic Disorder: Have you ever had an attack like this?
+PSY001,Psychosis: Have you ever heard voices when no one was there?
+SIP003,SIPS - PRIME SCREEN-REVISED: I think that I have felt that there are odd or unusual things going on that I can't explain.

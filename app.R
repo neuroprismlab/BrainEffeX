@@ -17,7 +17,8 @@ library(gridExtra)
 library(shinyBS) # For Bootstrap tooltips
 # library(osfr)
 library(shinyscreenshot) # for screenshot functionality
-library(EffeX) # to run locally, install the package from github with: devtools::install_github("halleeshearer/EffeX")
+library(EffeX) # to run locally, install the package from github with: devtools::install_github("neuroprismlab/BrainEffeX_utils")
+library(DT)
 
 # source helper functions
 source("helpers.R")
@@ -36,6 +37,10 @@ study <- data_list$study
 brain_masks <- data_list$brain_masks
 template <- data_list$template
 anatomical <- data_list$anatomical
+phen_keys <- data_list$phen_keys
+
+# load phen_key data
+#phen_keys <- read.csv('data/plotting/phen_key.csv')
 
 # clear data_list
 rm(data_list)
@@ -139,7 +144,7 @@ ui <- fluidPage(
                          label = tagList("Correlation", icon("info-circle", id = "behaviour_icon")),
                          choices = c("All" = "*", unique(study[study$orig_stat_type=="r", "test_component_2"])),
                          multiple = TRUE, selected = NULL),
-             bsTooltip("behaviour_icon", "Select behavioural variables for correlation analysis. If no behavioural variables are selected, all available options will be displayed by default.", "right", options = list(container = "body"))
+             bsTooltip("behaviour_icon", "Select behavioural variables for correlation analysis. If no behavioural variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
            ),
            
            selectInput("motion",
@@ -148,18 +153,11 @@ ui <- fluidPage(
                        selected = 'none'),
                        bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
            
-           
-           
            selectInput("spatial_scale",
                        label = tagList("Pooling", icon("info-circle", id = "spatial_scale_icon")),
                        choices = c("None" = 'none', "Network-level" = 'net')),
            bsTooltip("spatial_scale_icon", "Choose to pool the data.", "right", options = list(container = "body")),
            
-          #  radioButtons("dimensionality",
-          #              label = tagList("Dimensionality", icon("info-circle", id = "dimensionality_icon")),
-          #              choices = c("Univariate" = 'none', "Multivariate" = 'multi'), selected = 'none'),
-          #  bsTooltip("dimensionality_icon", "Univariate or multivariate analyses.", "right", options = list(container = "body")),
-
           selectInput("estimate",
                       label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
                       choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
@@ -167,8 +165,6 @@ ui <- fluidPage(
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
                        choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
            bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
-           
-           #actionButton("submit", "Submit", icon = icon("play")),
            
            h1(" "),
             # Button to download the plot as PNG
@@ -178,23 +174,35 @@ ui <- fluidPage(
            actionButton("screenshot", "Take a screenshot"),
            
            h1(" "),
-           h5("Helpful reminders"),
-           wellPanel(style = "background-color: #ffffff;", 
-                     helpText("For correlation studies (r), Var1 is the scanning condition, and Var2 is the behaviour."),
-                     helpText("For task vs. rest studies (t), Var1 is the task, and Var2 is rest."),
-                     helpText("For between-group studies (t2), Var1 and Var2 are the two groups."),
-                     helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-                     helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
-                     ),
+           # h5("Helpful reminders"),
+           # wellPanel(style = "background-color: #ffffff;", 
+           #           helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+           #           helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+           #           ),
            h1(" "),
-           h6(paste("Version 1.3; Last updated", Sys.Date()))      
+           
+          # add a small scrollable table of phenotypic keys and definitions
+          
+          conditionalPanel(
+            condition = "input.test_type.indexOf('r') > -1",
+            h4("Variable names"),
+            helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
+            DT::dataTableOutput("keys"),
+            ),
+          
+          h6(paste("Version 1.4; Last updated", Sys.Date())),
     ),
     
     column(5, align = "centre", # simCI plots
            uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
+           # h5("Helpful reminders"),
            h4("The plots below visualize all edges or voxels in each study."),
+           wellPanel(style = "background-color: #ffffff;", 
+                     helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+                     helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+           ),
           downloadButton("downloadPlots", "Download Plots"),
-           wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1))
+           wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
     ),
     
     column(4, align = "center", # effect size matrices)
@@ -695,6 +703,16 @@ server <- function(input, output, session) {
         plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
       })
     })
+    
+    output$keys <- DT::renderDataTable(phen_keys, 
+                                       options = list(rownames = FALSE, 
+                                                      paging = FALSE, 
+                                                      scroller = TRUE,
+                                                      scrollY = "400px",
+                                                      scrollX = FALSE,
+                                                      autoWidth = TRUE
+                                                      ),
+                                       rownames = FALSE)
 }
 
 # Run app ----
