@@ -28,8 +28,8 @@ body:
       label: Data collection
       description: "Did you collect this data?"
       options:
-        - label: Yes
-        - label: No
+        - "Yes"
+        - "No"
     validations:
       required: true
 
@@ -46,8 +46,8 @@ body:
       label: Map type
       description: "Are you providing activation maps or functional connectivity?"
       options:
-        - label: Activation maps
-        - label: Functional connectivity
+        - "Activation maps"
+        - "Functional connectivity"
     validations:
       required: true
 
