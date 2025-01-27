@@ -52,23 +52,23 @@ body:
       description: "Which preprocessing steps did you perform? Please send us your preprocessing scripts if available."
     validations:
       required: true
-    - type: input
-      id: parcellation
-      attributes: 
-        label: Parcellation
-        description: "Which parcellation did you use?"
-      validations:
-        required: true
-    - type: input
-      id: brainlife-link
-      attributes: 
-        label: Brainife.io Link
-        description: "If you haven't already, please upload your data to brainlife.io following the instructions in BrainEffeX/for_contributors/README.md. Please provide the link to the data from Brainlife.io here."
-      validations:
-        required: true
-    - type: markdown
-      id: thank-you
-      attributes: 
-        label: Thank you!
-        
+  - type: input
+    id: parcellation
+    attributes: 
+      label: Parcellation
+      description: "Which parcellation did you use?"
+    validations:
+      required: true
+  - type: input
+    id: brainlife-link
+    attributes: 
+      label: Brainife.io Link
+      description: "If you haven't already, please upload your data to brainlife.io following the instructions in BrainEffeX/for_contributors/README.md. Please provide the link to the data from Brainlife.io here."
+    validations:
+      required: true
+  - type: markdown
+    id: thank-you
+    attributes: 
+      label: Thank you!
+      
   
