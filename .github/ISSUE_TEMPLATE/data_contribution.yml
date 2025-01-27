@@ -2,9 +2,9 @@ name: Data Contribution
 description: Contribute data to BrainEffeX
 body:
   - type: markdown
-  attributes:
-    value: |
-      Thanks for contributing data to BrainEffeX! Please answer a few questions about your data contribution.
+    attributes:
+      value: |
+        Thanks for contributing data to BrainEffeX! Please answer a few questions about your data contribution.
   - type: input
     id: name
     attributes:
