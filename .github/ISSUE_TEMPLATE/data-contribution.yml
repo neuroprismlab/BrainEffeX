@@ -33,6 +33,17 @@ body:
     validations:
       required: true
 
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Sharing Permission
+      description: "Do you have permission to share this dataset?"
+      options:
+        - label: "Yes"
+        - label: "No"
+    validations:
+      required: true
+
   - type: input
     id: dataset-name
     attributes: 
