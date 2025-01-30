@@ -26,6 +26,9 @@ Save your .mat file in a directory that contains only this .mat file (this is im
 5. Upload data
    - On Brainlife, uploaded data should fit a preset data type. By utilizing a datatype, this ensures that the uploaded data fits the requirements of that type of data. Since we are currently only using Brainlife as a means to transfer the data, we have not created a datatype for EffeX contributions on Brainlife (although in the future we hope to transform the analysis pipeline into a series of Brainlife apps). Data that does not fit a datatype can be uploaded as the “raw” datatype that does not impose any restrictions. However, this type of data upload can only be done through the command line. Therefore, the following steps must be completed in the command line (i.e., terminal).
    - Install the Brainlife command line interface following the instructions at https://brainlife.io/docs/cli/install/.
+     - for Mac users, you can follow these summarized instructions, but they may become outdated so refer to the official instructions if you encounter issues.
+     - run ```brew install node``` to download node
+     - run ```sudo npm install -g brainlife``` to install brainlife. Enter your computer's username and password when prompted
    - Login to Brainlife in the command life with ```bl login --ttl 7```, where 7 is the number of days to remain logged in (feel free to change the number).
    - Find your project ID by running ```bl project query --admin {username}```. From the results, find your EffeX contribution project and note down the project ID.
    - To upload your data, run ```bl data upload --datatype raw --project {project_ID} --subject {subject_name} --output {data_dir_path}``` where project_ID is the ID from the previous step, subject_name is 1, and data_dir_path is the path to the data directory where your .mat file is stored (not the full path to the .mat file, just the path of the directory containing the .mat file).
