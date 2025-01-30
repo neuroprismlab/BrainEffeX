@@ -13,7 +13,7 @@ Save your .mat file in a directory that contains only this .mat file (this is im
 
 
 ## 2. Upload your data to Brainlife.io
-1. Create an account on Brainlife.io.
+1. Create an account on [Brainlife.io.](https://brainlife.io/auth/#!/signup)
 2. Create a project:
    - For the project name, please include the name of the dataset, your last name, and "EffeX". For example, "HCP_Shearer_EffeX"
    - Under "Access Control", please add us as a 'Guest' with the email address neuroprismlab@gmail.com
