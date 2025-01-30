@@ -60,10 +60,10 @@ body:
       required: true
 
   - type: input
-    id: parcellation
+    id: reference
     attributes: 
-      label: Parcellation
-      description: "Which parcellation did you use?"
+      label: Reference Space / Parcellation
+      description: "Which reference space (e.g., MNI152) or parcellation (e.g., Shen 268) did you use?"
     validations:
       required: true
 
