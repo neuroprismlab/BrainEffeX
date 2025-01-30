@@ -21,6 +21,7 @@ Save your .mat file in a directory that contains only this .mat file (this is im
    - For the project name, please include the name of the dataset, your last name, and "EffeX". For example, "HCP_Shearer_EffeX"
    - Click "Access Control" near the top. Please add us as a 'Guest' with the email address neuroprismlab@gmail.com
    ![Screenshot 2025-01-28 at 1 45 18 PM](https://github.com/user-attachments/assets/d3ac73f5-1618-4f9f-8b97-afcc54aa60b0)
+      - NOTE: Sometimes the neuroprismlab account won't show up if you copy-paste the email address. Instead, please type neuroprismlab and the email should show up.
    - Click "Submit" on the bottom right.
 5. Upload data
    - On Brainlife, uploaded data should fit a preset data type. By utilizing a datatype, this ensures that the uploaded data fits the requirements of that type of data. Since we are currently only using Brainlife as a means to transfer the data, we have not created a datatype for EffeX contributions on Brainlife (although in the future we hope to transform the analysis pipeline into a series of Brainlife apps). Data that does not fit a datatype can be uploaded as the “raw” datatype that does not impose any restrictions. However, this type of data upload can only be done through the command line. Therefore, the following steps must be completed in the command line (i.e., terminal).
