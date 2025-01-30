@@ -1,6 +1,8 @@
 # Instructions for contributors
 BrainEffeX welcomes contributions of large (n>500) subject-level datasets. Data should be provided at the subject level, after preprocessing and computation of functional connectivity or task-based activation. Specifically, a .mat file containing three structs should be provided, with fields listed in Figure 3. Template .mat files with the proper structure for each test type may be downloaded from https://github.com/neuroprismlab/BrainEffeX/tree/main/for_contributors/templates to facilitate the organization of the data files.
 
+If you have any issues while trying to contribute data, please don't hesistate to file an issue here on Github (via a 'Blank' issue request, not the contribution template), or email us at neuroprismlab@gmail.com. We would be happy to walk through any of these steps with you!
+
 **To contribute data to BrainEffeX, please follow these steps...**
 
 ## 1. Format your data
@@ -34,8 +36,6 @@ Save your .mat file in a directory that contains only this .mat file (this is im
   - Fill in the form, providing information about the data that you are contributing.
   - In the last field, provide the URL to the Brainlife project where you uploaded the data.
   - Submit the form!
-
-If you have any issues while trying to contribute data, please don't hesistate to file an issue here on Github (via a 'Blank' issue request, not the contribution template), or email us at neuroprismlab@gmail.com.
 
 
 
