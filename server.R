@@ -79,43 +79,25 @@ server <- function(input, output, session) {
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
   
-  # create an index of the studies that fit each input selection, as well as total
-  # index of studies that fill all input selections simultaneously (v$filter_index$total)
-  v$filter_idx <- get_filter_index(input, study)
-  
-  #TODO: could create index for each parameter stored in a list of parameters
+  # filter data and study by user inpute selections
   observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
-    v$data <- data[(grepl(input$dataset, study$dataset) & 
-                    grepl(input$measurement_type, study$map_type) & 
-                    ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
-                       (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
-                    (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                    grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
-                    # ensure that the combination of motion and spatial scale is included in data
-                    unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
+    # create an index of the studies that fit each input selection, as well as total
+    # index of studies that fill all input selections simultaneously (v$filter_index$total)
+    v$filter_idx <- get_filter_index(input, study)
     
-    # also filter study by the same parameters
-    v$study <- study[(grepl(input$dataset, study$dataset) & 
-                        grepl(input$measurement_type, study$map_type) & 
-                        ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
-                           (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
-                        (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                        grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
-                        unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))),]
+    # filter data and study by matching indices
+    v$data <- data[v$filter_idx$total]
+    v$study <- study[v$filter_idx$total,]
   })
   
   # update the task selection input with available tasks but do not pre-select any
   observeEvent(input$dataset, {
-    v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))#unique(v$study$test_component_1)
+    v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))
     updateSelectizeInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
   })
   
   # update the behaviour selection input with available behaviours but do not pre-select any
   observeEvent(list(input$dataset, input$measurement_type, input$test_type), {
-    # v$beh_choices <- v$study[(grepl(input$dataset, study$dataset) & 
-    #                  grepl(input$measurement_type, study$map_type) &
-    #                  grepl(input$test_type, study$orig_stat_type) &
-    #                  (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
     v$beh_choices <- v$study[, "test_component_2"]
     updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
   })
@@ -135,13 +117,13 @@ server <- function(input, output, session) {
   
   # update behaviour selections to only be the available constrained selections... 
   observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
+    # get filter index for matching studies
+    v$filter_idx <- get_filter_index(input, study)
     
-    v$task_choices <- study[(grepl(input$dataset, study$dataset) & 
-                               grepl(input$measurement_type, study$map_type)),"test_component_1"]
+    # filter by matching datasets and map type
+    v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
     
-    v$beh_choices <- study[(grepl(input$dataset, study$dataset) & 
-                              grepl(input$measurement_type, study$map_type) &
-                              (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))),"test_component_2"]
+    v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
     
     if (input$test_type == "r") {
       updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -154,10 +136,9 @@ server <- function(input, output, session) {
   }) 
   
   observe({
-    v$data_act <- v$data[grepl("_act_", names(v$data))]
+    v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
     v$data_fc <- v$data[grepl("_fc_", names(v$data))]
     v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
-    v$study_act <- v$study[grepl("_act_", v$study$name), ]
   })
   
   
@@ -179,11 +160,8 @@ server <- function(input, output, session) {
     v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
       # v$study_name as the name column from study that matches the task input and has map type activation
-      #print(paste("task: ", input$task, " is in effect maps available"))
       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-      #print(paste("creating nifti for: ", v$study_name))
       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
-      #print(paste("nifti created for: ", v$study_name, " with dimensions: ", dim(v$nifti)))
     }
   }, ignoreNULL = TRUE)
   
@@ -305,7 +283,7 @@ server <- function(input, output, session) {
     t_total_268 <- rep(0, 35778) 
     t_total_268_pooled <- rep(0, 55)
     t_total_55 <-  rep(0 , 1485)
-    t_total_55_pooled <- rep(0, 10)
+    t_total_55_pooled <- rep(0, 55)
     
     n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
     n_268_studies_pooled <- 0
@@ -314,11 +292,6 @@ server <- function(input, output, session) {
     
     for (i in 1:length(v$data_fc)) {
       t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
-      
-      # if study is hcp_ep, then transform from lower to upper triangle
-      if (grepl("hcp_ep", v$study_fc$name[i])) {
-        t <- lower_to_upper_triangle(t)
-      }
       
       study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
       if (v$study_fc$ref[study_idx] == "shen_268"){ 
@@ -375,7 +348,7 @@ server <- function(input, output, session) {
       t_avg_55 <- t_total_55
     }
     
-    if (n_55_studies_pooled > 1) {
+    if (n_55_studies_pooled >= 1) {
       t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
     }
     
@@ -438,8 +411,8 @@ server <- function(input, output, session) {
     output$brain <- renderPlot({
       par(mar = c(0, 0, 0, 5))
       validate(
-        need(length(v$data_act) == 1, "Please select exactly one task to visualize the activation map."),
-        need(length(v$data_act) > 0, paste0(c("We do not have activation data for the selected parameters."))),
+        need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
+        need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
         need(dim(v$nifti != NA), "")
       )
       

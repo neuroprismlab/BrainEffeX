@@ -697,6 +697,7 @@ get_filter_index <- function(input, study) {
   filter_idx$map <- grepl(input$measurement_type, study$map_type)
   filter_idx$task <- ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2)))
+  filter_idx$test_component_1 <- (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))
   filter_idx$test <- (input$test_type == "*" | (study$orig_stat_type == input$test_type))
   filter_idx$behavior <- grepl(paste(input$behaviour, collapse="|"), study$test_component_2)
   filter_idx$pool_motion <- unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))
