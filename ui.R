@@ -1,8 +1,15 @@
 ####################################################################
 # BrainEffeX UI
 ####################################################################
+library(shinyjs)
+library(bslib)
+library(shinyBS)
+library(shinycssloaders)
+library(BrainEffeX.utils)
 
 source("modals.R")
+
+date_updated = "Feb-03-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -122,7 +129,7 @@ ui <- fluidPage(
              DT::dataTableOutput("keys"),
            ),
            
-           h6(paste("Version 1.4; Last updated", Sys.Date())),
+           h6(paste("Version 1.5; Last updated ", date_updated)),
     ),
     
     column(5, align = "centre", # simCI plots

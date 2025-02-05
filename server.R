@@ -10,6 +10,9 @@ library(reshape)
 library(fields)
 library(oro.nifti)
 library(neurobase)
+library(shinyjs)
+library(bslib)
+library(BrainEffeX.utils)
 
 source("helpers.R")
 
@@ -75,15 +78,21 @@ server <- function(input, output, session) {
   
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
+  
+  # create an index of the studies that fit each input selection, as well as total
+  # index of studies that fill all input selections simultaneously (v$filter_index$total)
+  v$filter_idx <- get_filter_index(input, study)
+  
+  #TODO: could create index for each parameter stored in a list of parameters
   observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
     v$data <- data[(grepl(input$dataset, study$dataset) & 
-                      grepl(input$measurement_type, study$map_type) & 
-                      ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
-                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
-                      (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
-                      grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
-                      # ensure that the combination of motion and spatial scale is included in data
-                      unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
+                    grepl(input$measurement_type, study$map_type) & 
+                    ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
+                       (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2))) & 
+                    (input$test_type == "*" | (study$orig_stat_type == input$test_type)) &
+                    grepl(paste(input$behaviour, collapse="|"), study$test_component_2) &
+                    # ensure that the combination of motion and spatial scale is included in data
+                    unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist))))))]
     
     # also filter study by the same parameters
     v$study <- study[(grepl(input$dataset, study$dataset) & 

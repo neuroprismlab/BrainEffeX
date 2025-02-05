@@ -1,3 +1,170 @@
+# temporarily copied plot_sim_ci over from utils main branch function
+# just for now while transitioning to figure out how to use Steph's new function
+plot_sim_ci <- function(data, name, study_details, combo_name, mv_combo_name, group_by = 'none', estimate = 'd', save = FALSE, out_path = 'output', file_name = 'plot') {
+  if (save) {
+    out_name = paste0(out_path, '/', file_name)
+    png(out_name)
+  }
+  
+  if (estimate == "d") {
+    ci_lb <- "sim_ci_lb"
+    ci_ub <- "sim_ci_ub"
+  } else if (estimate == "r_sq") {
+    ci_lb <- "r_sq_sim_ci_lb"
+    ci_ub <- "r_sq_sim_ci_ub"
+  }
+  
+  #TODO: change variable names from d to estimate within this function to
+  # make less confusing. Not urgent.
+  
+  # find the full combo name for this multivariate test #TODO: fix the code that creates the data to assign the rest test statistic to the combos
+  full_mv_combo_name <- names(data)[grepl(mv_combo_name, names(data))]
+  
+  # remove na
+  na_idx <- is.na(data[[combo_name]][[estimate]]) | is.na(data[[combo_name]][[ci_lb]]) | is.na(data[[combo_name]][[ci_ub]])
+  data[[combo_name]][[estimate]] <- data[[combo_name]][[estimate]][!na_idx]
+  data[[combo_name]][[ci_lb]] <- data[[combo_name]][[ci_lb]][!na_idx]
+  data[[combo_name]][[ci_ub]] <- data[[combo_name]][[ci_ub]][!na_idx]
+  
+  # unlist sim CIs if list
+  if (is.list(data[[combo_name]][[ci_lb]])) {
+    data[[combo_name]][[ci_lb]] <- unlist(data[[combo_name]][[ci_lb]])
+    data[[full_mv_combo_name]][[ci_lb]] <- unlist(data[[full_mv_combo_name]][[ci_lb]])
+  }
+  if (is.list(data[[combo_name]][[ci_ub]])) {
+    data[[combo_name]][[ci_ub]] <- unlist(data[[combo_name]][[ci_ub]])
+    data[[full_mv_combo_name]][[ci_ub]] <- unlist(data[[full_mv_combo_name]][[ci_ub]])
+  }
+  
+  # sort data from smallest to largest d
+  sorted_indices <- order(data[[combo_name]][[estimate]])
+  sorted_d_whole <- data[[combo_name]][[estimate]][sorted_indices]
+  # sort confidence intervals by the same order
+  sorted_upper_bounds_whole <- data[[combo_name]][[ci_ub]][sorted_indices]
+  sorted_lower_bounds_whole <- data[[combo_name]][[ci_lb]][sorted_indices]
+  
+  # downsample data for plotting
+  downsample <- length(sorted_indices) %/% 100
+  if (downsample < 1) {
+    downsample = 1
+  }
+  sorted_d <- sorted_d_whole[seq(1, length(sorted_d_whole), by = downsample)]
+  # to include the last element of the sorted data, check if the last element of sorted_d is the same as the last element of sorted_d_whole
+  if (sorted_d[length(sorted_d)] != sorted_d_whole[length(sorted_d_whole)]) {
+    sorted_d <- c(sorted_d, sorted_d_whole[length(sorted_d_whole)])
+  }
+  sorted_upper_bounds <- sorted_upper_bounds_whole[seq(1, length(sorted_upper_bounds_whole), by = downsample)]
+  # check if the last element of sorted_upper_bounds is the same as the last element of sorted_upper_bounds_whole
+  if (sorted_upper_bounds[length(sorted_upper_bounds)] != sorted_upper_bounds_whole[length(sorted_upper_bounds_whole)]) {
+    sorted_upper_bounds <- c(sorted_upper_bounds, sorted_upper_bounds_whole[length(sorted_upper_bounds_whole)])
+  }
+  sorted_lower_bounds <- sorted_lower_bounds_whole[seq(1, length(sorted_lower_bounds_whole), by = downsample)]
+  # check if the last element of sorted_lower_bounds is the same as the last element of sorted_lower_bounds_whole
+  if (sorted_lower_bounds[length(sorted_lower_bounds)] != sorted_lower_bounds_whole[length(sorted_lower_bounds_whole)]) {
+    sorted_lower_bounds <- c(sorted_lower_bounds, sorted_lower_bounds_whole[length(sorted_lower_bounds_whole)])
+  }
+  
+  
+  # for coloring of confidence intervals:
+  below_zero <- sorted_upper_bounds < 0
+  below_cross_idx <- which(diff(below_zero) == -1) + 1# the last TRUE before switch
+  
+  above_zero <- sorted_lower_bounds > 0
+  above_cross_idx <- (which(diff(above_zero) == 1)) + 1 # the last FALSE before switch to true
+  
+  if (group_by == 'none') {
+    n_title <- paste0("n = ", data[[combo_name]]$n)
+  }
+  
+  # calculate the percent of edges/voxels with confidence intervals that don't overlap with zero:
+  percent_below_zero <- sum(sorted_upper_bounds < 0) / length(sorted_upper_bounds)
+  percent_above_zero <- sum(sorted_lower_bounds > 0) / length(sorted_lower_bounds)
+  percent_not_zero = percent_below_zero + percent_above_zero
+  
+  # if there are no values below zero, set the index to 1
+  if (length(below_cross_idx) == 0) {
+    below_cross_idx = 1
+  } 
+  
+  # if there are no values above zero, set the index to the end
+  if (length(above_cross_idx) == 0) {
+    above_cross_idx = length(above_zero)
+  } 
+  
+  # plot a line for d
+  par(mar=c(3, 4, 5, 2))
+  plot(sorted_d, type = "l", ylim = c(min(sorted_lower_bounds, na.rm = TRUE), max(sorted_upper_bounds, na.rm = TRUE)),
+       xlab = "Edges/Voxels", ylab = "Cohen's d", axes = FALSE)
+  # add a horizontal line at y = 0
+  abline(h = 0, col = "#ba2d25", lty = 3)
+  axis(2, las = 1)  # Add left axis with labels parallel to the axis (las = 1)
+  if (group_by == 'none') {
+    
+    legend("topleft", inset = c(-0.1, -0.5), 
+           legend = c(bquote(bold("Test: ") ~ .(study_details$orig_stat_type) ~ ": " ~ .(study_details$test_component_1) ~ ", " ~ .(study_details$test_component_2)),
+                      bquote(bold("Dataset: ") ~ .(study_details$dataset)), 
+                      "",
+                      bquote(bold("Map: ") ~ .(study_details$map_type)),
+                      "",
+                      bquote(bold("Sample Size: ") ~ .(n_title))),
+           col = 2, bty = "n", cex = 1, text.width = 25, xpd = TRUE, ncol = 3)
+    
+  } else if (group_by == "orig_stat_type") {
+    legend("topleft", inset = c(-0.1, -0.5),
+           legend = c(
+             bquote(bold("Statistic:")), 
+             paste(study_details$group, "  "),
+             bquote(bold("Reference Space:")),
+             paste(study_details$ref, "  ")
+           ), 
+           bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
+  } else if (group_by == "category") {
+    legend("topleft", inset = c(-0.1, -0.5),
+           legend = c(
+             bquote(bold("Phenotype Category:")), 
+             paste(study_details$group, "  "),
+             bquote(bold("Reference Space:")),
+             paste(study_details$ref, "  ")
+           ), 
+           bty = "n", ncol = 2, cex = 1, x.intersp = 0.0, xpd = TRUE)
+  }
+  max_cons_effect = ifelse((abs(max(data[[combo_name]][[ci_lb]], na.rm = TRUE)) > abs(min(data[[combo_name]][[ci_ub]], na.rm = TRUE))), 
+                           ifelse((max(data[[combo_name]][[ci_lb]], na.rm = TRUE) > 0),
+                                  round(abs(max(data[[combo_name]][[ci_lb]], na.rm = TRUE)), 2), 0),
+                           ifelse((min(data[[combo_name]][[ci_ub]], na.rm = TRUE) < 0), round(abs(min(data[[combo_name]][[ci_ub]], na.rm = TRUE)), 2), 0))
+  
+  if (group_by == 'none') {
+    legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+                                                        bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%"),
+                                                        bquote(bold("Multivariate effect size: ") ~.(round(data[[full_mv_combo_name]][[estimate]], 2)) ~ "  [" ~.(round(data[[full_mv_combo_name]][[ci_lb]], 2)) ~ ", " ~.(round(data[[full_mv_combo_name]][[ci_ub]], 2)) ~ "]")), col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+  } else {
+    legend("bottomleft", inset = c(0, -0.5), legend = c(bquote(bold("Max conservative effect size: ") ~ .(max_cons_effect)), 
+                                                        bquote(bold("Percent not overlapping zero: ") ~.(round(percent_not_zero * 100, 1)) ~ "%")),
+           col = 1, bty = "n", cex = 1, x.intersp = 0, xpd = TRUE)
+  }
+  
+  
+  # plot and shade the cofidence intervals:
+  # green for intervals that are entirely below zero
+  polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
+          c(sorted_upper_bounds[1:below_cross_idx], rev(sorted_lower_bounds[1:below_cross_idx])), 
+          col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
+  
+  # red for intervals that include zero
+  polygon(c(below_cross_idx:above_cross_idx, rev(below_cross_idx:above_cross_idx)), 
+          c(sorted_upper_bounds[below_cross_idx:above_cross_idx], rev(sorted_lower_bounds[below_cross_idx:above_cross_idx])), 
+          col = rgb(237/255, 185/255, 185/255, alpha = 0.5), border = NA)
+  
+  # green for intervals that are entirely above zero
+  polygon(c(above_cross_idx:length(above_zero), rev(above_cross_idx:length(above_zero))), 
+          c(sorted_upper_bounds[above_cross_idx:length(above_zero)], rev(sorted_lower_bounds[above_cross_idx:length(above_zero)])), 
+          col = rgb(177/255, 207/255, 192/255, alpha = 0.5), border = NA)
+  
+  if (save) {
+    dev.off()
+  }
+}
+
 #### Plot full FC matrix given a triangle:
 
 plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output', plot_name = 'matrix.png') {
@@ -324,7 +491,7 @@ exportDownloadData <- function(output, v) {
       paste("EffeX_data", ".RData", sep="")
     },
     content = function(file) {
-      saveRDS(v$d_clean, file)
+      saveRDS(v$data, file)
     }
   )
 }
@@ -352,13 +519,13 @@ exportDownloadPlots <- function(output, v, input) {
       v$plot_files <- c()
       
       # Save plots as PNGs
-      if (input$group_by == "none" && length(v$d_clean) > 0) {
-        for (i in 1:length(v$d_clean)) {
-          plotname <- paste0(names(v$d_clean[i]), '.png')
+      if (input$group_by == "none" && length(v$data) > 0) {
+        for (i in 1:length(v$data)) {
+          plotname <- paste0(names(v$data[i]), '.png')
           plotpath <- file.path(tmpdir, plotname)
           
           plot_sim_ci(
-            v$d_clean[[i]], names(v$d_clean[i]), v$study[i,],
+            v$data[[i]], names(v$data[i]), v$study[i,],
             combo_name = v$combo_name, mv_combo_name = v$mv_combo_name,
             group_by = input$group_by, save = TRUE, out_path = tmpdir, file_name = plotname
           )
@@ -406,10 +573,10 @@ exportDownloadMatrices <- function(output, v, input) {
       n_268_studies_pooled <- 0
       n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
  
-      for (i in 1:length(v$d_clean_fc)) {
-        t <- v$d_clean_fc[[i]][[v$combo_name]]$d
+      for (i in 1:length(v$data_fc)) {
+        t <- v$data_fc[[i]][[v$combo_name]]$d
 
-        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$d_clean_fc)[i]))
+        study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
         if (v$study_fc$ref[study_idx] == "shen_268"){ 
           
           if (input$spatial_scale == "net") {
@@ -514,4 +681,26 @@ lower_to_upper_triangle <- function(data) {
   t_m <- t(m)
   new_data <- c(t_m[upper.tri(t_m)])
   return(new_data)
+}
+
+
+
+
+
+
+#### new 
+
+
+get_filter_index <- function(input, study) {
+  filter_idx <- list()
+  filter_idx$dataset <- grepl(input$dataset, study$dataset)
+  filter_idx$map <- grepl(input$measurement_type, study$map_type)
+  filter_idx$task <- ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
+                        (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2)))
+  filter_idx$test <- (input$test_type == "*" | (study$orig_stat_type == input$test_type))
+  filter_idx$behavior <- grepl(paste(input$behaviour, collapse="|"), study$test_component_2)
+  filter_idx$pool_motion <- unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))
+  filter_idx$total <- filter_idx$dataset & filter_idx$map & filter_idx$task & filter_idx$test & filter_idx$behavior & filter_idx$pool_motion
+  
+  return(filter_idx)
 }
