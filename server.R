@@ -56,7 +56,6 @@ server <- function(input, output, session) {
           spinner.color.background = "#ffffff", spinner.size = 1)
   
   
-  
   # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
   updateSelectInput(session, "dataset", choices = c("All" = "*", unique(study$dataset)))
   updateSelectInput(session, "measurement_type", choices = c("All" = "*", unique(study$map_type)))
@@ -79,12 +78,12 @@ server <- function(input, output, session) {
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
   
-  # filter data and study by user inpute selections
+  # filter data and study by user input selections
   observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
-    v$filter_idx <- get_filter_index(input, study)
-    
+    v$filter_idx <- get_filter_index(data, input, study)
+  
     # filter data and study by matching indices
     v$data <- data[v$filter_idx$total]
     v$study <- study[v$filter_idx$total,]
@@ -118,7 +117,7 @@ server <- function(input, output, session) {
   # update behaviour selections to only be the available constrained selections... 
   observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
     # get filter index for matching studies
-    v$filter_idx <- get_filter_index(input, study)
+    v$filter_idx <- get_filter_index(data, input, study)
     
     # filter by matching datasets and map type
     v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
