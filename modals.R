@@ -107,10 +107,10 @@ createDynamicPanel <- function(input, study) {
     }
     
     # Map type message
-    if (is.null(input$measurement_type) || input$measurement_type == "*") {
-      messages$measurement_type <- "• All map types."
+    if (is.null(input$map_type) || input$map_type == "*") {
+      messages$map_type <- "• All map types."
     } else {
-      messages$measurement_type <- paste("• <b>", input$measurement_type, "</b> map type.")
+      messages$map_type <- paste("• <b>", input$map_type, "</b> map type.")
     }
     
     # Task message
@@ -129,13 +129,13 @@ createDynamicPanel <- function(input, study) {
       messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
     }
     
-    # Behaviour message
-    if (is.null(input$behaviour) || length(input$behaviour) == 0) {
-      messages$behaviour <- "• No specific behaviours are selected."
-    } else if (length(input$behaviour) == length(unique(study[["var2"]])) || input$behaviour == "*") {
-      messages$behaviour <- "• All correlations"
+    # correlation message
+    if (is.null(input$correlation) || length(input$correlation) == 0) {
+      messages$correlation <- "• No specific correlations are selected."
+    } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
+      messages$correlation <- "• All correlations"
     } else {
-      messages$behaviour <- paste("• The <b>", paste(input$behaviour, collapse = ", "), "</b> correlation(s).")
+      messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
     }
     
     # Group by message

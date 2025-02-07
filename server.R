@@ -58,20 +58,20 @@ server <- function(input, output, session) {
   
   # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
   updateSelectInput(session, "dataset", choices = c("All" = "*", unique(study$dataset)))
-  updateSelectInput(session, "measurement_type", choices = c("All" = "*", unique(study$map_type)))
+  updateSelectInput(session, "map_type", choices = c("All" = "*", unique(study$map_type)))
   updateSelectizeInput(session, "task", choices = c("All" = "*", unique(study$test_component_1)), server = TRUE)
   updateSelectInput(session, "test_type", choices = c("All" = "*", unique(study$orig_stat_type)))
-  updateSelectInput(session, "behaviour", choices = c("All" = "*", unique(study[study$orig_stat_type == "r", "test_component_2"])))
+  updateSelectInput(session, "correlation", choices = c("All" = "*", unique(study[study$orig_stat_type == "r", "test_component_2"])))
   
   # Dynamic panel output
   output$dynamicPanel <- createDynamicPanel(input, study)
   createModalNavigationObservers(input, session)
   
-  # # Observer to handle default behaviour display
-  observeEvent(input$behaviour, {
-    if (is.null(input$behaviour) || length(input$behaviour) == 0) {
+  # # Observer to handle default correlation display
+  observeEvent(input$correlation, {
+    if (is.null(input$correlation) || length(input$correlation) == 0) {
       # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "behaviour", choices = unique(v$beh_choices))
+      updateSelectizeInput(session, "correlation", choices = unique(v$beh_choices))
     }
   }, ignoreInit = TRUE)
   
@@ -79,7 +79,7 @@ server <- function(input, output, session) {
   v <- reactiveValues()
   
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$measurement_type, input$task, input$test_type, input$behaviour, input$motion, input$spatial_scale), priority = 1,{
+  observeEvent(list(input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     v$filter_idx <- get_filter_index(data, input, study)
@@ -95,16 +95,16 @@ server <- function(input, output, session) {
     updateSelectizeInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
   })
   
-  # update the behaviour selection input with available behaviours but do not pre-select any
-  observeEvent(list(input$dataset, input$measurement_type, input$test_type), {
+  # update the correlation selection input with available correlations but do not pre-select any
+  observeEvent(list(input$dataset, input$map_type, input$test_type), {
     v$beh_choices <- v$study[, "test_component_2"]
-    updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+    updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
   })
   
   # reset input$behavior to NULL if input$test_type is not "r"
   observeEvent(input$test_type, {
     if (input$test_type != "r") {
-      updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+      updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
     }
   })
   
@@ -114,8 +114,8 @@ server <- function(input, output, session) {
     updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
   })
   
-  # update behaviour selections to only be the available constrained selections... 
-  observeEvent(ignoreInit = TRUE, input$measurement_type, priority = 2, {
+  # update correlation selections to only be the available constrained selections... 
+  observeEvent(ignoreInit = TRUE, input$map_type, priority = 2, {
     # get filter index for matching studies
     v$filter_idx <- get_filter_index(data, input, study)
     
@@ -125,12 +125,12 @@ server <- function(input, output, session) {
     v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
     
     if (input$test_type == "r") {
-      updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+      updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
     }
     #print("measurement type changed")
     
     # Update the beh selection input with available behs but do not pre-select any
-    updateSelectInput(session, "behaviour", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+    updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
     updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
   }) 
   
@@ -152,12 +152,12 @@ server <- function(input, output, session) {
   
   
   toListen <- reactive({
-    list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$spatial_scale, input$estimate, input$motion)
+    list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$estimate, input$motion)
   })
   
   observeEvent(toListen(), {
-    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
-    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$spatial_scale == "none") {
+    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
       # v$study_name as the name column from study that matches the task input and has map type activation
       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
@@ -169,8 +169,8 @@ server <- function(input, output, session) {
   
   observe({
     # v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
-    v$combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.none')
-    v$mv_combo_name <- paste0('pooling.', input$spatial_scale, '.motion.', input$motion, '.mv.multi')
+    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+    v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
   })
   
   observeEvent(toListen(), {
@@ -295,7 +295,7 @@ server <- function(input, output, session) {
       study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
       if (v$study_fc$ref[study_idx] == "shen_268"){ 
         
-        if (input$spatial_scale == "net") {
+        if (input$pooling == "net") {
           t_total_268_pooled <- t_total_268_pooled + t
           n_268_studies_pooled <- n_268_studies_pooled + 1
         }
@@ -309,7 +309,7 @@ server <- function(input, output, session) {
       
       else if (v$study_fc$ref[study_idx] == "ukb_55") {
         
-        if (input$spatial_scale == "net") {
+        if (input$pooling == "net") {
           t_total_55_pooled <- t_total_55_pooled + t
           n_55_studies_pooled <- n_55_studies_pooled + 1
         }
@@ -372,7 +372,7 @@ server <- function(input, output, session) {
     }
     
     # if not pooled, show the 268 and 55 matrices
-    if (input$spatial_scale == "none") {
+    if (input$pooling == "none") {
       # if there is only shen or only ukb, only plot one plot
       if ((n_268_studies == 0) & (n_55_studies > 0)) {
         grid.arrange(plot_55, ncol = 1)
@@ -386,7 +386,7 @@ server <- function(input, output, session) {
     }
     
     # if pooled, show the pooled 268 and 55 matrices
-    if (input$spatial_scale == "net") {
+    if (input$pooling == "net") {
       # if there is only shen or only ukb, only plot one plot
       if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
         grid.arrange(plot_55_pooled, ncol = 1)

@@ -579,7 +579,7 @@ exportDownloadMatrices <- function(output, v, input) {
         study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
         if (v$study_fc$ref[study_idx] == "shen_268"){ 
           
-          if (input$spatial_scale == "net") {
+          if (input$pooling == "net") {
             t_total_268_pooled <- t_total_268_pooled + t
             n_268_studies_pooled <- n_268_studies_pooled + 1
           }
@@ -694,13 +694,13 @@ lower_to_upper_triangle <- function(data) {
 get_filter_index <- function(data, input, study) {
   filter_idx <- list()
   filter_idx$dataset <- grepl(input$dataset, study$dataset)
-  filter_idx$map <- grepl(input$measurement_type, study$map_type)
+  filter_idx$map <- grepl(input$map_type, study$map_type)
   filter_idx$task <- ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
                         (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2)))
   filter_idx$test_component_1 <- (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))
   filter_idx$test <- (input$test_type == "*" | (study$orig_stat_type == input$test_type))
-  filter_idx$behavior <- grepl(paste(input$behaviour, collapse="|"), study$test_component_2)
-  filter_idx$pool_motion <- unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$spatial_scale, ".motion.", input$motion), names(sublist)))))
+  filter_idx$behavior <- grepl(paste(input$correlation, collapse="|"), study$test_component_2)
+  filter_idx$pool_motion <- unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$pooling, ".motion.", input$motion), names(sublist)))))
   filter_idx$total <- filter_idx$dataset & filter_idx$map & filter_idx$test_component_1 & filter_idx$test & filter_idx$behavior & filter_idx$pool_motion
   
   return(filter_idx)

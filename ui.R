@@ -61,10 +61,10 @@ ui <- fluidPage(
                        choices = c("All" = "*")),
            bsTooltip("dataset_icon", "Select an dataset to visualize.", "right", options = list(container = "body")),
            
-           selectInput("measurement_type",
-                       label = tagList("Map Type", icon("info-circle", id = "measurement_type_icon")),
+           selectInput("map_type",
+                       label = tagList("Map Type", icon("info-circle", id = "map_type_icon")),
                        choices = c("All" = "*")),
-           bsTooltip("measurement_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
+           bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
            
            selectizeInput("task",
                           label = tagList("Task", icon("info-circle", id = "task_icon")),
@@ -79,11 +79,11 @@ ui <- fluidPage(
            
            conditionalPanel(
              condition = "input.test_type.indexOf('r') > -1",
-             selectInput("behaviour",
-                         label = tagList("Correlation", icon("info-circle", id = "behaviour_icon")),
+             selectInput("correlation",
+                         label = tagList("Correlation", icon("info-circle", id = "correlation_icon")),
                          choices = c("All" = "*"),
                          multiple = TRUE, selected = NULL),
-             bsTooltip("behaviour_icon", "Select behavioural variables for correlation analysis. If no behavioural variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
+             bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
            ),
            
            selectInput("motion",
@@ -92,17 +92,17 @@ ui <- fluidPage(
                        selected = 'none'),
            bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
            
-           selectInput("spatial_scale",
-                       label = tagList("Pooling", icon("info-circle", id = "spatial_scale_icon")),
+           selectInput("pooling",
+                       label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
                        choices = c("None" = 'none', "Network-level" = 'net')),
-           bsTooltip("spatial_scale_icon", "Choose to pool the data.", "right", options = list(container = "body")),
+           bsTooltip("pooling_icon", "Choose to pool the data.", "right", options = list(container = "body")),
            
            selectInput("estimate",
                        label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
                        choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
            selectInput("group_by", 
                        label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                       choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Phenotype Category" = 'category')), 
+                       choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Category" = 'category')), 
            bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
            
            h1(" "),
