@@ -78,8 +78,15 @@ server <- function(input, output, session) {
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
   
+  
+  # plotting info
+  v$plot_info__idx <- list()
+  v$plot_info__grouping_var <- list() # each row = grouping variable (same value repeated for each plot)
+  v$plot_info__group_level <- list() # each row = level within grouping variable
+  v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
+  
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
+  observeEvent(list(input$group_by, input$plot_combination_style, input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     v$filter_idx <- get_filter_index(data, input, study)
@@ -87,6 +94,42 @@ server <- function(input, output, session) {
     # filter data and study by matching indices
     v$data <- data[v$filter_idx$total]
     v$study <- study[v$filter_idx$total,]
+    
+    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+    
+    if (input$plot_combination_style == 'meta') {
+      if (!("data_group" %in% names(v)) || (previous_meta_grouping_var != input$group_by)) {
+        v <- meta_analysis(v, v$brain_masks, v$combo_name, grouping_var = input$group_by)
+        previous_meta_grouping_var <- input$group_by
+      }
+    }
+    
+    v$plot_info__idx <- list()
+    v$plot_info__grouping_var <- list()
+    v$plot_info__group_level <- list()
+    v$plot_info__ref <- list()
+    
+    if (input$plot_combination_style == 'single') {  # name by study
+      
+      for (i in 1:length(v$data)) {
+        v$plot_info__idx[[names(v$data)[[i]]]] <- i
+        v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
+        v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
+        v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
+      }
+    }
+    
+    # clear v$plot_info before re-making
+    v$plot_info <- list()
+    v$plot_info <- data.frame(
+      idx = I(v$plot_info__idx),
+      grouping_var = unlist(v$plot_info__grouping_var),
+      group_level = unlist(v$plot_info__group_level),
+      ref = I(v$plot_info__ref),
+      row.names = names(v$plot_info__idx),
+      stringsAsFactors = FALSE
+    )
+    print(v$plot_info)
   })
   
   # update the task selection input with available tasks but do not pre-select any
@@ -173,11 +216,11 @@ server <- function(input, output, session) {
     v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
   })
   
-  observeEvent(toListen(), {
-    if (input$group_by != "none") {
-      v <- group_data(v, brain_masks, v$combo_name, group_by = input$group_by)
-    }
-  })
+  # observeEvent(toListen(), {
+  #   if (input$group_by != "none") {
+  #     v <- group_data(v, brain_masks, v$combo_name, group_by = input$group_by)
+  #   }
+  # })
   
   
   ###### Plot Sim CI ######
@@ -186,16 +229,14 @@ server <- function(input, output, session) {
   # if data is not empty, then plot. Check if data is empty:
   observe({
     output$histograms <- renderUI({
-      if (length(v$data) == 0 & length(v$d_group) == 0) {
+      if (length(v$plot_info$idx) == 0) {
         # if there is no data, display a message
         tagList(
           h3("No data available for the selected parameters.")
         )
-      }
-      
-      else if (input$group_by == "none") {
-        if (length(v$data) > 0) {
-          plot_output_list <- lapply(1:length(v$data), function(i) {
+      } else if (length(v$plot_info$idx) > 0) {
+          plot_output_list <- lapply(1:length(v$plot_info$idx), function(i) {
+            
             plotname <- paste0("plot", i)
             #print(plotname)
             plotOutput(plotname, height = "200px", width = "100%")
@@ -204,58 +245,70 @@ server <- function(input, output, session) {
           # convert the list to a tagList, this is necessary for the list of items to display properly
           do.call(tagList, plot_output_list)
         }
-      } else {
-        if (length(v$d_group) > 0) {
-          plot_output_list <- lapply(1:length(v$d_group), function(i) {
-            plotname <- paste0("plot", i)
-            plotOutput(plotname, height = "200px", width = "100%")
-          })
-          
-          # convert the list to a tagList, this is necessary for the list of items to display properly
-          do.call(tagList, plot_output_list)
-        }
-      }
+      })
     })
-  })
   
   # call renderPlot for each one
   # plots are only actually generated when they are visible on the web page
   observe({
     
-    if (input$group_by == "none") {
+    #if (input$group_by == "none") {
       # check if v$data is empty
-      if (length(v$data) > 0) {
+      if (length(v$plot_info$idx) > 0) {
         # print(paste0("num plots: ", v$num_plots))
-        for (i in 1:length(v$data)) {
+        print(length(v$plot_info$idx))
+        for (i in 1:length(v$plot_info$idx)) {
           # create a local variable to hold the value of i
           #print(i)
           local({
             my_i <- i
             plotname <- paste0("plot", my_i, sep="")
             
-            output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$data[[my_i]], names(v$data[my_i]), v$study[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, estimate = input$estimate, save = FALSE)
-            })
-          })
-        }
-      }
-    } else {
-      # print(length(v$d_group))
-      if (length(v$d_group) > 0) {
-        for (i in 1:length(v$d_group)) {
-          # create a local variable to hold the value of i
-          local({
-            my_i <- i
-            plotname <- paste0("plot", my_i, sep="")
+            this_study_or_group <- rownames(v$plot_info)[my_i]
+            this_plot_info <- v$plot_info[this_study_or_group,]
             
-            output[[plotname]] <- renderPlot({
-              plot_sim_ci(v$d_group[[my_i]], names(v$d_group[my_i]), v$study_group[my_i,], combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, group_by = input$group_by, estimate = input$estimate, save = FALSE)
-            })
+            pd_list <- list()
+            n_studies_in_pd_list <- 1
+            
+            for (j in v$plot_info$idx[[i]]) {
+                name <- names(v$data[j])
+                data <- v$data[[j]]
+                study_details <- v$study[j, ]
+            }
+            
+            if (v$combo_name %in% names(data)) { # if combo_name exists in data (e.g., not all studies have net)
+              
+              # prep
+              
+              pd <- prep_data_for_plot(data = data, name = name, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
+              
+              pd_list[[n_studies_in_pd_list]] <- pd
+              n_studies_in_pd_list <- n_studies_in_pd_list + 1
+              
+            }
+            
+            if (length(pd_list) > 0) { # plot only if pd_list isn't empty
+              
+              # filename
+              if (input$pooling == 'net') {
+                net_str=" - net"
+              } else {
+                net_str=""
+              }
+              out_dir <- paste0('output/', pd_list$extra_study_details[[this_study_or_group]], ' - ', input$plot_combination_style, '/', 'simci', net_str)
+              fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
+              
+              # plot
+              output[[plotname]] <- renderPlot({
+                create_plots(pd_list, plot_type = 'simci', add_description = TRUE, save = FALSE, out_path = out_dir, file_name = fn)
+              })
+              
+            }
           })
         }
       }
-    }
-  })
+    } 
+  )
   
   # create a reactive value to store the height and width of the plot
   # the height should be double the width only when there are two plots (when there are some studies with 268 node parcellation and some with 55 node parcellation),
@@ -293,6 +346,7 @@ server <- function(input, output, session) {
       t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
       
       study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
+      print(study_idx)
       if (v$study_fc$ref[study_idx] == "shen_268"){ 
         
         if (input$pooling == "net") {
