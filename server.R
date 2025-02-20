@@ -280,7 +280,7 @@ server <- function(input, output, session) {
               
               # prep
               
-              pd <- prep_data_for_plot(data = data, name = name, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
+              pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
               
               pd_list[[n_studies_in_pd_list]] <- pd
               n_studies_in_pd_list <- n_studies_in_pd_list + 1
@@ -300,7 +300,7 @@ server <- function(input, output, session) {
               
               # plot
               output[[plotname]] <- renderPlot({
-                create_plots(pd_list, plot_type = 'simci', add_description = TRUE, save = FALSE, out_path = out_dir, file_name = fn)
+                create_plots(pd_list, plot_type = 'simci', add_description = TRUE)
               })
               
             }
