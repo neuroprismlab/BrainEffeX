@@ -482,4 +482,12 @@ server <- function(input, output, session) {
                                                     autoWidth = TRUE
                                      ),
                                      rownames = FALSE)
+  
+  observeEvent(input$meta_analysis, {
+    output$meta_analysis <- renderPlot({
+      par(mar = c(0, 0, 0, 5))
+      
+    })
+  })
+  
 }

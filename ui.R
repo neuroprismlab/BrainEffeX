@@ -31,8 +31,7 @@ ui <- fluidPage(
   ")),
   
   # titlePanel(
-  navset_tab( 
-    nav_panel("Explorer", fluidRow(
+  fluidRow(
     column(8,
            h1("BrainEffeX"),
            #hr(), #space
@@ -49,11 +48,12 @@ ui <- fluidPage(
       "showInstructions",
       "How to Use This App",
       style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
-    ),
-    
-    hr(), # space
-    
-    fluidRow( # top row
+  ),
+  
+  hr(), # space
+  
+  navset_tab( 
+    nav_panel("Explorer", fluidRow( # top row
       column(3, # inputs
              helpText("Select from the following options to visualize effect sizes:"),
              
@@ -170,7 +170,56 @@ ui <- fluidPage(
       ),
       
     )), # end of fluidRow
-    nav_panel("Meta-Analysis", "")), 
+    nav_panel("Meta-Analysis", 
+              fluidRow( # top row
+                column(3, # inputs
+                       h1(""),
+                       selectInput("meta_analysis", 
+                                   label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
+                                   choices = c("Statistic" = 'orig_stat_type', "Category" = 'category')), 
+                       bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
+                       
+                       h1(" "),
+                       # Button to download the plot as PNG
+                       downloadButton("downloadData", "Download Data"),
+                       
+                       # Button to take a screenshot of the app
+                       actionButton("screenshot", "Take a screenshot"),
+                       
+                       h6(paste("Version 1.5; Last updated ", date_updated)),
+                ),
+                
+                column(5, align = "centre", # simCI plots
+                       
+                       # h5("Helpful reminders"),
+                       h4("The plots below visualize all edges or voxels in each meta-analysis"),
+                       wellPanel(style = "background-color: #ffffff;", 
+                                 helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+                                 helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+                       ),
+                       downloadButton("downloadPlots", "Download Plots"),
+                       wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("meta_analysis"), type = 1)),
+                ),
+                
+                # column(4, align = "center", # effect size matrices)
+                #        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the effect sizes across edges for each meta-analysis."),
+                #                  withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
+                #                  downloadButton("downloadMatrices", "Download Matrices")),
+                #        h1(" "),
+                #        h1(""),
+                #        h1(""),
+                #        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
+                #                  h1(""),
+                #                  fluidRow( # second row: plots of activation maps for activation studies 
+                #                    column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
+                #                    column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
+                #                  ),
+                #                  downloadButton("downloadBrain", "Download Brain Image"),
+                #        )
+                # ),
+                
+              )
+    )), 
   
   
   #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
