@@ -86,7 +86,7 @@ server <- function(input, output, session) {
   v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
   
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
+  observeEvent(list(input$dataset, input$estimate, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     v$filter_idx <- get_filter_index(data, input, study)
@@ -96,6 +96,12 @@ server <- function(input, output, session) {
     v$study <- study[v$filter_idx$total,]
     
     v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+    
+    # remove data and study that are NaN
+    v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+    v$data <- v$data[!v$nan_filter]
+    v$study <- v$study[!v$nan_filter,]
+    
     
     # if (input$plot_combination_style == 'meta') {
     #   if (!("data_group" %in% names(v)) || (previous_meta_grouping_var != input$group_by)) {
@@ -256,6 +262,7 @@ server <- function(input, output, session) {
         # print(paste0("num plots: ", v$num_plots))
         print(length(v$plot_info$idx))
         for (i in 1:length(v$plot_info$idx)) {
+          print(paste0('plotting study ', rownames(v$plot_info)[i]))
           # create a local variable to hold the value of i
           #print(i)
           local({
@@ -277,7 +284,6 @@ server <- function(input, output, session) {
             if (v$combo_name %in% names(data)) { # if combo_name exists in data (e.g., not all studies have net)
               
               # prep
-              
               pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
               
               pd_list[[n_studies_in_pd_list]] <- pd
@@ -342,6 +348,10 @@ server <- function(input, output, session) {
     
     for (i in 1:length(v$data_fc)) {
       t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
+      
+      if (!is.vector(t)) {
+        t <- as.vector(t)
+      }
       
       study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
       print(study_idx)
