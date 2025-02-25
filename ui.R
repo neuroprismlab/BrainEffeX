@@ -100,19 +100,19 @@ ui <- fluidPage(
              
              selectInput("estimate",
                          label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                         choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
-             
-             selectInput("plot_combination_style",
-                         label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
-                         choices = c("Single" = 'single', "Overlapping" = 'overlapping', "Meta" = 'meta'), 
-                         selected = 'none'),
-             bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
-             
-             selectInput("group_by", 
-                         label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                         choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Category" = 'category')), 
-             bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
-             
+                          choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+             # 
+             # selectInput("plot_combination_style",
+             #             label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
+             #             choices = c("Single" = 'single', "Overlapping" = 'overlapping', "Meta" = 'meta'), 
+             #             selected = 'none'),
+             # bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+             # 
+             # selectInput("group_by", 
+             #             label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
+             #             choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Category" = 'category')), 
+             # bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
+             # 
              h1(" "),
              # Button to download the plot as PNG
              downloadButton("downloadData", "Download Data"),

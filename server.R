@@ -86,7 +86,7 @@ server <- function(input, output, session) {
   v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
   
   # filter data and study by user input selections
-  observeEvent(list(input$group_by, input$plot_combination_style, input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
+  observeEvent(list(input$dataset, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     v$filter_idx <- get_filter_index(data, input, study)
@@ -97,26 +97,24 @@ server <- function(input, output, session) {
     
     v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
     
-    if (input$plot_combination_style == 'meta') {
-      if (!("data_group" %in% names(v)) || (previous_meta_grouping_var != input$group_by)) {
-        v <- meta_analysis(v, v$brain_masks, v$combo_name, grouping_var = input$group_by)
-        previous_meta_grouping_var <- input$group_by
-      }
-    }
+    # if (input$plot_combination_style == 'meta') {
+    #   if (!("data_group" %in% names(v)) || (previous_meta_grouping_var != input$group_by)) {
+    #     v <- meta_analysis(v, v$brain_masks, v$combo_name, grouping_var = input$group_by)
+    #     previous_meta_grouping_var <- input$group_by
+    #   }
+    # }
     
     v$plot_info__idx <- list()
     v$plot_info__grouping_var <- list()
     v$plot_info__group_level <- list()
     v$plot_info__ref <- list()
     
-    if (input$plot_combination_style == 'single') {  # name by study
       
-      for (i in 1:length(v$data)) {
-        v$plot_info__idx[[names(v$data)[[i]]]] <- i
-        v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
-        v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
-        v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
-      }
+    for (i in 1:length(v$data)) {
+      v$plot_info__idx[[names(v$data)[[i]]]] <- i
+      v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
+      v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
+      v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
     }
     
     # clear v$plot_info before re-making
@@ -195,7 +193,7 @@ server <- function(input, output, session) {
   
   
   toListen <- reactive({
-    list(input$group_by, input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$estimate, input$motion)
+    list(input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$estimate, input$motion)
   })
   
   observeEvent(toListen(), {
@@ -235,7 +233,7 @@ server <- function(input, output, session) {
           h3("No data available for the selected parameters.")
         )
       } else if (length(v$plot_info$idx) > 0) {
-          plot_output_list <- lapply(1:length(v$plot_info$idx), function(i) {
+          v$plot_output_list <- lapply(1:length(v$plot_info$idx), function(i) {
             
             plotname <- paste0("plot", i)
             #print(plotname)
@@ -243,7 +241,7 @@ server <- function(input, output, session) {
           })
           
           # convert the list to a tagList, this is necessary for the list of items to display properly
-          do.call(tagList, plot_output_list)
+          do.call(tagList, v$plot_output_list)
         }
       })
     })
@@ -295,7 +293,7 @@ server <- function(input, output, session) {
               } else {
                 net_str=""
               }
-              out_dir <- paste0('output/', pd_list$extra_study_details[[this_study_or_group]], ' - ', input$plot_combination_style, '/', 'simci', net_str)
+              out_dir <- paste0('output/', pd_list$extra_study_details[[this_study_or_group]], ' - ', '/', 'simci', net_str)
               fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
               
               # plot
