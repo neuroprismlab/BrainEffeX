@@ -16,15 +16,10 @@ for (combo in combo_names) {
   for (name in names(data)) {
     this_combo = names(data[[name]])[grepl(combo, names(data[[name]]))]
     combo_data = data[[name]][[this_combo]]
-    # only keep n, n1, n2, d, ci, r_sq, ci
-    combo_data$stat = list()
-    combo_data$p = list()
-    combo_data$std.brain = list()
-    combo_data$std.score = list()
     this_combo_data[[name]] = combo_data
   }
   # save this_combo_data as RData file
-  save(combo_data, file = paste0('combo_', combo, '.RData'))
+  save(this_combo_data, file = paste0('combo_', combo, '.RData'))
 }
 
 d = data
