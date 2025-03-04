@@ -33,15 +33,17 @@ server <- function(input, output, session) {
   # category
   # ref 
   
-  data_list <- load_data()
-  data <- data_list$data # list of effect maps etc
-  study <- data_list$study # table of study information
-  brain_masks <- data_list$brain_masks # list of brain masks
-  template <- data_list$template
-  anatomical <- data_list$anatomical
-  phen_keys <- data_list$phen_keys
 
-  rm(data_list)
+    data_list <- load_data() # load just the initial combo's data
+    data <- data_list$data # list of effect maps etc
+    study <- data_list$study # table of study information
+    brain_masks <- data_list$brain_masks # list of brain masks
+    template <- data_list$template
+    anatomical <- data_list$anatomical
+    phen_keys <- data_list$phen_keys
+    print("loaded initial data")
+    rm(data_list)
+  
   
   
   ###### Extra setup ######
@@ -49,7 +51,7 @@ server <- function(input, output, session) {
   effect_maps_available <- study[study$map_type == "act", "name"]
   
   # TODO: temporary fix for not including test_component_2 in activation studies
-  study$test_component_2[study$map_type == "act"] <- "rest"
+  #study$test_component_2[study$map_type == "act"] <- "rest"
   
   # options for spinner
   options(spinner.color = "#9ecadb",
@@ -77,63 +79,235 @@ server <- function(input, output, session) {
   
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
+  # TODO: maybe try assigning v$data here?
   
+  # create combo names depending on active tab
+  observe({
+    if (input$tab == "Explorer") {
+      v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+      v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
+    } else if (input$tab == "Meta-Analysis") {
+      v$combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
+      v$mv_combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
+    }
+  })
+  
+  observeEvent(input$tab, ignoreInit = TRUE, priority = 1, {
+    print(paste0("loading data for tab ", input$tab))
+    if (input$tab == "Meta-Analysis") {
+      print("loading meta-analysis data")
+      load("data/meta_analysis/meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
+      v$data <- meta_category$data # list of effect maps etc
+      v$study <- meta_category$study # table of study information
+      print("head of study info right after loading meta data")
+      print(head(v$study))
+      brain_masks <- meta_category$brain_masks # list of brain masks
+      print("done loading meta-analysis data")
+      rm(meta_category)
+    } else if (input$tab == "Explorer") {
+      print(paste0("loading data for tab ", input$tab))
+      data_list <- load_data() # load just the initial combo's data
+      data <- data_list$data # list of effect maps etc
+      study <- data_list$study # table of study information
+      brain_masks <- data_list$brain_masks # list of brain masks
+      print("done loading explorer data")
+      rm(data_list)
+    }
+  })
   
   # plotting info
-  v$plot_info__idx <- list()
-  v$plot_info__grouping_var <- list() # each row = grouping variable (same value repeated for each plot)
-  v$plot_info__group_level <- list() # each row = level within grouping variable
-  v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
+  # v$plot_info__idx <- list()
+  # v$plot_info__grouping_var <- list() # each row = grouping variable (same value repeated for each plot)
+  # v$plot_info__group_level <- list() # each row = level within grouping variable
+  # v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
+  # # for meta-analysis plots
+  # v$plot_info__idx_m <- list()
+  # v$plot_info__grouping_var_m <- list() # each row = grouping variable (same value repeated for each plot)
+  # v$plot_info__group_level_m <- list() # each row = level within grouping variable
+  # v$plot_info__ref_m <- list() # each row = ref(s) used for a study or grouping variable
   
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$estimate, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling), priority = 1,{
+  observeEvent(list(input$dataset, input$estimate, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
-    v$filter_idx <- get_filter_index(data, input, study)
+    if (input$tab == "Explorer") {
+      print('filtering explorer data')
+      v$filter_idx <- get_filter_index(data, input, study)
   
-    # filter data and study by matching indices
-    v$data <- data[v$filter_idx$total]
-    v$study <- study[v$filter_idx$total,]
-    
-    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
-    
+      # filter data and study by matching indices
+      v$data <- data[v$filter_idx$total]
+      v$study <- study[v$filter_idx$total,]
+    } else if (input$tab == "Meta-Analysis") {
+      print("head of v$study for meta-analysis data")
+      print(v$study[1:4,])
+    }
     # remove data and study that are NaN
+    print('removing nans from v$data and v$study')
     v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
     v$data <- v$data[!v$nan_filter]
     v$study <- v$study[!v$nan_filter,]
+    print("another head of study")
+    print(names(v$data))
     
-    
-    # if (input$plot_combination_style == 'meta') {
-    #   if (!("data_group" %in% names(v)) || (previous_meta_grouping_var != input$group_by)) {
-    #     v <- meta_analysis(v, v$brain_masks, v$combo_name, grouping_var = input$group_by)
-    #     previous_meta_grouping_var <- input$group_by
-    #   }
-    # }
-    
-    v$plot_info__idx <- list()
-    v$plot_info__grouping_var <- list()
-    v$plot_info__group_level <- list()
-    v$plot_info__ref <- list()
-    
+  })
+  
+  # observe({
+  #   if (input$tab == "Explorer") {
+  #     print('initializing v$plot_info__... for explorer')
+  #   v$plot_info__idx <- list()
+  #   v$plot_info__grouping_var <- list()
+  #   v$plot_info__group_level <- list()
+  #   v$plot_info__ref <- list()
+  #   
+  #   print('adding plot info for each study in v$data')
+  #   for (i in 1:length(v$data)) {
+  #     v$plot_info__idx[[names(v$data)[[i]]]] <- i
+  #     v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
+  #     v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
+  #     v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
+  #   }
+  #   
+  #   # clear v$plot_info before re-making
+  #   print('initialize/clear v$plot_info')
+  #   v$plot_info <- NULL
+  #   v$plot_info <- data.frame(
+  #     idx = I(v$plot_info__idx),
+  #     grouping_var = unlist(v$plot_info__grouping_var),
+  #     group_level = unlist(v$plot_info__group_level),
+  #     ref = I(v$plot_info__ref),
+  #     row.names = names(v$plot_info__idx),
+  #     stringsAsFactors = FALSE
+  #   )
+  #   print('v$plot_info updated')
+  #   } else if (input$tab == "Meta-Analysis") {
+  #     print('initializing v$plot_info__... for meta-analysis')
+  #     v$plot_info__idx_m <- list()
+  #     v$plot_info__grouping_var_m <- list()
+  #     v$plot_info__group_level_m <- list()
+  #     v$plot_info__ref_m <- list()
+  #     
+  #     print('adding plot info for each study in v$data')
+  #     for (i in 1:length(v$data)) {
+  #       v$plot_info__idx_m[[names(v$data)[[i]]]] <- i
+  #       v$plot_info__grouping_var_m[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
+  #       v$plot_info__group_level_m[[names(v$data)[[i]]]] <- NA
+  #       v$plot_info__ref_m[[names(v$data)[[i]]]] <- v$study$ref[i]
+  #     }
+  #     
+  #     # clear v$plot_info before re-making
+  #     print('initialize/clear v$plot_info_m')
+  #     v$plot_info_m <- NULL
+  #     v$plot_info_m <- data.frame(
+  #       idx = I(v$plot_info__idx_m),
+  #       grouping_var = unlist(v$plot_info__grouping_var_m),
+  #       group_level = unlist(v$plot_info__group_level_m),
+  #       ref = I(v$plot_info__ref_m),
+  #       row.names = names(v$plot_info__idx_m),
+  #       stringsAsFactors = FALSE
+  #     )
+  #     print('v$plot_info_m updated')
+  #   }
+  
+  v$plot_info <- reactive({
+    if (input$tab == "Explorer") {
+      print('Generating v$plot_info__... for explorer')
       
-    for (i in 1:length(v$data)) {
-      v$plot_info__idx[[names(v$data)[[i]]]] <- i
-      v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
-      v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
-      v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
+      plot_info_idx <- list()
+      plot_info_grouping_var <- list()
+      plot_info_group_level <- list()
+      plot_info_ref <- list()
+      
+      for (i in seq_along(v$data)) {
+        study_name <- names(v$data)[i]
+        plot_info_idx[[study_name]] <- i
+        plot_info_grouping_var[[study_name]] <- "none"
+        plot_info_group_level[[study_name]] <- NA
+        plot_info_ref[[study_name]] <- v$study$ref[i]
+      }
+      
+      data.frame(
+        idx = I(plot_info_idx),
+        grouping_var = unlist(plot_info_grouping_var),
+        group_level = unlist(plot_info_group_level),
+        ref = I(plot_info_ref),
+        row.names = names(plot_info_idx),
+        stringsAsFactors = FALSE
+      )
+    } else {
+      return(NULL)
     }
-    
-    # clear v$plot_info before re-making
-    v$plot_info <- list()
-    v$plot_info <- data.frame(
-      idx = I(v$plot_info__idx),
-      grouping_var = unlist(v$plot_info__grouping_var),
-      group_level = unlist(v$plot_info__group_level),
-      ref = I(v$plot_info__ref),
-      row.names = names(v$plot_info__idx),
-      stringsAsFactors = FALSE
-    )
-    print(v$plot_info)
+  })
+  
+  # v$plot_info_m <- reactive({
+  #   if (input$tab == "Meta-Analysis") {
+  #     print('initializing v$plot_info__... for meta-analysis')
+  #     v$plot_info__idx_m <- list()
+  #     v$plot_info__grouping_var_m <- list()
+  #     v$plot_info__group_level_m <- list()
+  #     v$plot_info__ref_m <- list()
+  # 
+  #     print('adding plot info for each study in v$data')
+  #     for (i in 1:length(v$data)) {
+  #       v$plot_info__idx_m[[names(v$data)[[i]]]] <- i
+  #       v$plot_info__grouping_var_m[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
+  #       v$plot_info__group_level_m[[names(v$data)[[i]]]] <- NA
+  #       v$plot_info__ref_m[[names(v$data)[[i]]]] <- v$study$ref[i]
+  #     }
+  # 
+  #     # clear v$plot_info before re-making
+  #     print('initialize/clear v$plot_info_m')
+  #     v$plot_info_m <- NULL
+  #     v$plot_info_m <- data.frame(
+  #       idx = I(v$plot_info__idx_m),
+  #       grouping_var = unlist(v$plot_info__grouping_var_m),
+  #       group_level = unlist(v$plot_info__group_level_m),
+  #       ref = I(v$plot_info__ref_m),
+  #       row.names = names(v$plot_info__idx_m),
+  #       stringsAsFactors = FALSE
+  #       )
+  #         print('v$plot_info_m updated')
+  #   } else {
+  #     return(NULL)
+  #   }
+  # })
+  
+  v$plot_info_m <- reactive({
+    if (input$tab == "Meta-Analysis") {
+      print('Generating v$plot_info__... for explorer')
+      
+      if (is.null(v$data) || length(v$data) == 0) {
+        print("Warning: v$data is empty!")
+        return(NULL)
+      }
+      if (is.null(v$study) || nrow(v$study) == 0) {
+        print("Warning: v$study is empty!")
+        return(NULL)
+      }
+      
+      plot_info_idx_m <- list()
+      plot_info_grouping_var_m <- list()
+      plot_info_group_level_m <- list()
+      plot_info_ref_m <- list()
+      
+      for (i in seq_along(v$data)) {
+        study_name <- names(v$data)[i]
+        plot_info_idx_m[[study_name]] <- i
+        plot_info_grouping_var_m[[study_name]] <- "none"
+        plot_info_group_level_m[[study_name]] <- NA
+        plot_info_ref_m[[study_name]] <- v$study$ref[i]
+      }
+      
+      data.frame(
+        idx = I(plot_info_idx_m),
+        grouping_var = unlist(plot_info_grouping_var_m),
+        group_level = unlist(plot_info_group_level_m),
+        ref = I(plot_info_ref_m),
+        row.names = names(plot_info_idx_m),
+        stringsAsFactors = FALSE
+      )
+    } else {
+      return(NULL)
+    }
   })
   
   # update the task selection input with available tasks but do not pre-select any
@@ -162,29 +336,32 @@ server <- function(input, output, session) {
   })
   
   # update correlation selections to only be the available constrained selections... 
-  observeEvent(ignoreInit = TRUE, input$map_type, priority = 2, {
+  observeEvent(input$map_type, ignoreInit = TRUE, priority = 3, {
     # get filter index for matching studies
-    v$filter_idx <- get_filter_index(data, input, study)
+    if (input$tab == "Explorer") {
+      v$filter_idx <- get_filter_index(data, input, study)
     
-    # filter by matching datasets and map type
-    v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
-    
-    v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
-    
-    if (input$test_type == "r") {
+      # filter by matching datasets and map type
+      v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
+      
+      v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
+      
+      if (input$test_type == "r") {
+        updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+      }
+      #print("measurement type changed")
+      
+      # Update the beh selection input with available behs but do not pre-select any
       updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-    }
-    #print("measurement type changed")
-    
-    # Update the beh selection input with available behs but do not pre-select any
-    updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-    updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
-  }) 
+      updateSelectizeInput(session, server = TRUE, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
+  }}) 
   
   observe({
-    v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
-    v$data_fc <- v$data[grepl("_fc_", names(v$data))]
-    v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
+    if (input$tab == "Explorer") {
+      v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
+      v$data_fc <- v$data[grepl("_fc_", names(v$data))]
+      v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
+    }
   })
   
   
@@ -202,44 +379,37 @@ server <- function(input, output, session) {
     list(input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$estimate, input$motion)
   })
   
+  toListen_m <- reactive({
+    list(input$meta_analysis, input$m_pooling, input$m_estimate, input$m_motion)
+  })
+  
   observeEvent(toListen(), {
-    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
       # v$study_name as the name column from study that matches the task input and has map type activation
       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
+      print('created nifti')
     }
   }, ignoreNULL = TRUE)
   
   
   ##### Group_by / Meta-analysis ######
   
-  observe({
-    # v$multi_ext <- ifelse(input$dimensionality == "none", "none", paste0("multi.", input$test_type))
-    v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
-    v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
-  })
-  
-  # observeEvent(toListen(), {
-  #   if (input$group_by != "none") {
-  #     v <- group_data(v, brain_masks, v$combo_name, group_by = input$group_by)
-  #   }
-  # })
-  
-  
   ###### Plot Sim CI ######
   
   # insert the right number of plot output objects into the web page
   # if data is not empty, then plot. Check if data is empty:
   observe({
+    if (input$tab == "Explorer") {
+      print("creating placeholders for explorer simci plots")  
     output$histograms <- renderUI({
-      if (length(v$plot_info$idx) == 0) {
+      if (length(v$plot_info()$idx) == 0) {
         # if there is no data, display a message
         tagList(
           h3("No data available for the selected parameters.")
         )
-      } else if (length(v$plot_info$idx) > 0) {
-          v$plot_output_list <- lapply(1:length(v$plot_info$idx), function(i) {
+      } else if (length(v$plot_info()$idx) > 0) {
+          v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
             
             plotname <- paste0("plot", i)
             #print(plotname)
@@ -250,32 +420,33 @@ server <- function(input, output, session) {
           do.call(tagList, v$plot_output_list)
         }
       })
+    }
     })
   
   # call renderPlot for each one
   # plots are only actually generated when they are visible on the web page
   observe({
-    
-    #if (input$group_by == "none") {
+    if (input$tab == "Explorer") {
+      req(v$plot_info())  
+      print("filling explorer simci plots")  
       # check if v$data is empty
-      if (length(v$plot_info$idx) > 0) {
+      if (length(v$plot_info()$idx) > 0) {
         # print(paste0("num plots: ", v$num_plots))
-        print(length(v$plot_info$idx))
-        for (i in 1:length(v$plot_info$idx)) {
-          print(paste0('plotting study ', rownames(v$plot_info)[i]))
+        for (i in 1:length(v$plot_info()$idx)) {
+          # print(paste0('plotting study ', rownames(v$plot_info)[i]))
           # create a local variable to hold the value of i
           #print(i)
           local({
             my_i <- i
             plotname <- paste0("plot", my_i, sep="")
             
-            this_study_or_group <- rownames(v$plot_info)[my_i]
-            this_plot_info <- v$plot_info[this_study_or_group,]
+            this_study_or_group <- rownames(v$plot_info())[my_i]
+            this_plot_info <- v$plot_info()[this_study_or_group,]
             
             pd_list <- list()
             n_studies_in_pd_list <- 1
             
-            for (j in v$plot_info$idx[[i]]) {
+            for (j in v$plot_info()$idx[[i]]) {
                 name <- names(v$data[j])
                 data <- v$data[[j]]
                 study_details <- v$study[j, ]
@@ -311,7 +482,7 @@ server <- function(input, output, session) {
           })
         }
       }
-    } 
+    } }
   )
   
   # create a reactive value to store the height and width of the plot
@@ -354,7 +525,6 @@ server <- function(input, output, session) {
       }
       
       study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
-      print(study_idx)
       if (v$study_fc$ref[study_idx] == "shen_268"){ 
         
         if (input$pooling == "net") {
@@ -474,7 +644,7 @@ server <- function(input, output, session) {
       validate(
         need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
         need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
-        need(dim(v$nifti != NA), "")
+        need(dim(is.na(v$nifti)), "")
       )
       
       plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
@@ -491,11 +661,95 @@ server <- function(input, output, session) {
                                      ),
                                      rownames = FALSE)
   
-  observeEvent(input$meta_analysis, {
-    output$meta_analysis <- renderPlot({
-      par(mar = c(0, 0, 0, 5))
+  
+  ### Meta-analysis tab
+  observe({
+    if (input$tab == "Meta-Analysis") {
+      print("creating plot placeholders for meta-analysis simci plots") 
       
-    })
-  })
+      print("Checking v$plot_info_m() in UI rendering:")
+      print(v$plot_info_m())
+      
+        output$m_plots <- renderUI({
+          if (length(v$plot_info_m()$idx) == 0) {
+            # if there is no data, display a message
+            tagList(
+              h3("No data available for the selected parameters.")
+            )
+          } else if (length(v$plot_info_m()$idx) > 0) {
+            v$plot_output_list_m <- lapply(1:length(v$plot_info_m()$idx), function(i) {
+              
+              plotname <- paste0("plot_m", i)
+              plotOutput(plotname, height = "200px", width = "100%")
+            })
+            
+            # convert the list to a tagList, this is necessary for the list of items to display properly
+            do.call(tagList, v$plot_output_list_m)
+          }
+        })
+      }
+    })    
+  
+  observe({
+    if (input$tab == "Meta-Analysis") {
+      print('filling placeholders with meta-analysis simci plots')
+    #if (input$group_by == "none") {
+    # check if v$data is empty
+      print(head(v$plot_info_m()))
+    if (length(v$plot_info_m()$idx) > 0) {
+      print(paste0("num plots: ", length(v$plot_info_m()$idx)))
+      for (i in 1:length(v$plot_info_m()$idx)) {
+        # print(paste0('plotting study ', rownames(v$plot_info)[i]))
+        # create a local variable to hold the value of i
+        #print(i)
+        local({
+          my_i <- i
+          plotname <- paste0("plot_m", my_i, sep="")
+          
+          this_study_or_group <- rownames(v$plot_info_m())[my_i]
+          this_plot_info <- v$plot_info_m()[this_study_or_group,]
+          
+          pd_list_m <- list()
+          n_studies_in_pd_list <- 1
+          
+          for (j in v$plot_info_m()$idx[[i]]) {
+            name <- names(v$data[j])
+            data <- v$data[[j]]
+            study_details <- v$study[j, ]
+          }
+          
+          if (v$combo_name %in% names(data)) { # if combo_name exists in data (e.g., not all studies have net)
+            
+            # prep
+            pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
+            
+            pd_list_m[[n_studies_in_pd_list]] <- pd
+            n_studies_in_pd_list <- n_studies_in_pd_list + 1
+            
+          }
+          
+          if (length(pd_list_m) > 0) { # plot only if pd_list_m isn't empty
+            print(paste0('pd_list_m is not empty - the length is ', length(pd_list_m)))
+            # filename
+            if (input$m_pooling == 'net') {
+              net_str=" - net"
+            } else {
+              net_str=""
+            }
+            out_dir <- paste0('output/', pd_list_m$extra_study_details[[this_study_or_group]], ' - ', '/', 'simci', net_str)
+            fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
+            
+            # plot
+            output[[plotname]] <- renderPlot({
+              create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE)
+            })
+            
+          }
+        })
+      }
+    }
+    } 
+  }
+  )
   
 }
