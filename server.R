@@ -92,18 +92,18 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(input$tab, ignoreInit = TRUE, priority = 1, {
+  observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, priority = 1, {
     print(paste0("loading data for tab ", input$tab))
     if (input$tab == "Meta-Analysis") {
       print("loading meta-analysis data")
-      load("data/meta_analysis/meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
-      v$data <- meta_category$data # list of effect maps etc
-      v$study <- meta_category$study # table of study information
+      load(paste0("data/meta_analysis/meta_", input$meta_analysis, ".RData")) #meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
+      v$data <- meta$data # list of effect maps etc
+      v$study <- meta$study # table of study information
       print("head of study info right after loading meta data")
       print(head(v$study))
-      brain_masks <- meta_category$brain_masks # list of brain masks
+      brain_masks <- meta$brain_masks # list of brain masks
       print("done loading meta-analysis data")
-      rm(meta_category)
+      rm(meta)
     } else if (input$tab == "Explorer") {
       print(paste0("loading data for tab ", input$tab))
       data_list <- load_data() # load just the initial combo's data
@@ -137,9 +137,6 @@ server <- function(input, output, session) {
       # filter data and study by matching indices
       v$data <- data[v$filter_idx$total]
       v$study <- study[v$filter_idx$total,]
-    } else if (input$tab == "Meta-Analysis") {
-      print("head of v$study for meta-analysis data")
-      print(v$study[1:4,])
     }
     # remove data and study that are NaN
     print('removing nans from v$data and v$study')
@@ -150,63 +147,6 @@ server <- function(input, output, session) {
     print(names(v$data))
     
   })
-  
-  # observe({
-  #   if (input$tab == "Explorer") {
-  #     print('initializing v$plot_info__... for explorer')
-  #   v$plot_info__idx <- list()
-  #   v$plot_info__grouping_var <- list()
-  #   v$plot_info__group_level <- list()
-  #   v$plot_info__ref <- list()
-  #   
-  #   print('adding plot info for each study in v$data')
-  #   for (i in 1:length(v$data)) {
-  #     v$plot_info__idx[[names(v$data)[[i]]]] <- i
-  #     v$plot_info__grouping_var[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
-  #     v$plot_info__group_level[[names(v$data)[[i]]]] <- NA
-  #     v$plot_info__ref[[names(v$data)[[i]]]] <- v$study$ref[i]
-  #   }
-  #   
-  #   # clear v$plot_info before re-making
-  #   print('initialize/clear v$plot_info')
-  #   v$plot_info <- NULL
-  #   v$plot_info <- data.frame(
-  #     idx = I(v$plot_info__idx),
-  #     grouping_var = unlist(v$plot_info__grouping_var),
-  #     group_level = unlist(v$plot_info__group_level),
-  #     ref = I(v$plot_info__ref),
-  #     row.names = names(v$plot_info__idx),
-  #     stringsAsFactors = FALSE
-  #   )
-  #   print('v$plot_info updated')
-  #   } else if (input$tab == "Meta-Analysis") {
-  #     print('initializing v$plot_info__... for meta-analysis')
-  #     v$plot_info__idx_m <- list()
-  #     v$plot_info__grouping_var_m <- list()
-  #     v$plot_info__group_level_m <- list()
-  #     v$plot_info__ref_m <- list()
-  #     
-  #     print('adding plot info for each study in v$data')
-  #     for (i in 1:length(v$data)) {
-  #       v$plot_info__idx_m[[names(v$data)[[i]]]] <- i
-  #       v$plot_info__grouping_var_m[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
-  #       v$plot_info__group_level_m[[names(v$data)[[i]]]] <- NA
-  #       v$plot_info__ref_m[[names(v$data)[[i]]]] <- v$study$ref[i]
-  #     }
-  #     
-  #     # clear v$plot_info before re-making
-  #     print('initialize/clear v$plot_info_m')
-  #     v$plot_info_m <- NULL
-  #     v$plot_info_m <- data.frame(
-  #       idx = I(v$plot_info__idx_m),
-  #       grouping_var = unlist(v$plot_info__grouping_var_m),
-  #       group_level = unlist(v$plot_info__group_level_m),
-  #       ref = I(v$plot_info__ref_m),
-  #       row.names = names(v$plot_info__idx_m),
-  #       stringsAsFactors = FALSE
-  #     )
-  #     print('v$plot_info_m updated')
-  #   }
   
   v$plot_info <- reactive({
     if (input$tab == "Explorer") {
@@ -238,39 +178,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # v$plot_info_m <- reactive({
-  #   if (input$tab == "Meta-Analysis") {
-  #     print('initializing v$plot_info__... for meta-analysis')
-  #     v$plot_info__idx_m <- list()
-  #     v$plot_info__grouping_var_m <- list()
-  #     v$plot_info__group_level_m <- list()
-  #     v$plot_info__ref_m <- list()
-  # 
-  #     print('adding plot info for each study in v$data')
-  #     for (i in 1:length(v$data)) {
-  #       v$plot_info__idx_m[[names(v$data)[[i]]]] <- i
-  #       v$plot_info__grouping_var_m[[names(v$data)[[i]]]] <- "none"  # overwrite any other grouping var if doing single plots single
-  #       v$plot_info__group_level_m[[names(v$data)[[i]]]] <- NA
-  #       v$plot_info__ref_m[[names(v$data)[[i]]]] <- v$study$ref[i]
-  #     }
-  # 
-  #     # clear v$plot_info before re-making
-  #     print('initialize/clear v$plot_info_m')
-  #     v$plot_info_m <- NULL
-  #     v$plot_info_m <- data.frame(
-  #       idx = I(v$plot_info__idx_m),
-  #       grouping_var = unlist(v$plot_info__grouping_var_m),
-  #       group_level = unlist(v$plot_info__group_level_m),
-  #       ref = I(v$plot_info__ref_m),
-  #       row.names = names(v$plot_info__idx_m),
-  #       stringsAsFactors = FALSE
-  #       )
-  #         print('v$plot_info_m updated')
-  #   } else {
-  #     return(NULL)
-  #   }
-  # })
-  
   v$plot_info_m <- reactive({
     if (input$tab == "Meta-Analysis") {
       print('Generating v$plot_info__... for explorer')
@@ -292,8 +199,8 @@ server <- function(input, output, session) {
       for (i in seq_along(v$data)) {
         study_name <- names(v$data)[i]
         plot_info_idx_m[[study_name]] <- i
-        plot_info_grouping_var_m[[study_name]] <- "none"
-        plot_info_group_level_m[[study_name]] <- NA
+        plot_info_grouping_var_m[[study_name]] <- input$meta_analysis
+        plot_info_group_level_m[[study_name]] <- v$study$group_level[i]
         plot_info_ref_m[[study_name]] <- v$study$ref[i]
       }
       
@@ -452,7 +359,7 @@ server <- function(input, output, session) {
                 study_details <- v$study[j, ]
             }
             
-            if (v$combo_name %in% names(data)) { # if combo_name exists in data (e.g., not all studies have net)
+            if ((v$combo_name %in% names(data)) & (length(data[[v$combo_name]][[input$estimate]]) != 0)) { # if combo_name exists in data (e.g., not all studies have net)
               
               # prep
               pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
@@ -712,16 +619,16 @@ server <- function(input, output, session) {
           pd_list_m <- list()
           n_studies_in_pd_list <- 1
           
-          for (j in v$plot_info_m()$idx[[i]]) {
+          for (j in v$plot_info_m()$idx[[my_i]]) {
             name <- names(v$data[j])
             data <- v$data[[j]]
             study_details <- v$study[j, ]
           }
           
-          if (v$combo_name %in% names(data)) { # if combo_name exists in data (e.g., not all studies have net)
+          if ((v$combo_name %in% names(data)) & !(all(is.na(data[[v$combo_name]][[input$m_estimate]])))) { # if combo_name exists in data (e.g., not all studies have net)
             
             # prep
-            pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
+            pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$m_estimate, plot_info = this_plot_info)
             
             pd_list_m[[n_studies_in_pd_list]] <- pd
             n_studies_in_pd_list <- n_studies_in_pd_list + 1
