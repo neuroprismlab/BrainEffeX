@@ -92,7 +92,7 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, priority = 1, {
+  observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, {
     print(paste0("loading data for tab ", input$tab))
     if (input$tab == "Meta-Analysis") {
       print("loading meta-analysis data")
@@ -114,17 +114,6 @@ server <- function(input, output, session) {
       rm(data_list)
     }
   })
-  
-  # plotting info
-  # v$plot_info__idx <- list()
-  # v$plot_info__grouping_var <- list() # each row = grouping variable (same value repeated for each plot)
-  # v$plot_info__group_level <- list() # each row = level within grouping variable
-  # v$plot_info__ref <- list() # each row = ref(s) used for a study or grouping variable
-  # # for meta-analysis plots
-  # v$plot_info__idx_m <- list()
-  # v$plot_info__grouping_var_m <- list() # each row = grouping variable (same value repeated for each plot)
-  # v$plot_info__group_level_m <- list() # each row = level within grouping variable
-  # v$plot_info__ref_m <- list() # each row = ref(s) used for a study or grouping variable
   
   # filter data and study by user input selections
   observeEvent(list(input$dataset, input$estimate, input$map_type, input$task, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
@@ -243,7 +232,7 @@ server <- function(input, output, session) {
   })
   
   # update correlation selections to only be the available constrained selections... 
-  observeEvent(input$map_type, ignoreInit = TRUE, priority = 3, {
+  observeEvent(input$map_type, ignoreInit = TRUE, {
     # get filter index for matching studies
     if (input$tab == "Explorer") {
       v$filter_idx <- get_filter_index(data, input, study)
