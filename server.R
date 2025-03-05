@@ -51,7 +51,7 @@ server <- function(input, output, session) {
   effect_maps_available <- study[study$map_type == "act", "name"]
   
   # TODO: temporary fix for not including test_component_2 in activation studies
-  #study$test_component_2[study$map_type == "act"] <- "rest"
+  study$test_component_2[study$map_type == "act"] <- "rest"
   
   # options for spinner
   options(spinner.color = "#9ecadb",
@@ -268,6 +268,7 @@ server <- function(input, output, session) {
       v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
       v$data_fc <- v$data[grepl("_fc_", names(v$data))]
       v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
+      print(paste0("number of activation studies: ", v$n_act_studies))
     }
   })
   
