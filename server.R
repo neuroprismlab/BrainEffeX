@@ -116,19 +116,124 @@ server <- function(input, output, session) {
     }
   })
   
+  # observeEvent(input$map_type, ignoreInit = TRUE, {
+  #   print('changed map type. resetting task selection to All.')
+  #   updateSelectInput(session, "task", selected = "*")
+  #   print(paste0('updated task selection: ', input$task))
+  #   print(paste0('about to filter (map), current task is: ', input$task))
+  #   if (input$tab == "Explorer") {
+  #     print('filtering explorer data')
+  #     v$filter_idx <- get_filter_index(data, input, study)
+  # 
+  #     # filter data and study by matching indices
+  #     v$data <- data[v$filter_idx$total]
+  #     v$study <- study[v$filter_idx$total,]
+  #   }
+  #   # remove data and study that are NaN
+  #   print('removing nans from v$data and v$study')
+  #   v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+  #   v$data <- v$data[!v$nan_filter]
+  #   v$study <- v$study[!v$nan_filter,]
+  #   print("another head of study")
+  #   print(names(v$data))
+  # })
+  
   observeEvent(input$map_type, ignoreInit = TRUE, {
     print('changed map type. resetting task selection to All.')
     updateSelectInput(session, "task", selected = "*")
-    print(paste0('updated task selection: ', input$task))
-    # print(paste0('about to filter (map), current task is: ', input$task))
-    # if (input$tab == "Explorer") {
-    #   print('filtering explorer data')
-    #   v$filter_idx <- get_filter_index(data, input, study)
-    # 
-    #   # filter data and study by matching indices
-    #   v$data <- data[v$filter_idx$total]
-    #   v$study <- study[v$filter_idx$total,]
-    # }
+    print(input$task)
+    
+    if (input$task == "*") {
+      print("Task is already *, filtering now")
+      isolate({
+        
+        if (exists("v$data") & (length(v$data) == 0)) {
+          print("Filtered all data out. No remaining studies.")
+          return()
+        }
+        v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+        v$data <- data[!v$nan_filter]
+        v$study <- study[!v$nan_filter,]
+        
+        if (exists("v$data") & (length(v$data) == 0)) {
+          print("Filtered all data out. No remaining studies.")
+          return()
+        }
+        
+        v$filter_idx <- get_filter_index(v$data, input, v$study)
+        v$data <- v$data[v$filter_idx$total]
+        v$study <- v$study[v$filter_idx$total,]
+        
+        
+        
+        print("Filtered data immediately in map_type observer:")
+        print(names(v$data))
+      })
+    }
+  })
+  
+  observeEvent(input$task, ignoreInit = TRUE, {
+    print(paste0('task updated to: ', input$task))
+    print('Filtering data after task update')
+    
+    if (exists("v$data") & (length(v$data) == 0)) {
+      print("Filtered all data out. No remaining studies.")
+      return()
+    }
+      v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+      v$data <- data[!v$nan_filter]
+      v$study <- study[!v$nan_filter,]
+      
+      if (exists("v$data") & (length(v$data) == 0)) {
+        print("Filtered all data out. No remaining studies.")
+        return()
+      }
+      
+      v$filter_idx <- get_filter_index(v$data, input, v$study)
+      v$data <- v$data[v$filter_idx$total]
+      v$study <- v$study[v$filter_idx$total,]
+    
+    
+    
+    print("Filtered data after task update:")
+    print(names(v$data))
+  })
+  
+  
+  # filter data and study by user input selections
+  observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
+    # create an index of the studies that fit each input selection, as well as total
+    # index of studies that fill all input selections simultaneously (v$filter_index$total)
+    isolate({
+    # remove data and study that are NaN
+    print('removing nans from v$data and v$study')
+      
+      if (exists("v$data") & (length(v$data) == 0)) {
+        print("Filtered all data out. No remaining studies.")
+        return()
+      }
+    v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+    v$data <- data[!v$nan_filter]
+    v$study <- study[!v$nan_filter,]
+    print(which(v$nan_filter == TRUE))
+
+    print("another head of study")
+    print(names(v$data))
+    
+    if (exists("v$data") & (length(v$data) == 0)) {
+      print("Filtered all data out. No remaining studies.")
+      return()
+    }
+    
+    print(paste0('about to filter, current task is: ', input$task))
+    if (input$tab == "Explorer") {
+      print('filtering explorer data')
+      v$filter_idx <- get_filter_index(v$data, input, v$study)
+      v$data <- v$data[v$filter_idx$total]
+      v$study <- v$study[v$filter_idx$total,]
+    }
+    })
+    
     # # remove data and study that are NaN
     # print('removing nans from v$data and v$study')
     # v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
@@ -136,33 +241,11 @@ server <- function(input, output, session) {
     # v$study <- v$study[!v$nan_filter,]
     # print("another head of study")
     # print(names(v$data))
-  })
-  
-  # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$estimate, input$task, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
-    # create an index of the studies that fit each input selection, as well as total
-    # index of studies that fill all input selections simultaneously (v$filter_index$total)
-    print(paste0('about to filter, current task is: ', input$task))
-    if (input$tab == "Explorer") {
-      print('filtering explorer data')
-      v$filter_idx <- get_filter_index(data, input, study)
-      
-      # filter data and study by matching indices
-      v$data <- data[v$filter_idx$total]
-      v$study <- study[v$filter_idx$total,]
-    }
-    # remove data and study that are NaN
-    print('removing nans from v$data and v$study')
-    v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-    v$data <- v$data[!v$nan_filter]
-    v$study <- v$study[!v$nan_filter,]
-    print("another head of study")
-    print(names(v$data))
     
   })
   
   v$plot_info <- reactive({
-    if (input$tab == "Explorer") {
+    if ((input$tab == "Explorer") & (length(v$data) > 0)) {
       print('Generating v$plot_info__... for explorer')
       
       plot_info_idx <- list()
@@ -277,7 +360,7 @@ server <- function(input, output, session) {
     }}) 
   
   observe({
-    if (input$tab == "Explorer") {
+    if ((input$tab == "Explorer") & (length(v$data) > 0)) {
       v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
       v$data_fc <- v$data[grepl("_fc_", names(v$data))]
       v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
@@ -307,9 +390,13 @@ server <- function(input, output, session) {
   observeEvent(toListen(), {
     if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
       # v$study_name as the name column from study that matches the task input and has map type activation
-      v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-      v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
-      print('created nifti')
+      if (length(v$data) == 0) {
+        return()
+      } else {
+        v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
+        v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
+        print('created nifti')
+      }
     }
   }, ignoreNULL = TRUE)
   
@@ -324,6 +411,7 @@ server <- function(input, output, session) {
     if (input$tab == "Explorer") {
       print("creating placeholders for explorer simci plots")  
       output$histograms <- renderUI({
+        validate(need(length(v$data) > 0, "No data available for the selected parameters."))
         if (length(v$plot_info()$idx) == 0) {
           # if there is no data, display a message
           tagList(
@@ -348,7 +436,8 @@ server <- function(input, output, session) {
   # plots are only actually generated when they are visible on the web page
   observe({
     if (input$tab == "Explorer") {
-      req(v$plot_info())  
+      req(v$plot_info())
+      validate(need(length(v$data) > 0, "no data avilable to plot"))
       print("filling explorer simci plots")  
       # check if v$data is empty
       if (length(v$plot_info()$idx) > 0) {

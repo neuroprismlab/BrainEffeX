@@ -699,14 +699,13 @@ get_filter_index <- function(data, input, study) {
   filter_idx <- list()
   filter_idx$dataset <- grepl(input$dataset, study$dataset)
   filter_idx$map <- grepl(input$map_type, study$map_type)
-  filter_idx$task <- ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1)) |
-                        (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2)))
-  filter_idx$test_component_1 <- (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1))
+  filter_idx$task <- ((length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1, ignore.case = TRUE)) |
+                        (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_2, ignore.case = TRUE)))
+  filter_idx$test_component_1 <- (length(input$task) == 0 | grepl(paste(input$task, collapse="|"), study$test_component_1, ignore.case = TRUE))
   filter_idx$test <- (input$test_type == "*" | (study$orig_stat_type == input$test_type))
   filter_idx$behavior <- grepl(paste(input$correlation, collapse="|"), study$test_component_2)
   filter_idx$pool_motion <- unname(sapply(data, function(sublist) any(grepl(paste0("pooling.", input$pooling, ".motion.", input$motion), names(sublist)))))
-  filter_idx$total <- filter_idx$dataset & filter_idx$map & filter_idx$test_component_1 & filter_idx$test & filter_idx$behavior & filter_idx$pool_motion
-  
+  filter_idx$total <- filter_idx$dataset & filter_idx$map & filter_idx$task & filter_idx$test & filter_idx$behavior & filter_idx$pool_motion
   return(filter_idx)
 }
 
