@@ -67,10 +67,9 @@ ui <- fluidPage(
                          choices = c("All" = "*")),
              bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
              
-             selectizeInput("task",
+             selectInput("task",
                             label = tagList("Task", icon("info-circle", id = "task_icon")),
-                            choices = c("All" = "*"),
-                            multiple = TRUE, selected = NULL),
+                            choices = c("All" = "*")),
              bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
              selectInput("test_type",
