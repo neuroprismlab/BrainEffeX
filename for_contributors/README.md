@@ -23,7 +23,7 @@ Save your .mat file in a directory that contains only this .mat file (this is im
    ![Screenshot 2025-01-28 at 1 45 18 PM](https://github.com/user-attachments/assets/d3ac73f5-1618-4f9f-8b97-afcc54aa60b0)
       - NOTE: Sometimes the neuroprismlab account won't show up if you copy-paste the email address. Instead, please type neuroprismlab and the email should show up.
    - Click "Submit" on the bottom right.
-5. Upload data
+4. Upload data
    - On Brainlife, uploaded data should fit a preset data type. By utilizing a datatype, this ensures that the uploaded data fits the requirements of that type of data. Since we are currently only using Brainlife as a means to transfer the data, we have not created a datatype for EffeX contributions on Brainlife (although in the future we hope to transform the analysis pipeline into a series of Brainlife apps). Data that does not fit a datatype can be uploaded as the “raw” datatype that does not impose any restrictions. However, this type of data upload can only be done through the command line. Therefore, the following steps must be completed in the command line (i.e., terminal).
    - Install the Brainlife command line interface following the instructions at https://brainlife.io/docs/cli/install/.
      - for Mac users, you can follow these summarized instructions, but they may become outdated so refer to the official instructions if you encounter issues.
@@ -35,7 +35,7 @@ Save your .mat file in a directory that contains only this .mat file (this is im
    - Once the upload is complete, you can check that the file was successfully uploaded by returning to brainlife.io. Go to 'projects' on the left navigation bar, then select your data contribution project, and select 'archive' from the top navigation bar. You should see one 'subject' with a datatype 'raw'.
    ![Screenshot 2025-01-28 at 2 12 03 PM](https://github.com/user-attachments/assets/940ffc95-d408-4d10-8441-ea9c184633bf)
   - **Note the URL of this project page for the next step.**
-4. Submit Github Issue (data contribution request)
+## 3. Submit Github Issue (data contribution request)
   - Navigate to github.com/neuroprismlab/BrainEffeX.
   - From the top navigation bar, select "Issues".
   - Near the top right, select the green "New Issue" button.
