@@ -37,7 +37,6 @@ Save your .mat file in a directory that contains only this .mat file (this is im
   - **Note the URL of this project page for the next step.**
 ## 3. Submit Github Issue (data contribution request)
   - Navigate to the Github [Issue page](https://github.com/neuroprismlab/BrainEffeX/issues) for BrainEffeX.
-  - From the top navigation bar, select "Issues".
   - Near the top right, select the green "New Issue" button.
   - Select "Data Contribution"
   ![Screenshot 2025-01-28 at 3 11 41 PM](https://github.com/user-attachments/assets/0d0261e7-05af-4495-8b52-7a878be55f76)
