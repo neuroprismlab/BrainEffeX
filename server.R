@@ -33,11 +33,13 @@ server <- function(input, output, session) {
   # category
   # ref 
   
+  # set reactive parameters for filtering based on options chosen by user
+  v <- reactiveValues()
   
   data_list <- load_data() # load just the initial combo's data
-  data <- data_list$data # list of effect maps etc
-  study <- data_list$study # table of study information
-  brain_masks <- data_list$brain_masks # list of brain masks
+  v$data_init <- data_list$data # list of effect maps etc
+  v$study_init <- data_list$study # table of study information
+  v$brain_masks_init <- data_list$brain_masks # list of brain masks
   template <- data_list$template
   anatomical <- data_list$anatomical
   phen_keys <- data_list$phen_keys
@@ -47,27 +49,28 @@ server <- function(input, output, session) {
   
   
   ###### Extra setup ######
-  
-  effect_maps_available <- study[study$map_type == "act", "name"]
-  
-  # TODO: temporary fix for not including test_component_2 in activation studies
-  study$test_component_2[study$map_type == "act"] <- "rest"
+  observe({
+    effect_maps_available <- v$study_init[v$study_init$map_type == "act", "name"]
+    
+    # TODO: temporary fix for not including test_component_2 in activation studies
+    v$study_init$test_component_2[v$study_init$map_type == "act"] <- "rest"
+  })
   
   # options for spinner
   options(spinner.color = "#9ecadb",
           spinner.color.background = "#ffffff", spinner.size = 1)
   
-  
+  observe({
   # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
-  updateSelectInput(session, "dataset", choices = c("All" = "*", unique(study$dataset)))
-  updateSelectInput(session, "map_type", choices = c("All" = "*", unique(study$map_type)))
-  updateSelectInput(session, "task", choices = c("All" = "*", unique(study$test_component_1)))
-  updateSelectInput(session, "test_type", choices = c("All" = "*", unique(study$orig_stat_type)))
-  updateSelectInput(session, "correlation", choices = c("All" = "*", unique(study[study$orig_stat_type == "r", "test_component_2"])))
-  
+  updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
+  updateSelectInput(session, "map_type", choices = c("All" = "*", unique(v$study_init$map_type)))
+  updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
+  updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
+  updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
+  })
   observe(print(paste0('initial value of task: ', input$task)))
   # Dynamic panel output
-  output$dynamicPanel <- createDynamicPanel(input, study)
+  output$dynamicPanel <- createDynamicPanel(input, study_init)
   createModalNavigationObservers(input, session)
   
   # # Observer to handle default correlation display
@@ -78,8 +81,7 @@ server <- function(input, output, session) {
     }
   }, ignoreInit = TRUE)
   
-  # set reactive parameters for filtering based on options chosen by user
-  v <- reactiveValues()
+ 
   # TODO: maybe try assigning v$data here?
   
   # create combo names depending on active tab
@@ -89,7 +91,7 @@ server <- function(input, output, session) {
       v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
     } else if (input$tab == "Meta-Analysis") {
       v$combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
-      v$mv_combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
+      print(paste0('v$combo name set to: ', v$combo_name))
     }
   })
   
@@ -98,62 +100,76 @@ server <- function(input, output, session) {
     if (input$tab == "Meta-Analysis") {
       print("loading meta-analysis data")
       load(paste0("data/meta_analysis/meta_", input$meta_analysis, ".RData")) #meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
-      v$data <- meta$data # list of effect maps etc
-      v$study <- meta$study # table of study information
-      print("head of study info right after loading meta data")
-      print(head(v$study))
-      brain_masks <- meta$brain_masks # list of brain masks
+      #isolate({
+        v$data_m_init <- meta$data # list of effect maps etc
+        v$study_m_init <- unique(meta$study) # table of study information, TMP: checking if it was an accident to have duplicates in study
+        print("head of study info right after loading meta data")
+        print(head(v$study_m_init))
+        v$brain_masks_m_init <- meta$brain_masks # list of brain masks
+      #})
       print("done loading meta-analysis data")
       rm(meta)
     } else if (input$tab == "Explorer") {
       print(paste0("loading data for tab ", input$tab))
       data_list <- load_data() # load just the initial combo's data
-      data <- data_list$data # list of effect maps etc
-      study <- data_list$study # table of study information
-      brain_masks <- data_list$brain_masks # list of brain masks
+      v$data_init <- data_list$data # list of effect maps etc
+      v$study_init <- data_list$study # table of study information
+      v$brain_masks_init <- data_list$brain_masks # list of brain masks
       print("done loading explorer data")
       rm(data_list)
     }
   })
   
-  # observeEvent(input$map_type, ignoreInit = TRUE, {
-  #   print('changed map type. resetting task selection to All.')
-  #   updateSelectInput(session, "task", selected = "*")
-  #   print(paste0('updated task selection: ', input$task))
-  #   print(paste0('about to filter (map), current task is: ', input$task))
-  #   if (input$tab == "Explorer") {
-  #     print('filtering explorer data')
-  #     v$filter_idx <- get_filter_index(data, input, study)
-  # 
-  #     # filter data and study by matching indices
-  #     v$data <- data[v$filter_idx$total]
-  #     v$study <- study[v$filter_idx$total,]
-  #   }
-  #   # remove data and study that are NaN
-  #   print('removing nans from v$data and v$study')
-  #   v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-  #   v$data <- v$data[!v$nan_filter]
-  #   v$study <- v$study[!v$nan_filter,]
-  #   print("another head of study")
-  #   print(names(v$data))
-  # })
-  
   observeEvent(input$map_type, ignoreInit = TRUE, {
     print('changed map type. resetting task selection to All.')
     updateSelectInput(session, "task", selected = "*")
-    print(input$task)
+    #print(input$task)
     
-    if (input$task == "*") {
-      print("Task is already *, filtering now")
-      isolate({
+    if (input$tab == "Explorer") {
+      if (input$task == "*") {
+        print("Task is already *, filtering now")
+        isolate({
+          
+          if (exists("v$data") & (length(v$data) == 0)) {
+            print("Filtered all data out. No remaining studies.")
+            return()
+          }
+          v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+          v$data <- v$data_init[!v$nan_filter]
+          v$study <- v$study_init[!v$nan_filter,]
+          
+          if (exists("v$data") & (length(v$data) == 0)) {
+            print("Filtered all data out. No remaining studies.")
+            return()
+          }
+          
+          v$filter_idx <- get_filter_index(v$data, input, v$study)
+          v$data <- v$data[v$filter_idx$total]
+          v$study <- v$study[v$filter_idx$total,]
+          
+          
+          
+          print("Filtered data immediately in map_type observer:")
+          print(names(v$data))
         
+      })
+      }
+    }
+  })
+  
+  observeEvent(input$task, ignoreInit = TRUE, {
+    print(paste0('task updated to: ', input$task))
+    print('Filtering data after task update')
+    
+    if (input$tab == "Explorer") {
         if (exists("v$data") & (length(v$data) == 0)) {
-          print("Filtered all data out. No remaining studies.")
-          return()
-        }
-        v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-        v$data <- data[!v$nan_filter]
-        v$study <- study[!v$nan_filter,]
+        print("Filtered all data out. No remaining studies.")
+        return()
+      }
+        
+        v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+        v$data <- v$data_init[!v$nan_filter]
+        v$study <- v$study_init[!v$nan_filter,]
         
         if (exists("v$data") & (length(v$data) == 0)) {
           print("Filtered all data out. No remaining studies.")
@@ -163,40 +179,38 @@ server <- function(input, output, session) {
         v$filter_idx <- get_filter_index(v$data, input, v$study)
         v$data <- v$data[v$filter_idx$total]
         v$study <- v$study[v$filter_idx$total,]
-        
-        
-        
-        print("Filtered data immediately in map_type observer:")
-        print(names(v$data))
-      })
+      
+      
+      
+      print("Filtered data after task update:")
+      print(names(v$data))
     }
   })
   
-  observeEvent(input$task, ignoreInit = TRUE, {
-    print(paste0('task updated to: ', input$task))
-    print('Filtering data after task update')
+  # filter meta-analysis data to show just available data
+  observeEvent(list(input$m_motion, input$m_pooling, input$m_estimate, input$meta_analysis, input$tab), {
     
-    if (exists("v$data") & (length(v$data) == 0)) {
-      print("Filtered all data out. No remaining studies.")
-      return()
+    # create an index of the studies that fit each input selection
+    # FIRST NEED TO CHECK IF THE COMBO EXISTS IN THE DATA, THEN FILTER FOR NAS
+    if (input$tab == 'Meta-Analysis') {
+      req(v$data_m_init)
+      # first remove studies that don't include the current combo
+      print(paste0('filtering meta data to remove studies without this combo: ', v$combo_name))
+      v$combo_idx <- sapply(v$data_m_init, function(d) v$combo_name %in% names(d))
+      print(v$combo_idx)
+      v$data <- v$data_m_init[v$combo_idx]
+      v$study <- v$study_m_init[v$combo_idx,]
+      print('v$study after filtering by combo')
+      print(head(v$study))
+      
+      # then remove studies that don't include the selected estimate for the current combo
+      print(paste0('filtering meta data to remove studies with NA for this estimate: ', input$m_estimate))
+      v$nan_filter <- sapply(v$data, function(study) any(is.na(study[[v$combo_name]][[input$m_estimate]])))
+      v$data <- v$data[!v$nan_filter]
+      v$study <- v$study[!v$nan_filter,]
+      print('v$study after filtering by NA')
+      print(head(v$study))
     }
-      v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-      v$data <- data[!v$nan_filter]
-      v$study <- study[!v$nan_filter,]
-      
-      if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
-      
-      v$filter_idx <- get_filter_index(v$data, input, v$study)
-      v$data <- v$data[v$filter_idx$total]
-      v$study <- v$study[v$filter_idx$total,]
-    
-    
-    
-    print("Filtered data after task update:")
-    print(names(v$data))
   })
   
   
@@ -206,41 +220,36 @@ server <- function(input, output, session) {
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     isolate({
     # remove data and study that are NaN
-    print('removing nans from v$data and v$study')
+    
       
       if (exists("v$data") & (length(v$data) == 0)) {
         print("Filtered all data out. No remaining studies.")
         return()
       }
-    v$nan_filter <- sapply(data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-    v$data <- data[!v$nan_filter]
-    v$study <- study[!v$nan_filter,]
-    print(which(v$nan_filter == TRUE))
-
-    print("another head of study")
-    print(names(v$data))
+    if (input$tab == "Explorer") {
+      print('removing nans from v$data and v$study')
+      v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+      v$data <- v$data_init[!v$nan_filter]
+      v$study <- v$study_init[!v$nan_filter,]
+      print(which(v$nan_filter == TRUE))
+  
+      print("another head of study")
+      print(names(v$data))
+    }
     
     if (exists("v$data") & (length(v$data) == 0)) {
       print("Filtered all data out. No remaining studies.")
       return()
     }
     
+      if (input$tab == "Explorer") {
     print(paste0('about to filter, current task is: ', input$task))
-    if (input$tab == "Explorer") {
       print('filtering explorer data')
       v$filter_idx <- get_filter_index(v$data, input, v$study)
       v$data <- v$data[v$filter_idx$total]
       v$study <- v$study[v$filter_idx$total,]
-    }
+      }
     })
-    
-    # # remove data and study that are NaN
-    # print('removing nans from v$data and v$study')
-    # v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-    # v$data <- v$data[!v$nan_filter]
-    # v$study <- v$study[!v$nan_filter,]
-    # print("another head of study")
-    # print(names(v$data))
     
   })
   
@@ -275,15 +284,17 @@ server <- function(input, output, session) {
   })
   
   v$plot_info_m <- reactive({
+    req(input$meta_analysis)
+    req(v$data)
     if (input$tab == "Meta-Analysis") {
-      print('Generating v$plot_info__... for explorer')
+      #print('Generating v$plot_info__... for meta-analysis')
       
       if (is.null(v$data) || length(v$data) == 0) {
-        print("Warning: v$data is empty!")
+        #print("Warning: v$data is empty!")
         return(NULL)
       }
       if (is.null(v$study) || nrow(v$study) == 0) {
-        print("Warning: v$study is empty!")
+        #print("Warning: v$study is empty!")
         return(NULL)
       }
       
@@ -300,6 +311,11 @@ server <- function(input, output, session) {
         plot_info_ref_m[[study_name]] <- v$study$ref[i]
       }
       
+      #print(paste0('plot_info_idx_m: ', plot_info_idx_m))
+      #print(paste0('plot_info_grouping_var_m: ', plot_info_grouping_var_m))
+      #print(paste0('plot_info_group_level_m: ', plot_info_group_level_m))
+      #print(paste0('plot_info_ref_m: ', plot_info_ref_m))
+      
       data.frame(
         idx = I(plot_info_idx_m),
         grouping_var = unlist(plot_info_grouping_var_m),
@@ -308,6 +324,8 @@ server <- function(input, output, session) {
         row.names = names(plot_info_idx_m),
         stringsAsFactors = FALSE
       )
+      #print('data frame of plot_info_m')
+      
     } else {
       return(NULL)
     }
@@ -675,13 +693,14 @@ server <- function(input, output, session) {
   ### Meta-analysis tab
   observe({
     if (input$tab == "Meta-Analysis") {
+      req(v$plot_info_m())
       print("creating plot placeholders for meta-analysis simci plots") 
-      
+      #validate(need(length(v$plot_info_m()$idx) > 0, "no data avilable to plot"))
       print("Checking v$plot_info_m() in UI rendering:")
       print(v$plot_info_m())
       
       output$m_plots <- renderUI({
-        if (length(v$plot_info_m()$idx) == 0) {
+        if (length(v$data) == 0 | is.null(v$data))  {
           # if there is no data, display a message
           tagList(
             h3("No data available for the selected parameters.")
@@ -705,7 +724,16 @@ server <- function(input, output, session) {
       print('filling placeholders with meta-analysis simci plots')
       #if (input$group_by == "none") {
       # check if v$data is empty
-      print(head(v$plot_info_m()))
+      #print(head(v$plot_info_m()))
+      if (is.null(v$data) || length(v$data) == 0) {
+        output$m_plots <- renderUI({
+          tagList(
+            h3("No data available for the selected parameters."),
+            p("Please try adjusting your selections.")
+          )
+        })
+        return()  # Exit the observe function early
+      }
       if (length(v$plot_info_m()$idx) > 0) {
         print(paste0("num plots: ", length(v$plot_info_m()$idx)))
         for (i in 1:length(v$plot_info_m()$idx)) {
