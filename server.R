@@ -428,22 +428,43 @@ server <- function(input, output, session) {
   observe({
     if (input$tab == "Explorer") {
       print("creating placeholders for explorer simci plots")  
+      # output$histograms <- renderUI({
+      #   validate(need(length(v$data) > 0, "No data available for the selected parameters."))
+      #   if (length(v$plot_info()$idx) == 0) {
+      #     # if there is no data, display a message
+      #     tagList(
+      #       h3("No data available for the selected parameters.")
+      #     )
+      #   } else if (length(v$plot_info()$idx) > 0) {
+      #     v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
+      #       
+      #       plotname <- paste0("plot", i)
+      #       #print(plotname)
+      #       plotOutput(plotname, height = "200px", width = "100%")
+      #     })
+      #     
+      #     # convert the list to a tagList, this is necessary for the list of items to display properly
+      #     do.call(tagList, v$plot_output_list)
+      #   }
+      # })
       output$histograms <- renderUI({
         validate(need(length(v$data) > 0, "No data available for the selected parameters."))
+        
         if (length(v$plot_info()$idx) == 0) {
-          # if there is no data, display a message
-          tagList(
-            h3("No data available for the selected parameters.")
-          )
-        } else if (length(v$plot_info()$idx) > 0) {
+          tagList(h3("No data available for the selected parameters."))
+        } else {
           v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
+            plotname_simci <- paste0("plot", i)
+            plotname_spatial <- paste0("spatial_plot", i)
             
-            plotname <- paste0("plot", i)
-            #print(plotname)
-            plotOutput(plotname, height = "200px", width = "100%")
+            tagList(
+              fluidRow(
+                column(6, plotOutput(plotname_simci, height = "200px", width = "100%")),
+                column(6, plotOutput(plotname_spatial, height = "200px", width = "100%"))
+              )
+            )
           })
           
-          # convert the list to a tagList, this is necessary for the list of items to display properly
           do.call(tagList, v$plot_output_list)
         }
       })
@@ -456,7 +477,7 @@ server <- function(input, output, session) {
     if (input$tab == "Explorer") {
       req(v$plot_info())
       validate(need(length(v$data) > 0, "no data avilable to plot"))
-      print("filling explorer simci plots")  
+      print("filling explorer simci and spatial plots")  
       # check if v$data is empty
       if (length(v$plot_info()$idx) > 0) {
         # print(paste0("num plots: ", v$num_plots))
@@ -466,7 +487,8 @@ server <- function(input, output, session) {
           #print(i)
           local({
             my_i <- i
-            plotname <- paste0("plot", my_i, sep="")
+            plotname_simci <- paste0("plot", my_i, sep="")
+            plotname_spatial <- paste0("spatial_plot", my_i)
             
             this_study_or_group <- rownames(v$plot_info())[my_i]
             this_plot_info <- v$plot_info()[this_study_or_group,]
@@ -502,16 +524,31 @@ server <- function(input, output, session) {
               fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
               
               # plot
-              output[[plotname]] <- renderPlot({
+              output[[plotname_simci]] <- renderPlot({
                 create_plots(pd_list, plot_type = 'simci', add_description = TRUE)
               })
               
             }
+            
+            output[[plotname_spatial]] <- renderPlot({
+              if (grepl("_act_", this_study_or_group)) {
+                plot(0)
+                #plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+              } else if (grepl("_fc_", this_study_or_group)) {
+                t_avg <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
+                n_nodes <- (((-1 + sqrt(1 + 8 * length(t_avg))) / 2) + 1)
+                if (n_nodes == 268) {
+                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE)
+                } else if (n_nodes == 55) {
+                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE)
+                }
+              }
+            })
           })
+          }
         }
       }
-    } }
-  )
+    })
   
   # create a reactive value to store the height and width of the plot
   # the height should be double the width only when there are two plots (when there are some studies with 268 node parcellation and some with 55 node parcellation),
@@ -530,135 +567,135 @@ server <- function(input, output, session) {
     }
   })
   
-  output$maps <- renderPlot({
-    validate(
-      need((0 < length(v$data_fc)), "We do not have FC data for the selected parameters"))
-    
-    # create a vector to store the data for if there is more than one study
-    t_total_268 <- rep(0, 35778) 
-    t_total_268_pooled <- rep(0, 55)
-    t_total_55 <-  rep(0 , 1485)
-    t_total_55_pooled <- rep(0, 55)
-    
-    n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
-    n_268_studies_pooled <- 0
-    n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
-    n_55_studies_pooled <- 0
-    
-    for (i in 1:length(v$data_fc)) {
-      t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
-      
-      if (!is.vector(t)) {
-        t <- as.vector(t)
-      }
-      
-      study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
-      if (v$study_fc$ref[study_idx] == "shen_268"){ 
-        
-        if (input$pooling == "net") {
-          t_total_268_pooled <- t_total_268_pooled + t
-          n_268_studies_pooled <- n_268_studies_pooled + 1
-        }
-        else {
-          #print(c(dim(t), v$study_fc$name[study_idx]))
-          
-          t_total_268 <- t_total_268 + t
-          n_268_studies <- n_268_studies + 1
-        }
-      }
-      
-      else if (v$study_fc$ref[study_idx] == "ukb_55") {
-        
-        if (input$pooling == "net") {
-          t_total_55_pooled <- t_total_55_pooled + t
-          n_55_studies_pooled <- n_55_studies_pooled + 1
-        }
-        else {
-          # add the data to the total vector
-          t_total_55 <- t_total_55 + t
-          
-          n_55_studies <- n_55_studies + 1
-        }
-      }
-    }
-    
-    # if data_fc is longer than 1, find the average of the matrices
-    if (n_268_studies > 1) {
-      t_avg_268 <- t_total_268 / n_268_studies
-    }
-    
-    if (n_268_studies == 1 | n_268_studies == 0) {
-      t_avg_268 <- t_total_268
-    }
-    
-    if (n_268_studies_pooled > 1) {
-      t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
-    }
-    
-    if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
-      t_avg_268_pooled <- t_total_268_pooled
-    }
-    
-    if (n_55_studies > 1) {
-      t_avg_55 <- t_total_55 / n_55_studies
-    }
-    
-    if (n_55_studies == 1 | n_55_studies == 0) {
-      t_avg_55 <- t_total_55
-    }
-    
-    if (n_55_studies_pooled >= 1) {
-      t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
-    }
-    
-    # only plot the 268 plot if n_268_studies > 0
-    if (n_268_studies > 0) {
-      plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", ukb = FALSE, save = FALSE, plot_name = 'Shen_matrix.png')
-    }
-    
-    # only plot the 268 pooled plot if n_268_studies_pooled > 0
-    if (n_268_studies_pooled > 0) {
-      plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, ukb = FALSE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
-    }
-    
-    # only plot the 55 plot if n_55_studies > 0
-    if (n_55_studies > 0) {
-      plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, ukb = TRUE, plot_name = 'UKB_matrix.png')
-    }
-    
-    # only plot the 55 pooled plot if n_55_studies_pooled > 0
-    if (n_55_studies_pooled > 0) {
-      plot_55_pooled <- plot_full_mat(t_avg_55_pooled, rearrange = FALSE, pooled = TRUE, ukb = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix_pooled.png')
-    }
-    
-    # if not pooled, show the 268 and 55 matrices
-    if (input$pooling == "none") {
-      # if there is only shen or only ukb, only plot one plot
-      if ((n_268_studies == 0) & (n_55_studies > 0)) {
-        grid.arrange(plot_55, ncol = 1)
-      }
-      else if ((n_55_studies == 0) & (n_268_studies > 0)) {
-        grid.arrange(plot_268, ncol = 1)
-      }
-      else if ((n_55_studies > 0) & (n_268_studies > 0)) {
-        grid.arrange(plot_268, plot_55, ncol = 1)
-      }
-    }
-    
-    # if pooled, show the pooled 268 and 55 matrices
-    if (input$pooling == "net") {
-      # if there is only shen or only ukb, only plot one plot
-      if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
-        grid.arrange(plot_55_pooled, ncol = 1)
-      }
-      else if ((n_55_studies_pooled == 0) & (n_268_studies_pooled > 0)) {
-        grid.arrange(plot_268_pooled, ncol = 1)
-      }
-      else if ((n_55_studies_pooled > 0) & (n_268_studies_pooled > 0)) {
-        grid.arrange(plot_268_pooled, plot_55_pooled, ncol = 1)
-      }
-    }}
-    , height = reactive(v$h))#, width = reactive(v$w))
+  # output$maps <- renderPlot({
+  #   validate(
+  #     need((0 < length(v$data_fc)), "We do not have FC data for the selected parameters"))
+  #   
+  #   # create a vector to store the data for if there is more than one study
+  #   t_total_268 <- rep(0, 35778) 
+  #   t_total_268_pooled <- rep(0, 55)
+  #   t_total_55 <-  rep(0 , 1485)
+  #   t_total_55_pooled <- rep(0, 55)
+  #   
+  #   n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
+  #   n_268_studies_pooled <- 0
+  #   n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
+  #   n_55_studies_pooled <- 0
+  #   
+  #   for (i in 1:length(v$data_fc)) {
+  #     t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
+  #     
+  #     if (!is.vector(t)) {
+  #       t <- as.vector(t)
+  #     }
+  #     
+  #     study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
+  #     if (v$study_fc$ref[study_idx] == "shen_268"){ 
+  #       
+  #       if (input$pooling == "net") {
+  #         t_total_268_pooled <- t_total_268_pooled + t
+  #         n_268_studies_pooled <- n_268_studies_pooled + 1
+  #       }
+  #       else {
+  #         #print(c(dim(t), v$study_fc$name[study_idx]))
+  #         
+  #         t_total_268 <- t_total_268 + t
+  #         n_268_studies <- n_268_studies + 1
+  #       }
+  #     }
+  #     
+  #     else if (v$study_fc$ref[study_idx] == "ukb_55") {
+  #       
+  #       if (input$pooling == "net") {
+  #         t_total_55_pooled <- t_total_55_pooled + t
+  #         n_55_studies_pooled <- n_55_studies_pooled + 1
+  #       }
+  #       else {
+  #         # add the data to the total vector
+  #         t_total_55 <- t_total_55 + t
+  #         
+  #         n_55_studies <- n_55_studies + 1
+  #       }
+  #     }
+  #   }
+  #   
+  #   # if data_fc is longer than 1, find the average of the matrices
+  #   if (n_268_studies > 1) {
+  #     t_avg_268 <- t_total_268 / n_268_studies
+  #   }
+  #   
+  #   if (n_268_studies == 1 | n_268_studies == 0) {
+  #     t_avg_268 <- t_total_268
+  #   }
+  #   
+  #   if (n_268_studies_pooled > 1) {
+  #     t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
+  #   }
+  #   
+  #   if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
+  #     t_avg_268_pooled <- t_total_268_pooled
+  #   }
+  #   
+  #   if (n_55_studies > 1) {
+  #     t_avg_55 <- t_total_55 / n_55_studies
+  #   }
+  #   
+  #   if (n_55_studies == 1 | n_55_studies == 0) {
+  #     t_avg_55 <- t_total_55
+  #   }
+  #   
+  #   if (n_55_studies_pooled >= 1) {
+  #     t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
+  #   }
+  #   
+  #   # only plot the 268 plot if n_268_studies > 0
+  #   if (n_268_studies > 0) {
+  #     plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", ukb = FALSE, save = FALSE, plot_name = 'Shen_matrix.png')
+  #   }
+  #   
+  #   # only plot the 268 pooled plot if n_268_studies_pooled > 0
+  #   if (n_268_studies_pooled > 0) {
+  #     plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, ukb = FALSE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
+  #   }
+  #   
+  #   # only plot the 55 plot if n_55_studies > 0
+  #   if (n_55_studies > 0) {
+  #     plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, ukb = TRUE, plot_name = 'UKB_matrix.png')
+  #   }
+  #   
+  #   # only plot the 55 pooled plot if n_55_studies_pooled > 0
+  #   if (n_55_studies_pooled > 0) {
+  #     plot_55_pooled <- plot_full_mat(t_avg_55_pooled, rearrange = FALSE, pooled = TRUE, ukb = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix_pooled.png')
+  #   }
+  #   
+  #   # if not pooled, show the 268 and 55 matrices
+  #   if (input$pooling == "none") {
+  #     # if there is only shen or only ukb, only plot one plot
+  #     if ((n_268_studies == 0) & (n_55_studies > 0)) {
+  #       grid.arrange(plot_55, ncol = 1)
+  #     }
+  #     else if ((n_55_studies == 0) & (n_268_studies > 0)) {
+  #       grid.arrange(plot_268, ncol = 1)
+  #     }
+  #     else if ((n_55_studies > 0) & (n_268_studies > 0)) {
+  #       grid.arrange(plot_268, plot_55, ncol = 1)
+  #     }
+  #   }
+  #   
+  #   # if pooled, show the pooled 268 and 55 matrices
+  #   if (input$pooling == "net") {
+  #     # if there is only shen or only ukb, only plot one plot
+  #     if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
+  #       grid.arrange(plot_55_pooled, ncol = 1)
+  #     }
+  #     else if ((n_55_studies_pooled == 0) & (n_268_studies_pooled > 0)) {
+  #       grid.arrange(plot_268_pooled, ncol = 1)
+  #     }
+  #     else if ((n_55_studies_pooled > 0) & (n_268_studies_pooled > 0)) {
+  #       grid.arrange(plot_268_pooled, plot_55_pooled, ncol = 1)
+  #     }
+  #   }}
+  #   , height = reactive(v$h))#, width = reactive(v$w))
   
   
   
@@ -666,18 +703,18 @@ server <- function(input, output, session) {
   
   ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
   
-  observeEvent(input$estimate, {
-    output$brain <- renderPlot({
-      par(mar = c(0, 0, 0, 5))
-      validate(
-        need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
-        need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
-        need(dim(is.na(v$nifti)), "")
-      )
-      
-      plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
-    })
-  })
+  # observeEvent(input$estimate, {
+  #   output$brain <- renderPlot({
+  #     par(mar = c(0, 0, 0, 5))
+  #     validate(
+  #       need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
+  #       need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
+  #       need(dim(is.na(v$nifti)), "")
+  #     )
+  #     
+  #     plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+  #   })
+  # })
   
   output$keys <- DT::renderDataTable(phen_keys, 
                                      options = list(rownames = FALSE, 

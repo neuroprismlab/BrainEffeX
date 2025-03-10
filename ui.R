@@ -139,7 +139,7 @@ ui <- fluidPage(
              h6(paste("Version 1.5; Last updated ", date_updated)),
       ),
       
-      column(5, align = "centre", # simCI plots
+      column(9, align = "centre", # simCI plots
              uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
              # h5("Helpful reminders"),
              h4("The plots below visualize all edges or voxels in each study."),
@@ -151,23 +151,22 @@ ui <- fluidPage(
              wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
       ),
       
-      column(4, align = "center", # effect size matrices)
-             wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
-                       withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
-                       downloadButton("downloadMatrices", "Download Matrices")),
-             h1(" "),
-             h1(""),
-             h1(""),
-             wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-                       h1(""),
-                       fluidRow( # second row: plots of activation maps for activation studies 
-                         column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-                         column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
-                       ),
-                       downloadButton("downloadBrain", "Download Brain Image"),
-             )
-      ),
-      
+      # column(4, align = "center", # effect size matrices)
+      #        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
+      #                  withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
+      #                  downloadButton("downloadMatrices", "Download Matrices")),
+      #        h1(" "),
+      #        h1(""),
+      #        h1(""),
+      #        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
+      #                  h1(""),
+      #                  fluidRow( # second row: plots of activation maps for activation studies 
+      #                    column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
+      #                    column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
+      #                  ),
+      #                  downloadButton("downloadBrain", "Download Brain Image"),
+      #        )
+      # ),
     )), # end of fluidRow
     nav_panel("Meta-Analysis", 
               fluidRow( # top row
