@@ -67,10 +67,9 @@ ui <- fluidPage(
                          choices = c("All" = "*")),
              bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
              
-             selectizeInput("task",
+             selectInput("task",
                             label = tagList("Task", icon("info-circle", id = "task_icon")),
-                            choices = c("All" = "*"),
-                            multiple = TRUE, selected = NULL),
+                            choices = c("All" = "*")),
              bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
              selectInput("test_type",
@@ -176,12 +175,26 @@ ui <- fluidPage(
                        h1(""),
                        selectInput("meta_analysis", 
                                    label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                                   choices = c("Statistic" = 'orig_stat_type', "Category" = 'category')), 
+                                   choices = c("Statistic" = 'statistic', "Category" = 'category')), 
                        bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
+                       selectInput("m_motion",
+                                   label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
+                                   selected = 'none'),
+                       bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+                       
+                       selectInput("m_pooling",
+                                   label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
+                                   choices = c("None" = 'none', "Network-level" = 'net')),
+                       bsTooltip("pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
+                       
+                       selectInput("m_estimate",
+                                   label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                                   choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
                        
                        h1(" "),
                        # Button to download the plot as PNG
-                       downloadButton("downloadData", "Download Data"),
+                       # downloadButton("downloadData", "Download Data"),
                        
                        # Button to take a screenshot of the app
                        actionButton("screenshot", "Take a screenshot"),
@@ -189,7 +202,8 @@ ui <- fluidPage(
                        h6(paste("Version 1.5; Last updated ", date_updated)),
                 ),
                 
-                column(5, align = "centre", # simCI plots
+                column(9, align = "centre", # plots
+                       # simCI plot on the left, accompanying spatial plot on right
                        
                        # h5("Helpful reminders"),
                        h4("The plots below visualize all edges or voxels in each meta-analysis"),
@@ -198,7 +212,8 @@ ui <- fluidPage(
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
                        ),
                        downloadButton("downloadPlots", "Download Plots"),
-                       wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("meta_analysis"), type = 1)),
+                       wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
+                       plotOutput("m_plots", width = "100%", height = "100%")
                 ),
                 
                 # column(4, align = "center", # effect size matrices)
@@ -219,7 +234,7 @@ ui <- fluidPage(
                 # ),
                 
               )
-    )), 
+    ), id = "tab"), 
   
   
   #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
