@@ -171,7 +171,7 @@
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output', plot_name = 'matrix.png') {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output', plot_name = 'matrix.png', title = TRUE) {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
     
     #TODO: look into heatmaply package for plotly interactive heatmap!
@@ -215,7 +215,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
     heatmap_plot <- ggplot(melted, aes(Var1, Var2, fill = value)) +
 
     labs(fill = "Cohen's d", 
-          title = plot_title,
+          title = ifelse(title, plot_title, ""),
            x = "", y = "") +
       
       geom_tile() +
@@ -348,7 +348,7 @@ plot_brain <- function(nifti, anatomical, x, y, z) {
     #clabels = seq(-0.1, 0.1, length.out = 30),
     ybreaks = seq(-1, 1, length.out = 31),
     ycolorbar = TRUE,
-    mfrow = c(3, 1)
+    mfrow = c(1, 3)
   )
 
   min_val = -1

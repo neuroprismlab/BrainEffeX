@@ -89,6 +89,7 @@ server <- function(input, output, session) {
     if (input$tab == "Explorer") {
       v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
       v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
+      print(paste0('current combo name: ', v$combo_name))
     } else if (input$tab == "Meta-Analysis") {
       v$combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
       print(paste0('v$combo name set to: ', v$combo_name))
@@ -405,18 +406,18 @@ server <- function(input, output, session) {
     list(input$meta_analysis, input$m_pooling, input$m_estimate, input$m_motion)
   })
   
-  observeEvent(toListen(), {
-    if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
-      # v$study_name as the name column from study that matches the task input and has map type activation
-      if (length(v$data) == 0) {
-        return()
-      } else {
-        v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-        v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
-        print('created nifti')
-      }
-    }
-  }, ignoreNULL = TRUE)
+  # observeEvent(toListen(), {
+  #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
+  #     # v$study_name as the name column from study that matches the task input and has map type activation
+  #     if (length(v$data) == 0) {
+  #       return()
+  #     } else {
+  #       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
+  #       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
+  #       print('created nifti')
+  #     }
+  #   }
+  # }, ignoreNULL = TRUE)
   
   
   ##### Group_by / Meta-analysis ######
@@ -530,17 +531,22 @@ server <- function(input, output, session) {
               
             }
             
+            if (grepl("_act_", this_study_or_group)) {
+              print(paste0('creating nifti for ', this_study_or_group))
+              v$nifti <- create_nifti(template, v$data, this_study_or_group, v$combo_name, v$brain_masks_init, estimate = input$estimate)
+            }
+            
             output[[plotname_spatial]] <- renderPlot({
               if (grepl("_act_", this_study_or_group)) {
-                plot(0)
-                #plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+                plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+                
               } else if (grepl("_fc_", this_study_or_group)) {
                 t_avg <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
                 n_nodes <- (((-1 + sqrt(1 + 8 * length(t_avg))) / 2) + 1)
                 if (n_nodes == 268) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE)
+                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE)
                 } else if (n_nodes == 55) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE)
+                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE)
                 }
               }
             })
