@@ -70,7 +70,7 @@ server <- function(input, output, session) {
   })
   observe(print(paste0('initial value of task: ', input$task)))
   # Dynamic panel output
-  output$dynamicPanel <- createDynamicPanel(input, study_init)
+  output$dynamicPanel <- createDynamicPanel(input, v$study_init)
   createModalNavigationObservers(input, session)
   
   # # Observer to handle default correlation display
@@ -190,7 +190,7 @@ server <- function(input, output, session) {
   
   # filter meta-analysis data to show just available data
   observeEvent(list(input$m_motion, input$m_pooling, input$m_estimate, input$meta_analysis, input$tab), {
-    
+  
     # create an index of the studies that fit each input selection
     # FIRST NEED TO CHECK IF THE COMBO EXISTS IN THE DATA, THEN FILTER FOR NAS
     if (input$tab == 'Meta-Analysis') {
@@ -214,6 +214,9 @@ server <- function(input, output, session) {
     }
   })
   
+  observeEvent(input$tab, priority = 1, {
+    updateSelectInput(session, "pooling", selected = "none")
+  })
   
   # filter data and study by user input selections
   observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
@@ -312,11 +315,6 @@ server <- function(input, output, session) {
         plot_info_ref_m[[study_name]] <- v$study$ref[i]
       }
       
-      #print(paste0('plot_info_idx_m: ', plot_info_idx_m))
-      #print(paste0('plot_info_grouping_var_m: ', plot_info_grouping_var_m))
-      #print(paste0('plot_info_group_level_m: ', plot_info_group_level_m))
-      #print(paste0('plot_info_ref_m: ', plot_info_ref_m))
-      
       data.frame(
         idx = I(plot_info_idx_m),
         grouping_var = unlist(plot_info_grouping_var_m),
@@ -353,20 +351,20 @@ server <- function(input, output, session) {
   
   # update the test type selection input with available test types
   observeEvent(input$dataset, {
-    v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-    updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
+    v$test_choices <- v$study_init[(grepl(input$dataset, v$study$dataset)),"orig_stat_type"]
+    updateSelectInput(session, "test_type", selected = unique(v$study[["test_type"]]))
   })
   
   # update correlation selections to only be the available constrained selections... 
   observeEvent(input$map_type, ignoreInit = TRUE, {
     # get filter index for matching studies
     if (input$tab == "Explorer") {
-      v$filter_idx <- get_filter_index(data, input, study)
+      v$filter_idx <- get_filter_index(v$data_init, input, v$study_init)
       
       # filter by matching datasets and map type
-      v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
+      v$task_choices <- v$study_init[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
       
-      v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
+      v$beh_choices <- v$study_init[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
       
       if (input$test_type == "r") {
         updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
@@ -406,19 +404,6 @@ server <- function(input, output, session) {
     list(input$meta_analysis, input$m_pooling, input$m_estimate, input$m_motion)
   })
   
-  # observeEvent(toListen(), {
-  #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
-  #     # v$study_name as the name column from study that matches the task input and has map type activation
-  #     if (length(v$data) == 0) {
-  #       return()
-  #     } else {
-  #       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-  #       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
-  #       print('created nifti')
-  #     }
-  #   }
-  # }, ignoreNULL = TRUE)
-  
   
   ##### Group_by / Meta-analysis ######
   
@@ -429,25 +414,6 @@ server <- function(input, output, session) {
   observe({
     if (input$tab == "Explorer") {
       print("creating placeholders for explorer simci plots")  
-      # output$histograms <- renderUI({
-      #   validate(need(length(v$data) > 0, "No data available for the selected parameters."))
-      #   if (length(v$plot_info()$idx) == 0) {
-      #     # if there is no data, display a message
-      #     tagList(
-      #       h3("No data available for the selected parameters.")
-      #     )
-      #   } else if (length(v$plot_info()$idx) > 0) {
-      #     v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
-      #       
-      #       plotname <- paste0("plot", i)
-      #       #print(plotname)
-      #       plotOutput(plotname, height = "200px", width = "100%")
-      #     })
-      #     
-      #     # convert the list to a tagList, this is necessary for the list of items to display properly
-      #     do.call(tagList, v$plot_output_list)
-      #   }
-      # })
       output$histograms <- renderUI({
         validate(need(length(v$data) > 0, "No data available for the selected parameters."))
         
@@ -477,6 +443,9 @@ server <- function(input, output, session) {
   observe({
     if (input$tab == "Explorer") {
       req(v$plot_info())
+      req(input$pooling)
+      req(v$combo_name)
+      print(paste0('creating explorer plots with pooling : ', input$pooling))
       validate(need(length(v$data) > 0, "no data avilable to plot"))
       print("filling explorer simci and spatial plots")  
       # check if v$data is empty
@@ -504,13 +473,11 @@ server <- function(input, output, session) {
             }
             
             if ((v$combo_name %in% names(data)) & (length(data[[v$combo_name]][[input$estimate]]) != 0)) { # if combo_name exists in data (e.g., not all studies have net)
-              
               # prep
               pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
               
               pd_list[[n_studies_in_pd_list]] <- pd
               n_studies_in_pd_list <- n_studies_in_pd_list + 1
-              
             }
             
             if (length(pd_list) > 0) { # plot only if pd_list isn't empty
@@ -531,23 +498,43 @@ server <- function(input, output, session) {
               
             }
             
-            if (grepl("_act_", this_study_or_group)) {
+            if (grepl("_act_", this_study_or_group) & input$pooling == 'none') {
               print(paste0('creating nifti for ', this_study_or_group))
-              v$nifti <- create_nifti(template, v$data, this_study_or_group, v$combo_name, v$brain_masks_init, estimate = input$estimate)
+              v$nifti_list[[this_study_or_group]] <- create_nifti(template, v$data, this_study_or_group, v$combo_name, v$brain_masks_init, estimate = input$estimate)
             }
             
+            if (grepl("_fc_", this_study_or_group)) {
+              print(paste0('adding fc data to list for combo :  ', v$combo_name))
+              v$fc_combo_data[[this_study_or_group]] <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
+            }
+            
+            print(v$fc_combo_data[[this_study_or_group]][1,1:5])
+            
+            output[[plotname_spatial]] <- NULL
             output[[plotname_spatial]] <- renderPlot({
               if (grepl("_act_", this_study_or_group)) {
-                plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+                plot_brain(v$nifti_list[[this_study_or_group]], anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
                 
               } else if (grepl("_fc_", this_study_or_group)) {
-                t_avg <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
-                n_nodes <- (((-1 + sqrt(1 + 8 * length(t_avg))) / 2) + 1)
-                if (n_nodes == 268) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE)
-                } else if (n_nodes == 55) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE)
+                if (input$pooling != "none") {
+                  #len <- length(v$fc_combo_data[[this_study_or_group]])
+                  print(paste0('pooling data for ', this_study_or_group))
+                  if (grepl("ukb", this_study_or_group)) { #ukb only
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
+                    #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = ifelse((input$pooling == 'none'), FALSE, TRUE), rearrange = ifelse((input$pooling == 'none'), TRUE, FALSE))
+                  } else { # other
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = TRUE, rearrange = FALSE)
+                    #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
+                  }
+                } else { # not pooled
+                  n_nodes <- (((-1 + sqrt(1 + 8 * length(v$fc_combo_data[[this_study_or_group]]))) / 2) + 1)
+                  if (n_nodes == 268) {
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = FALSE, rearrange = TRUE)
+                  } else if (n_nodes == 55) {
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE)
+                  }
                 }
+                
               }
             })
           })
@@ -573,154 +560,10 @@ server <- function(input, output, session) {
     }
   })
   
-  # output$maps <- renderPlot({
-  #   validate(
-  #     need((0 < length(v$data_fc)), "We do not have FC data for the selected parameters"))
-  #   
-  #   # create a vector to store the data for if there is more than one study
-  #   t_total_268 <- rep(0, 35778) 
-  #   t_total_268_pooled <- rep(0, 55)
-  #   t_total_55 <-  rep(0 , 1485)
-  #   t_total_55_pooled <- rep(0, 55)
-  #   
-  #   n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
-  #   n_268_studies_pooled <- 0
-  #   n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
-  #   n_55_studies_pooled <- 0
-  #   
-  #   for (i in 1:length(v$data_fc)) {
-  #     t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
-  #     
-  #     if (!is.vector(t)) {
-  #       t <- as.vector(t)
-  #     }
-  #     
-  #     study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
-  #     if (v$study_fc$ref[study_idx] == "shen_268"){ 
-  #       
-  #       if (input$pooling == "net") {
-  #         t_total_268_pooled <- t_total_268_pooled + t
-  #         n_268_studies_pooled <- n_268_studies_pooled + 1
-  #       }
-  #       else {
-  #         #print(c(dim(t), v$study_fc$name[study_idx]))
-  #         
-  #         t_total_268 <- t_total_268 + t
-  #         n_268_studies <- n_268_studies + 1
-  #       }
-  #     }
-  #     
-  #     else if (v$study_fc$ref[study_idx] == "ukb_55") {
-  #       
-  #       if (input$pooling == "net") {
-  #         t_total_55_pooled <- t_total_55_pooled + t
-  #         n_55_studies_pooled <- n_55_studies_pooled + 1
-  #       }
-  #       else {
-  #         # add the data to the total vector
-  #         t_total_55 <- t_total_55 + t
-  #         
-  #         n_55_studies <- n_55_studies + 1
-  #       }
-  #     }
-  #   }
-  #   
-  #   # if data_fc is longer than 1, find the average of the matrices
-  #   if (n_268_studies > 1) {
-  #     t_avg_268 <- t_total_268 / n_268_studies
-  #   }
-  #   
-  #   if (n_268_studies == 1 | n_268_studies == 0) {
-  #     t_avg_268 <- t_total_268
-  #   }
-  #   
-  #   if (n_268_studies_pooled > 1) {
-  #     t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
-  #   }
-  #   
-  #   if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
-  #     t_avg_268_pooled <- t_total_268_pooled
-  #   }
-  #   
-  #   if (n_55_studies > 1) {
-  #     t_avg_55 <- t_total_55 / n_55_studies
-  #   }
-  #   
-  #   if (n_55_studies == 1 | n_55_studies == 0) {
-  #     t_avg_55 <- t_total_55
-  #   }
-  #   
-  #   if (n_55_studies_pooled >= 1) {
-  #     t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
-  #   }
-  #   
-  #   # only plot the 268 plot if n_268_studies > 0
-  #   if (n_268_studies > 0) {
-  #     plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", ukb = FALSE, save = FALSE, plot_name = 'Shen_matrix.png')
-  #   }
-  #   
-  #   # only plot the 268 pooled plot if n_268_studies_pooled > 0
-  #   if (n_268_studies_pooled > 0) {
-  #     plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, ukb = FALSE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
-  #   }
-  #   
-  #   # only plot the 55 plot if n_55_studies > 0
-  #   if (n_55_studies > 0) {
-  #     plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, ukb = TRUE, plot_name = 'UKB_matrix.png')
-  #   }
-  #   
-  #   # only plot the 55 pooled plot if n_55_studies_pooled > 0
-  #   if (n_55_studies_pooled > 0) {
-  #     plot_55_pooled <- plot_full_mat(t_avg_55_pooled, rearrange = FALSE, pooled = TRUE, ukb = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix_pooled.png')
-  #   }
-  #   
-  #   # if not pooled, show the 268 and 55 matrices
-  #   if (input$pooling == "none") {
-  #     # if there is only shen or only ukb, only plot one plot
-  #     if ((n_268_studies == 0) & (n_55_studies > 0)) {
-  #       grid.arrange(plot_55, ncol = 1)
-  #     }
-  #     else if ((n_55_studies == 0) & (n_268_studies > 0)) {
-  #       grid.arrange(plot_268, ncol = 1)
-  #     }
-  #     else if ((n_55_studies > 0) & (n_268_studies > 0)) {
-  #       grid.arrange(plot_268, plot_55, ncol = 1)
-  #     }
-  #   }
-  #   
-  #   # if pooled, show the pooled 268 and 55 matrices
-  #   if (input$pooling == "net") {
-  #     # if there is only shen or only ukb, only plot one plot
-  #     if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
-  #       grid.arrange(plot_55_pooled, ncol = 1)
-  #     }
-  #     else if ((n_55_studies_pooled == 0) & (n_268_studies_pooled > 0)) {
-  #       grid.arrange(plot_268_pooled, ncol = 1)
-  #     }
-  #     else if ((n_55_studies_pooled > 0) & (n_268_studies_pooled > 0)) {
-  #       grid.arrange(plot_268_pooled, plot_55_pooled, ncol = 1)
-  #     }
-  #   }}
-  #   , height = reactive(v$h))#, width = reactive(v$w))
-  
-  
   
   ###### Plot brain images ######
   
   ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
-  
-  # observeEvent(input$estimate, {
-  #   output$brain <- renderPlot({
-  #     par(mar = c(0, 0, 0, 5))
-  #     validate(
-  #       need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
-  #       need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
-  #       need(dim(is.na(v$nifti)), "")
-  #     )
-  #     
-  #     plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
-  #   })
-  # })
   
   output$keys <- DT::renderDataTable(phen_keys, 
                                      options = list(rownames = FALSE, 
