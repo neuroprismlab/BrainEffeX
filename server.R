@@ -386,7 +386,16 @@ server <- function(input, output, session) {
   })
   
   
-  ###### Download & Screenshot buttons ######
+  ###### Reset filters & Download & Screenshot buttons ######
+  # Reset all SelectInputs when reset button is clicked
+  observeEvent(input$reset_btn, {
+    updateSelectInput(session, "dataset", selected = "*")
+    updateSelectInput(session, "map_type", selected = "*")
+    updateSelectizeInput(session, "task", selected = "*")
+    updateSelectInput(session, "test_type", selected = "*")
+    updateSelectInput(session, "correlation", selected = "*")
+  })
+  
   exportDownloadData(output, v)
   exportDownloadBrain(output, v, input, anatomical)
   exportDownloadPlots(output, v, input)
