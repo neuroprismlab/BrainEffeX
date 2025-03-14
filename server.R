@@ -1,836 +1,211 @@
 ####################################################################
-# BrainEffeX Server
-# Loading data, filtering, and plotting
+# BrainEffeX UI
 ####################################################################
-
-library(shinyscreenshot)
-library(gridExtra)
-library(ggplot2)
-library(reshape)
-library(fields)
-library(oro.nifti)
-library(neurobase)
 library(shinyjs)
 library(bslib)
+library(shinyBS)
+library(shinycssloaders)
 library(BrainEffeX.utils)
 
-source("helpers.R")
+source("modals.R")
 
-server <- function(input, output, session) {
+date_updated = "Feb-03-2025"
+
+# User interface ----
+ui <- fluidPage(
+  # theme = shinytheme("spacelab"),
+  useShinyjs(),
   
-  ###### Load data ######
+  # Include the custom CSS file
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+  ),
   
-  # study is a data frame that contains information about each study, including:
-  # basefile
-  # folder
-  # name
-  # extension as ext
-  # dataset
-  # map_type
-  # orig_stat_type
-  # test_component_1
-  # test_component_2
-  # category
-  # ref 
+  # JavaScript to trigger the modal on app load
+  tags$script(HTML("
+    $(document).ready(function(){
+      setTimeout(function() {
+        $('#instructionsModal1').modal('show');
+      }, 500);
+    });
+  ")),
   
-  # set reactive parameters for filtering based on options chosen by user
-  v <- reactiveValues()
-  
-  data_list <- load_data() # load just the initial combo's data
-  v$data_init <- data_list$data # list of effect maps etc
-  v$study_init <- data_list$study # table of study information
-  v$brain_masks_init <- data_list$brain_masks # list of brain masks
-  template <- data_list$template
-  anatomical <- data_list$anatomical
-  phen_keys <- data_list$phen_keys
-  print("loaded initial data")
-  rm(data_list)
-  
-  
-  
-  ###### Extra setup ######
-  observe({
-    effect_maps_available <- v$study_init[v$study_init$map_type == "act", "name"]
+  # titlePanel(
+  fluidRow(
+    column(8,
+           h1("BrainEffeX"),
+           #hr(), #space
+           h4("A tool for exploring effect sizes in typical neuroimaging study designs"),
+           
+    ),
+    column(4, 
+           tags$div(style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%;", 
+                    tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
+                    h5("The NeuroPrism Lab", style = "margin-top: 5px;"))
+    ),
     
-    # TODO: temporary fix for not including test_component_2 in activation studies
-    v$study_init$test_component_2[v$study_init$map_type == "act"] <- "rest"
-  })
+    actionButton(
+      "showInstructions",
+      "How to Use This App",
+      style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
+  ),
   
-  # options for spinner
-  options(spinner.color = "#9ecadb",
-          spinner.color.background = "#ffffff", spinner.size = 1)
+  hr(), # space
   
-  observe({
-  # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
-  updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
-  updateSelectInput(session, "map_type", choices = c("All" = "*", unique(v$study_init$map_type)))
-  updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
-  updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
-  updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
-  })
-  observe(print(paste0('initial value of task: ', input$task)))
-  # Dynamic panel output
-  output$dynamicPanel <- createDynamicPanel(input, study_init)
-  createModalNavigationObservers(input, session)
-  
-  # # Observer to handle default correlation display
-  observeEvent(input$correlation, {
-    if (is.null(input$correlation) || length(input$correlation) == 0) {
-      # Update the selectizeInput to show all tasks if none are selected
-      updateSelectizeInput(session, "correlation", choices = unique(v$beh_choices))
-    }
-  }, ignoreInit = TRUE)
-  
- 
-  # TODO: maybe try assigning v$data here?
-  
-  # create combo names depending on active tab
-  observe({
-    if (input$tab == "Explorer") {
-      v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
-      v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
-      print(paste0('current combo name: ', v$combo_name))
-    } else if (input$tab == "Meta-Analysis") {
-      v$combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
-      print(paste0('v$combo name set to: ', v$combo_name))
-    }
-  })
-  
-  observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, {
-    print(paste0("loading data for tab ", input$tab))
-    if (input$tab == "Meta-Analysis") {
-      print("loading meta-analysis data")
-      load(paste0("data/meta_analysis/meta_", input$meta_analysis, ".RData")) #meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
-      #isolate({
-        v$data_m_init <- meta$data # list of effect maps etc
-        v$study_m_init <- unique(meta$study) # table of study information, TMP: checking if it was an accident to have duplicates in study
-        print("head of study info right after loading meta data")
-        print(head(v$study_m_init))
-        v$brain_masks_m_init <- meta$brain_masks # list of brain masks
-      #})
-      print("done loading meta-analysis data")
-      rm(meta)
-    } else if (input$tab == "Explorer") {
-      print(paste0("loading data for tab ", input$tab))
-      data_list <- load_data() # load just the initial combo's data
-      v$data_init <- data_list$data # list of effect maps etc
-      v$study_init <- data_list$study # table of study information
-      v$brain_masks_init <- data_list$brain_masks # list of brain masks
-      print("done loading explorer data")
-      rm(data_list)
-    }
-  })
-  
-  observeEvent(input$map_type, ignoreInit = TRUE, {
-    print('changed map type. resetting task selection to All.')
-    updateSelectInput(session, "task", selected = "*")
-    #print(input$task)
-    
-    if (input$tab == "Explorer") {
-      if (input$task == "*") {
-        print("Task is already *, filtering now")
-        isolate({
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-          v$data <- v$data_init[!v$nan_filter]
-          v$study <- v$study_init[!v$nan_filter,]
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          
-          v$filter_idx <- get_filter_index(v$data, input, v$study)
-          v$data <- v$data[v$filter_idx$total]
-          v$study <- v$study[v$filter_idx$total,]
-          
-          
-          
-          print("Filtered data immediately in map_type observer:")
-          print(names(v$data))
-        
-      })
-      }
-    }
-  })
-  
-  observeEvent(input$task, ignoreInit = TRUE, {
-    print(paste0('task updated to: ', input$task))
-    print('Filtering data after task update')
-    
-    if (input$tab == "Explorer") {
-        if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
-        
-        v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-        v$data <- v$data_init[!v$nan_filter]
-        v$study <- v$study_init[!v$nan_filter,]
-        
-        if (exists("v$data") & (length(v$data) == 0)) {
-          print("Filtered all data out. No remaining studies.")
-          return()
-        }
-        
-        v$filter_idx <- get_filter_index(v$data, input, v$study)
-        v$data <- v$data[v$filter_idx$total]
-        v$study <- v$study[v$filter_idx$total,]
+  navset_tab( 
+    nav_panel("Explorer", fluidRow( # top row
+      column(3, # inputs
+             helpText("Select from the following options to visualize effect sizes:"),
+             
+             selectInput("dataset",
+                         label = tagList("Dataset", icon("info-circle", id = "dataset_icon")),
+                         choices = c("All" = "*")),
+             bsTooltip("dataset_icon", "Select an dataset to visualize.", "right", options = list(container = "body")),
+             
+             selectInput("map_type",
+                         label = tagList("Map Type", icon("info-circle", id = "map_type_icon")),
+                         choices = c("All" = "*")),
+             bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
+             
+             selectInput("task",
+                            label = tagList("Task", icon("info-circle", id = "task_icon")),
+                            choices = c("All" = "*")),
+             bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
+             
+             selectInput("test_type",
+                         label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
+                         choices = c("All" = "*")),
+             bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
+             
+             conditionalPanel(
+               condition = "input.test_type.indexOf('r') > -1",
+               selectInput("correlation",
+                           label = tagList("Correlation", icon("info-circle", id = "correlation_icon")),
+                           choices = c("All" = "*"),
+                           multiple = TRUE, selected = NULL),
+               bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
+             ),
+             
+             selectInput("motion",
+                         label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                         choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
+                         selected = 'none'),
+             bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+             
+             selectInput("pooling",
+                         label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
+                         choices = c("None" = 'none', "Network-level" = 'net')),
+             bsTooltip("pooling_icon", "Choose to pool the data.", "right", options = list(container = "body")),
+             
+             selectInput("estimate",
+                         label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                          choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+             # 
+             # selectInput("plot_combination_style",
+             #             label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
+             #             choices = c("Single" = 'single', "Overlapping" = 'overlapping', "Meta" = 'meta'), 
+             #             selected = 'none'),
+             # bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+             # 
+             # selectInput("group_by", 
+             #             label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
+             #             choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Category" = 'category')), 
+             # bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
+             # 
+             h1(" "),
+             # Button to download the plot as PNG
+             downloadButton("downloadData", "Download Data"),
+             
+             # Button to take a screenshot of the app
+             actionButton("screenshot", "Take a screenshot"),
+             
+             h1(" "),
+             # h5("Helpful reminders"),
+             # wellPanel(style = "background-color: #ffffff;", 
+             #           helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+             #           helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+             #           ),
+             h1(" "),
+             
+             # add a small scrollable table of phenotypic keys and definitions
+             
+             conditionalPanel(
+               condition = "input.test_type.indexOf('r') > -1",
+               h4("Variable names"),
+               helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
+               DT::dataTableOutput("keys"),
+             ),
+             
+             h6(paste("Version 1.5; Last updated ", date_updated)),
+      ),
       
-      
-      
-      print("Filtered data after task update:")
-      print(names(v$data))
-    }
-  })
-  
-  # filter meta-analysis data to show just available data
-  observeEvent(list(input$m_motion, input$m_pooling, input$m_estimate, input$meta_analysis, input$tab), {
-    
-    # create an index of the studies that fit each input selection
-    # FIRST NEED TO CHECK IF THE COMBO EXISTS IN THE DATA, THEN FILTER FOR NAS
-    if (input$tab == 'Meta-Analysis') {
-      req(v$data_m_init)
-      # first remove studies that don't include the current combo
-      print(paste0('filtering meta data to remove studies without this combo: ', v$combo_name))
-      v$combo_idx <- sapply(v$data_m_init, function(d) v$combo_name %in% names(d))
-      print(v$combo_idx)
-      v$data <- v$data_m_init[v$combo_idx]
-      v$study <- v$study_m_init[v$combo_idx,]
-      print('v$study after filtering by combo')
-      print(head(v$study))
-      
-      # then remove studies that don't include the selected estimate for the current combo
-      print(paste0('filtering meta data to remove studies with NA for this estimate: ', input$m_estimate))
-      v$nan_filter <- sapply(v$data, function(study) any(is.na(study[[v$combo_name]][[input$m_estimate]])))
-      v$data <- v$data[!v$nan_filter]
-      v$study <- v$study[!v$nan_filter,]
-      print('v$study after filtering by NA')
-      print(head(v$study))
-    }
-  })
-  
-  
-  # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
-    # create an index of the studies that fit each input selection, as well as total
-    # index of studies that fill all input selections simultaneously (v$filter_index$total)
-    isolate({
-    # remove data and study that are NaN
-    
-      
-      if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
-    if (input$tab == "Explorer") {
-      print('removing nans from v$data and v$study')
-      v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-      v$data <- v$data_init[!v$nan_filter]
-      v$study <- v$study_init[!v$nan_filter,]
-      print(which(v$nan_filter == TRUE))
-  
-      print("another head of study")
-      print(names(v$data))
-    }
-    
-    if (exists("v$data") & (length(v$data) == 0)) {
-      print("Filtered all data out. No remaining studies.")
-      return()
-    }
-    
-      if (input$tab == "Explorer") {
-    print(paste0('about to filter, current task is: ', input$task))
-      print('filtering explorer data')
-      v$filter_idx <- get_filter_index(v$data, input, v$study)
-      v$data <- v$data[v$filter_idx$total]
-      v$study <- v$study[v$filter_idx$total,]
-      }
-    })
-    
-  })
-  
-  v$plot_info <- reactive({
-    if ((input$tab == "Explorer") & (length(v$data) > 0)) {
-      print('Generating v$plot_info__... for explorer')
-      
-      plot_info_idx <- list()
-      plot_info_grouping_var <- list()
-      plot_info_group_level <- list()
-      plot_info_ref <- list()
-      
-      for (i in seq_along(v$data)) {
-        study_name <- names(v$data)[i]
-        plot_info_idx[[study_name]] <- i
-        plot_info_grouping_var[[study_name]] <- "none"
-        plot_info_group_level[[study_name]] <- NA
-        plot_info_ref[[study_name]] <- v$study$ref[i]
-      }
-      
-      data.frame(
-        idx = I(plot_info_idx),
-        grouping_var = unlist(plot_info_grouping_var),
-        group_level = unlist(plot_info_group_level),
-        ref = I(plot_info_ref),
-        row.names = names(plot_info_idx),
-        stringsAsFactors = FALSE
-      )
-    } else {
-      return(NULL)
-    }
-  })
-  
-  v$plot_info_m <- reactive({
-    req(input$meta_analysis)
-    req(v$data)
-    if (input$tab == "Meta-Analysis") {
-      #print('Generating v$plot_info__... for meta-analysis')
-      
-      if (is.null(v$data) || length(v$data) == 0) {
-        #print("Warning: v$data is empty!")
-        return(NULL)
-      }
-      if (is.null(v$study) || nrow(v$study) == 0) {
-        #print("Warning: v$study is empty!")
-        return(NULL)
-      }
-      
-      plot_info_idx_m <- list()
-      plot_info_grouping_var_m <- list()
-      plot_info_group_level_m <- list()
-      plot_info_ref_m <- list()
-      
-      for (i in seq_along(v$data)) {
-        study_name <- names(v$data)[i]
-        plot_info_idx_m[[study_name]] <- i
-        plot_info_grouping_var_m[[study_name]] <- input$meta_analysis
-        plot_info_group_level_m[[study_name]] <- v$study$group_level[i]
-        plot_info_ref_m[[study_name]] <- v$study$ref[i]
-      }
-      
-      #print(paste0('plot_info_idx_m: ', plot_info_idx_m))
-      #print(paste0('plot_info_grouping_var_m: ', plot_info_grouping_var_m))
-      #print(paste0('plot_info_group_level_m: ', plot_info_group_level_m))
-      #print(paste0('plot_info_ref_m: ', plot_info_ref_m))
-      
-      data.frame(
-        idx = I(plot_info_idx_m),
-        grouping_var = unlist(plot_info_grouping_var_m),
-        group_level = unlist(plot_info_group_level_m),
-        ref = I(plot_info_ref_m),
-        row.names = names(plot_info_idx_m),
-        stringsAsFactors = FALSE
-      )
-      #print('data frame of plot_info_m')
-      
-    } else {
-      return(NULL)
-    }
-  })
-  
-  # update the task selection input with available tasks but do not pre-select any
-  observeEvent(input$dataset, {
-    v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))
-    updateSelectInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
-  })
-  
-  # update the correlation selection input with available correlations but do not pre-select any
-  observeEvent(list(input$dataset, input$map_type, input$test_type), {
-    v$beh_choices <- v$study[, "test_component_2"]
-    updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-  })
-  
-  # reset input$behavior to NULL if input$test_type is not "r"
-  observeEvent(input$test_type, {
-    if (input$test_type != "r") {
-      updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-    }
-  })
-  
-  # update the test type selection input with available test types
-  observeEvent(input$dataset, {
-    v$test_choices <- study[(grepl(input$dataset, study$dataset)),"orig_stat_type"]
-    updateSelectInput(session, "test_type", selected = unique(study[["test_type"]]))
-  })
-  
-  # update correlation selections to only be the available constrained selections... 
-  observeEvent(input$map_type, ignoreInit = TRUE, {
-    # get filter index for matching studies
-    if (input$tab == "Explorer") {
-      v$filter_idx <- get_filter_index(data, input, study)
-      
-      # filter by matching datasets and map type
-      v$task_choices <- study[(v$filter_idx$dataset & v$filter_idx$map),"test_component_1"]
-      
-      v$beh_choices <- study[(v$filter_idx$dataset & v$filter_idx$map & v$filter_idx$test_component_1),"test_component_2"]
-      
-      if (input$test_type == "r") {
-        updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-      }
-      #print("measurement type changed")
-      
-      # Update the beh selection input with available behs but do not pre-select any
-      updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-      updateSelectInput(session, "task", selected = "*", choices = c("All" = "*", unique(v$task_choices)))
-    }}) 
-  
-  observe({
-    if ((input$tab == "Explorer") & (length(v$data) > 0)) {
-      v$n_act_studies <- length(v$data[grepl("_act_", names(v$data))])
-      v$data_fc <- v$data[grepl("_fc_", names(v$data))]
-      v$study_fc <- v$study[grepl("_fc_", v$study$name), ]
-      print(paste0("number of activation studies: ", v$n_act_studies))
-    }
-  })
-  
-  
-  ###### Download & Screenshot buttons ######
-  exportDownloadData(output, v)
-  exportDownloadBrain(output, v, input, anatomical)
-  exportDownloadPlots(output, v, input)
-  exportDownloadMatrices(output, v, input)
-  observeEvent(input$screenshot, {
-    screenshot()
-  })
-  
-  
-  toListen <- reactive({
-    list(input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$estimate, input$motion)
-  })
-  
-  toListen_m <- reactive({
-    list(input$meta_analysis, input$m_pooling, input$m_estimate, input$m_motion)
-  })
-  
-  # observeEvent(toListen(), {
-  #   if (!is.null(input$task) && length(input$task) == 1 && input$task != "*" && (any(grepl(input$task[1], effect_maps_available, ignore.case = TRUE))) && input$pooling == "none") {
-  #     # v$study_name as the name column from study that matches the task input and has map type activation
-  #     if (length(v$data) == 0) {
-  #       return()
-  #     } else {
-  #       v$study_name <- v$study[grepl(input$task, v$study$name, ignore.case = TRUE) & grepl("act", v$study$map_type), "name"]
-  #       v$nifti <- create_nifti(template, data, v$study_name, v$combo_name, brain_masks, estimate = input$estimate)
-  #       print('created nifti')
-  #     }
-  #   }
-  # }, ignoreNULL = TRUE)
-  
-  
-  ##### Group_by / Meta-analysis ######
-  
-  ###### Plot Sim CI ######
-  
-  # insert the right number of plot output objects into the web page
-  # if data is not empty, then plot. Check if data is empty:
-  observe({
-    if (input$tab == "Explorer") {
-      print("creating placeholders for explorer simci plots")  
-      # output$histograms <- renderUI({
-      #   validate(need(length(v$data) > 0, "No data available for the selected parameters."))
-      #   if (length(v$plot_info()$idx) == 0) {
-      #     # if there is no data, display a message
-      #     tagList(
-      #       h3("No data available for the selected parameters.")
-      #     )
-      #   } else if (length(v$plot_info()$idx) > 0) {
-      #     v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
-      #       
-      #       plotname <- paste0("plot", i)
-      #       #print(plotname)
-      #       plotOutput(plotname, height = "200px", width = "100%")
-      #     })
-      #     
-      #     # convert the list to a tagList, this is necessary for the list of items to display properly
-      #     do.call(tagList, v$plot_output_list)
-      #   }
-      # })
-      output$histograms <- renderUI({
-        validate(need(length(v$data) > 0, "No data available for the selected parameters."))
-        
-        if (length(v$plot_info()$idx) == 0) {
-          tagList(h3("No data available for the selected parameters."))
-        } else {
-          v$plot_output_list <- lapply(1:length(v$plot_info()$idx), function(i) {
-            plotname_simci <- paste0("plot", i)
-            plotname_spatial <- paste0("spatial_plot", i)
-            
-            tagList(
-              fluidRow(
-                column(6, plotOutput(plotname_simci, height = "200px", width = "100%")),
-                column(6, plotOutput(plotname_spatial, height = "200px", width = "100%"))
-              )
-            )
-          })
-          
-          do.call(tagList, v$plot_output_list)
-        }
-      })
-    }
-  })
-  
-  # call renderPlot for each one
-  # plots are only actually generated when they are visible on the web page
-  observe({
-    if (input$tab == "Explorer") {
-      req(v$plot_info())
-      validate(need(length(v$data) > 0, "no data avilable to plot"))
-      print("filling explorer simci and spatial plots")  
-      # check if v$data is empty
-      if (length(v$plot_info()$idx) > 0) {
-        # print(paste0("num plots: ", v$num_plots))
-        for (i in 1:length(v$plot_info()$idx)) {
-          # print(paste0('plotting study ', rownames(v$plot_info)[i]))
-          # create a local variable to hold the value of i
-          #print(i)
-          local({
-            my_i <- i
-            plotname_simci <- paste0("plot", my_i, sep="")
-            plotname_spatial <- paste0("spatial_plot", my_i)
-            
-            this_study_or_group <- rownames(v$plot_info())[my_i]
-            this_plot_info <- v$plot_info()[this_study_or_group,]
-            
-            pd_list <- list()
-            n_studies_in_pd_list <- 1
-            
-            for (j in v$plot_info()$idx[[i]]) {
-              name <- names(v$data[j])
-              data <- v$data[[j]]
-              study_details <- v$study[j, ]
-            }
-            
-            if ((v$combo_name %in% names(data)) & (length(data[[v$combo_name]][[input$estimate]]) != 0)) { # if combo_name exists in data (e.g., not all studies have net)
-              
-              # prep
-              pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$estimate, plot_info = this_plot_info)
-              
-              pd_list[[n_studies_in_pd_list]] <- pd
-              n_studies_in_pd_list <- n_studies_in_pd_list + 1
-              
-            }
-            
-            if (length(pd_list) > 0) { # plot only if pd_list isn't empty
-              
-              # filename
-              if (input$pooling == 'net') {
-                net_str=" - net"
-              } else {
-                net_str=""
-              }
-              out_dir <- paste0('output/', pd_list$extra_study_details[[this_study_or_group]], ' - ', '/', 'simci', net_str)
-              fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
-              
-              # plot
-              output[[plotname_simci]] <- renderPlot({
-                create_plots(pd_list, plot_type = 'simci', add_description = TRUE)
-              })
-              
-            }
-            
-            if (grepl("_act_", this_study_or_group)) {
-              print(paste0('creating nifti for ', this_study_or_group))
-              v$nifti <- create_nifti(template, v$data, this_study_or_group, v$combo_name, v$brain_masks_init, estimate = input$estimate)
-            }
-            
-            output[[plotname_spatial]] <- renderPlot({
-              if (grepl("_act_", this_study_or_group)) {
-                plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+      column(9, align = "centre", # simCI plots
+             uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
+             # h5("Helpful reminders"),
+             h4("The plots below visualize all edges or voxels in each study."),
+             wellPanel(style = "background-color: #ffffff;", 
+                       helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+                       helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+             ),
+             downloadButton("downloadPlots", "Download Plots"),
+             wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
+      ),
+    )), # end of fluidRow
+    nav_panel("Meta-Analysis", 
+              fluidRow( # top row
+                column(3, # inputs
+                       h1(""),
+                       selectInput("meta_analysis", 
+                                   label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
+                                   choices = c("Statistic" = 'statistic', "Category" = 'category')), 
+                       bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
+                       selectInput("m_motion",
+                                   label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
+                                   selected = 'none'),
+                       bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+                       
+                       selectInput("m_pooling",
+                                   label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
+                                   choices = c("None" = 'none', "Network-level" = 'net')),
+                       bsTooltip("pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
+                       
+                       selectInput("m_estimate",
+                                   label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                                   choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+                       
+                       h1(" "),
+                       # Button to download the plot as PNG
+                       # downloadButton("downloadData", "Download Data"),
+                       
+                       # Button to take a screenshot of the app
+                       actionButton("screenshot_m", "Take a screenshot"),
+                       
+                       h6(paste("Version 1.5; Last updated ", date_updated)),
+                ),
                 
-              } else if (grepl("_fc_", this_study_or_group)) {
-                t_avg <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
-                n_nodes <- (((-1 + sqrt(1 + 8 * length(t_avg))) / 2) + 1)
-                if (n_nodes == 268) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE)
-                } else if (n_nodes == 55) {
-                  plot_full_mat(t_avg, mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE)
-                }
-              }
-            })
-          })
-          }
-        }
-      }
-    })
-  
-  # create a reactive value to store the height and width of the plot
-  # the height should be double the width only when there are two plots (when there are some studies with 268 node parcellation and some with 55 node parcellation),
-  # and height should be equal to width when there is only one plot (when all studies are of the same parcellation type)
-  
-  observe({
-    v$num_268_studies <- sum(v$study_fc$ref == "shen_268")
-    v$num_55_studies <- sum(v$study_fc$ref == "ukb_55")
-    if (v$num_268_studies > 0 & v$num_55_studies > 0) {
-      v$h <- 700
-      v$w <- 500
-    }
-    else {
-      v$h <- 350
-      v$w <- 500
-    }
-  })
-  
-  # output$maps <- renderPlot({
-  #   validate(
-  #     need((0 < length(v$data_fc)), "We do not have FC data for the selected parameters"))
-  #   
-  #   # create a vector to store the data for if there is more than one study
-  #   t_total_268 <- rep(0, 35778) 
-  #   t_total_268_pooled <- rep(0, 55)
-  #   t_total_55 <-  rep(0 , 1485)
-  #   t_total_55_pooled <- rep(0, 55)
-  #   
-  #   n_268_studies <- 0 # initialize count of studies that use the 268 node parcellation
-  #   n_268_studies_pooled <- 0
-  #   n_55_studies <- 0 # initialize count of studies that use the 55 node parcellation
-  #   n_55_studies_pooled <- 0
-  #   
-  #   for (i in 1:length(v$data_fc)) {
-  #     t <- v$data_fc[[i]][[v$combo_name]][[input$estimate]]
-  #     
-  #     if (!is.vector(t)) {
-  #       t <- as.vector(t)
-  #     }
-  #     
-  #     study_idx <- which(toupper(v$study_fc$name) == toupper(names(v$data_fc)[i]))
-  #     if (v$study_fc$ref[study_idx] == "shen_268"){ 
-  #       
-  #       if (input$pooling == "net") {
-  #         t_total_268_pooled <- t_total_268_pooled + t
-  #         n_268_studies_pooled <- n_268_studies_pooled + 1
-  #       }
-  #       else {
-  #         #print(c(dim(t), v$study_fc$name[study_idx]))
-  #         
-  #         t_total_268 <- t_total_268 + t
-  #         n_268_studies <- n_268_studies + 1
-  #       }
-  #     }
-  #     
-  #     else if (v$study_fc$ref[study_idx] == "ukb_55") {
-  #       
-  #       if (input$pooling == "net") {
-  #         t_total_55_pooled <- t_total_55_pooled + t
-  #         n_55_studies_pooled <- n_55_studies_pooled + 1
-  #       }
-  #       else {
-  #         # add the data to the total vector
-  #         t_total_55 <- t_total_55 + t
-  #         
-  #         n_55_studies <- n_55_studies + 1
-  #       }
-  #     }
-  #   }
-  #   
-  #   # if data_fc is longer than 1, find the average of the matrices
-  #   if (n_268_studies > 1) {
-  #     t_avg_268 <- t_total_268 / n_268_studies
-  #   }
-  #   
-  #   if (n_268_studies == 1 | n_268_studies == 0) {
-  #     t_avg_268 <- t_total_268
-  #   }
-  #   
-  #   if (n_268_studies_pooled > 1) {
-  #     t_avg_268_pooled <- t_total_268_pooled / n_268_studies_pooled
-  #   }
-  #   
-  #   if (n_268_studies_pooled == 1 | n_268_studies_pooled == 0) {
-  #     t_avg_268_pooled <- t_total_268_pooled
-  #   }
-  #   
-  #   if (n_55_studies > 1) {
-  #     t_avg_55 <- t_total_55 / n_55_studies
-  #   }
-  #   
-  #   if (n_55_studies == 1 | n_55_studies == 0) {
-  #     t_avg_55 <- t_total_55
-  #   }
-  #   
-  #   if (n_55_studies_pooled >= 1) {
-  #     t_avg_55_pooled <- t_total_55_pooled / n_55_studies_pooled
-  #   }
-  #   
-  #   # only plot the 268 plot if n_268_studies > 0
-  #   if (n_268_studies > 0) {
-  #     plot_268 <- plot_full_mat(t_avg_268, mapping_path = "data/parcellations/map268_subnetwork.csv", ukb = FALSE, save = FALSE, plot_name = 'Shen_matrix.png')
-  #   }
-  #   
-  #   # only plot the 268 pooled plot if n_268_studies_pooled > 0
-  #   if (n_268_studies_pooled > 0) {
-  #     plot_268_pooled <- plot_full_mat(t_avg_268_pooled, rearrange = FALSE, pooled = TRUE, ukb = FALSE, mapping_path = "data/parcellations/map268_subnetwork.csv", save = FALSE, plot_name = 'Shen_matrix_pooled.png')
-  #   }
-  #   
-  #   # only plot the 55 plot if n_55_studies > 0
-  #   if (n_55_studies > 0) {
-  #     plot_55 <- plot_full_mat(t_avg_55, rearrange = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, ukb = TRUE, plot_name = 'UKB_matrix.png')
-  #   }
-  #   
-  #   # only plot the 55 pooled plot if n_55_studies_pooled > 0
-  #   if (n_55_studies_pooled > 0) {
-  #     plot_55_pooled <- plot_full_mat(t_avg_55_pooled, rearrange = FALSE, pooled = TRUE, ukb = TRUE, mapping_path = "data/parcellations/map55_ukb.csv", save = FALSE, plot_name = 'UKB_matrix_pooled.png')
-  #   }
-  #   
-  #   # if not pooled, show the 268 and 55 matrices
-  #   if (input$pooling == "none") {
-  #     # if there is only shen or only ukb, only plot one plot
-  #     if ((n_268_studies == 0) & (n_55_studies > 0)) {
-  #       grid.arrange(plot_55, ncol = 1)
-  #     }
-  #     else if ((n_55_studies == 0) & (n_268_studies > 0)) {
-  #       grid.arrange(plot_268, ncol = 1)
-  #     }
-  #     else if ((n_55_studies > 0) & (n_268_studies > 0)) {
-  #       grid.arrange(plot_268, plot_55, ncol = 1)
-  #     }
-  #   }
-  #   
-  #   # if pooled, show the pooled 268 and 55 matrices
-  #   if (input$pooling == "net") {
-  #     # if there is only shen or only ukb, only plot one plot
-  #     if ((n_268_studies_pooled == 0) & (n_55_studies_pooled > 0)) {
-  #       grid.arrange(plot_55_pooled, ncol = 1)
-  #     }
-  #     else if ((n_55_studies_pooled == 0) & (n_268_studies_pooled > 0)) {
-  #       grid.arrange(plot_268_pooled, ncol = 1)
-  #     }
-  #     else if ((n_55_studies_pooled > 0) & (n_268_studies_pooled > 0)) {
-  #       grid.arrange(plot_268_pooled, plot_55_pooled, ncol = 1)
-  #     }
-  #   }}
-  #   , height = reactive(v$h))#, width = reactive(v$w))
+                column(9, align = "centre", # plots
+                       # simCI plot on the left, accompanying spatial plot on right
+                       
+                       # h5("Helpful reminders"),
+                       h4("The plots below visualize all edges or voxels in each meta-analysis"),
+                       wellPanel(style = "background-color: #ffffff;", 
+                                 helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
+                                 helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+                       ),
+                       downloadButton("downloadPlots_m", "Download Plots"),
+                       wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
+                       #plotOutput("m_plots", width = "100%", height = "100%")
+                ),
+                
+                
+              )
+    ), id = "tab"), 
   
   
-  
-  ###### Plot brain images ######
-  
-  ## TODO: ## currently we only have one-sample task-act maps, will need to tweak this code when we get other test types
-  
-  # observeEvent(input$estimate, {
-  #   output$brain <- renderPlot({
-  #     par(mar = c(0, 0, 0, 5))
-  #     validate(
-  #       need(v$n_act_studies == 1, "Please select exactly one task to visualize the activation map."),
-  #       need(v$n_act_studies > 0, paste0(c("We do not have activation data for the selected parameters."))),
-  #       need(dim(is.na(v$nifti)), "")
-  #     )
-  #     
-  #     plot_brain(v$nifti, anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
-  #   })
-  # })
-  
-  output$keys <- DT::renderDataTable(phen_keys, 
-                                     options = list(rownames = FALSE, 
-                                                    paging = FALSE, 
-                                                    scroller = TRUE,
-                                                    scrollY = "400px",
-                                                    scrollX = FALSE,
-                                                    autoWidth = TRUE
-                                     ),
-                                     rownames = FALSE)
-  
-  
-  ### Meta-analysis tab
-  observe({
-    if (input$tab == "Meta-Analysis") {
-      req(v$plot_info_m())
-      print("creating plot placeholders for meta-analysis simci plots") 
-      #validate(need(length(v$plot_info_m()$idx) > 0, "no data avilable to plot"))
-      print("Checking v$plot_info_m() in UI rendering:")
-      print(v$plot_info_m())
-      
-      output$m_plots <- renderUI({
-        if (length(v$data) == 0 | is.null(v$data))  {
-          # if there is no data, display a message
-          tagList(
-            h3("No data available for the selected parameters.")
-          )
-        } else if (length(v$plot_info_m()$idx) > 0) {
-          v$plot_output_list_m <- lapply(1:length(v$plot_info_m()$idx), function(i) {
-            
-            plotname <- paste0("plot_m", i)
-            plotOutput(plotname, height = "200px", width = "100%")
-          })
-          
-          # convert the list to a tagList, this is necessary for the list of items to display properly
-          do.call(tagList, v$plot_output_list_m)
-        }
-      })
-    }
-  })    
-  
-  observe({
-    if (input$tab == "Meta-Analysis") {
-      print('filling placeholders with meta-analysis simci plots')
-      #if (input$group_by == "none") {
-      # check if v$data is empty
-      #print(head(v$plot_info_m()))
-      if (is.null(v$data) || length(v$data) == 0) {
-        output$m_plots <- renderUI({
-          tagList(
-            h3("No data available for the selected parameters."),
-            p("Please try adjusting your selections.")
-          )
-        })
-        return()  # Exit the observe function early
-      }
-      if (length(v$plot_info_m()$idx) > 0) {
-        print(paste0("num plots: ", length(v$plot_info_m()$idx)))
-        for (i in 1:length(v$plot_info_m()$idx)) {
-          # print(paste0('plotting study ', rownames(v$plot_info)[i]))
-          # create a local variable to hold the value of i
-          #print(i)
-          local({
-            my_i <- i
-            plotname <- paste0("plot_m", my_i, sep="")
-            
-            this_study_or_group <- rownames(v$plot_info_m())[my_i]
-            this_plot_info <- v$plot_info_m()[this_study_or_group,]
-            
-            pd_list_m <- list()
-            n_studies_in_pd_list <- 1
-            
-            for (j in v$plot_info_m()$idx[[my_i]]) {
-              name <- names(v$data[j])
-              data <- v$data[[j]]
-              study_details <- v$study[j, ]
-            }
-            
-            if ((v$combo_name %in% names(data)) & !(all(is.na(data[[v$combo_name]][[input$m_estimate]])))) { # if combo_name exists in data (e.g., not all studies have net)
-              
-              # prep
-              pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$m_estimate, plot_info = this_plot_info)
-              
-              pd_list_m[[n_studies_in_pd_list]] <- pd
-              n_studies_in_pd_list <- n_studies_in_pd_list + 1
-              
-            }
-            
-            if (length(pd_list_m) > 0) { # plot only if pd_list_m isn't empty
-              print(paste0('pd_list_m is not empty - the length is ', length(pd_list_m)))
-              # filename
-              if (input$m_pooling == 'net') {
-                net_str=" - net"
-              } else {
-                net_str=""
-              }
-              out_dir <- paste0('output/', pd_list_m$extra_study_details[[this_study_or_group]], ' - ', '/', 'simci', net_str)
-              fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
-              
-              # plot
-              output[[plotname]] <- renderPlot({
-                create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE)
-              })
-              
-            }
-          })
-        }
-      }
-    } 
-  }
-  )
-  
-}
+  #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
+  createGettingStartedModal(),
+  createUnderstandingPlotsModal1(),
+  createUnderstandingPlotsModal2(),
+  createDownloadingEffectMapsModal()
+)
