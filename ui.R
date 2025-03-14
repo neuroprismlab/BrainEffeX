@@ -150,23 +150,6 @@ ui <- fluidPage(
              downloadButton("downloadPlots", "Download Plots"),
              wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
       ),
-      
-      # column(4, align = "center", # effect size matrices)
-      #        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the average effect sizes across all studies that fit the selected parameters."),
-      #                  withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
-      #                  downloadButton("downloadMatrices", "Download Matrices")),
-      #        h1(" "),
-      #        h1(""),
-      #        h1(""),
-      #        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-      #                  h1(""),
-      #                  fluidRow( # second row: plots of activation maps for activation studies 
-      #                    column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-      #                    column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
-      #                  ),
-      #                  downloadButton("downloadBrain", "Download Brain Image"),
-      #        )
-      # ),
     )), # end of fluidRow
     nav_panel("Meta-Analysis", 
               fluidRow( # top row
@@ -196,7 +179,7 @@ ui <- fluidPage(
                        # downloadButton("downloadData", "Download Data"),
                        
                        # Button to take a screenshot of the app
-                       actionButton("screenshot", "Take a screenshot"),
+                       actionButton("screenshot_m", "Take a screenshot"),
                        
                        h6(paste("Version 1.5; Last updated ", date_updated)),
                 ),
@@ -210,27 +193,11 @@ ui <- fluidPage(
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
                        ),
-                       downloadButton("downloadPlots", "Download Plots"),
+                       downloadButton("downloadPlots_m", "Download Plots"),
                        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
-                       plotOutput("m_plots", width = "100%", height = "100%")
+                       #plotOutput("m_plots", width = "100%", height = "100%")
                 ),
                 
-                # column(4, align = "center", # effect size matrices)
-                #        wellPanel(style = "background-color: #ffffff;", h3("Effect size matrices"), helpText("These matrices show the effect sizes across edges for each meta-analysis."),
-                #                  withSpinner(plotOutput("maps", width = "100%", height = "100%"), type = 1),
-                #                  downloadButton("downloadMatrices", "Download Matrices")),
-                #        h1(" "),
-                #        h1(""),
-                #        h1(""),
-                #        wellPanel(style = "background-color: #ffffff;", h3("Activation Maps (Cohen's d)"),
-                #                  h1(""),
-                #                  fluidRow( # second row: plots of activation maps for activation studies 
-                #                    column(4, numericInput("xCoord", "X", 30), numericInput("yCoord", "Y", 30), numericInput("zCoord", "Z", 30)),
-                #                    column(8, withSpinner(plotOutput("brain", width = "90%"), type = 1))
-                #                  ),
-                #                  downloadButton("downloadBrain", "Download Brain Image"),
-                #        )
-                # ),
                 
               )
     ), id = "tab"), 
