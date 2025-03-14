@@ -249,7 +249,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
         label_strings <- mapping$label[label_positions]
         
         # Add labels to each mapping category
-        heatmap_plot <- heatmap_plot + annotate("text", x = label_positions, y = -6, label = label_strings, angle = 90, hjust = 1, vjust=0.5, size=3.5) + coord_cartesian(clip="off")
+        heatmap_plot <- heatmap_plot + annotate("text", x = label_positions, y = -6, label = label_strings, angle = 90, hjust = 1, vjust=0.5, size=3.5)
         heatmap_plot <- heatmap_plot + annotate("text", x = -10, y = label_positions, label = label_strings, angle = 0, hjust = 0.5, vjust=1, size=3.5)
       }
 
@@ -260,10 +260,11 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
           heatmap_plot <- heatmap_plot + geom_vline(xintercept = i+0.5, color = "black", size = 0.3) +
             geom_hline(yintercept = i+0.5, color = "black")
 
-          heatmap_plot <- heatmap_plot + annotate("text", x = i, y = -1, label = unique(mapping$label)[i], angle = 90, hjust = 1, vjust=0.5, size=3.5) + coord_cartesian(clip="off")
+          heatmap_plot <- heatmap_plot + annotate("text", x = i, y = -1, label = unique(mapping$label)[i], angle = 90, hjust = 1, vjust=0.5, size=3.5)
           heatmap_plot <- heatmap_plot + annotate("text", x = -1, y = i, label = unique(mapping$label)[i], angle = 0, hjust = 0.5, vjust=1, size=3.5)
         }
       }
+      heatmap_plot <- heatmap_plot + coord_cartesian(clip="off")
     }
     
         

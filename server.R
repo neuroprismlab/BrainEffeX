@@ -668,7 +668,7 @@ server <- function(input, output, session) {
               
               # plot
               output[[plotname]] <- renderPlot({
-                create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE)
+                create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE, meta = TRUE)
               })
               
             }
