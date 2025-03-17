@@ -85,16 +85,17 @@ server <- function(input, output, session) {
   # TODO: maybe try assigning v$data here?
   
   # create combo names depending on active tab
-  observe({
+  observeEvent(list(input$tab, input$motion, input$pooling, input$m_pooling, input$m_motion, input$meta_analysis), {
     if (input$tab == "Explorer") {
       v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
       v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
       print(paste0('current combo name: ', v$combo_name))
     } else if (input$tab == "Meta-Analysis") {
-      v$combo_name <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
-      print(paste0('v$combo name set to: ', v$combo_name))
+      v$combo_name_m <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
+      v$mv_combo_name_m <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.multi')
+      print(paste0('v$combo_name_m set to: ', v$combo_name_m))
     }
-  })
+  }, priority = 2)
   
   observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, {
     print(paste0("loading data for tab ", input$tab))
@@ -110,6 +111,10 @@ server <- function(input, output, session) {
       #})
       print("done loading meta-analysis data")
       rm(meta)
+      
+      v$combo_name_m <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.none')
+      v$mv_combo_name_m <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.multi')
+      print(paste0('v$combo_name_m set to: ', v$combo_name_m))
     } else if (input$tab == "Explorer") {
       print(paste0("loading data for tab ", input$tab))
       data_list <- load_data() # load just the initial combo's data
@@ -118,8 +123,12 @@ server <- function(input, output, session) {
       v$brain_masks_init <- data_list$brain_masks # list of brain masks
       print("done loading explorer data")
       rm(data_list)
+      
+      v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+      v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
+      print(paste0('current combo name: ', v$combo_name))
     }
-  })
+  }, priority = 3)
   
   observeEvent(input$map_type, ignoreInit = TRUE, {
     print('changed map type. resetting task selection to All.')
@@ -189,34 +198,35 @@ server <- function(input, output, session) {
   })
   
   # filter meta-analysis data to show just available data
-  observeEvent(list(input$m_motion, input$m_pooling, input$m_estimate, input$meta_analysis, input$tab), {
+  observeEvent(list(v$combo_name_m, input$m_estimate, input$meta_analysis, input$tab), {
   
     # create an index of the studies that fit each input selection
     # FIRST NEED TO CHECK IF THE COMBO EXISTS IN THE DATA, THEN FILTER FOR NAS
     if (input$tab == 'Meta-Analysis') {
       req(v$data_m_init)
+      req(v$combo_name_m)
       # first remove studies that don't include the current combo
-      print(paste0('filtering meta data to remove studies without this combo: ', v$combo_name))
-      v$combo_idx <- sapply(v$data_m_init, function(d) v$combo_name %in% names(d))
-      print(v$combo_idx)
-      v$data <- v$data_m_init[v$combo_idx]
-      v$study <- v$study_m_init[v$combo_idx,]
+      print(paste0('filtering meta data to remove studies without this combo: ', v$combo_name_m))
+      v$combo_idx_m <- sapply(v$data_m_init, function(d) v$combo_name_m %in% names(d))
+      print(v$combo_idx_m)
+      v$data <- v$data_m_init[v$combo_idx_m]
+      v$study <- v$study_m_init[v$combo_idx_m,]
       print('v$study after filtering by combo')
       print(head(v$study))
       
       # then remove studies that don't include the selected estimate for the current combo
       print(paste0('filtering meta data to remove studies with NA for this estimate: ', input$m_estimate))
-      v$nan_filter <- sapply(v$data, function(study) any(is.na(study[[v$combo_name]][[input$m_estimate]])))
-      v$data <- v$data[!v$nan_filter]
-      v$study <- v$study[!v$nan_filter,]
+      v$nan_filter_m <- sapply(v$data, function(study) any(is.na(v$study[[v$combo_name_m]][[input$m_estimate]])))
+      v$data <- v$data[!v$nan_filter_m]
+      v$study <- v$study[!v$nan_filter_m,]
       print('v$study after filtering by NA')
       print(head(v$study))
     }
-  })
+  }, priority = 1)
   
-  observeEvent(input$tab, priority = 1, {
-    updateSelectInput(session, "pooling", selected = "none")
-  })
+  # observeEvent(input$tab, priority = 1, {
+  #   updateSelectInput(session, "pooling", selected = "none")
+  # })
   
   # filter data and study by user input selections
   observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
@@ -235,10 +245,10 @@ server <- function(input, output, session) {
       v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
       v$data <- v$data_init[!v$nan_filter]
       v$study <- v$study_init[!v$nan_filter,]
-      print(which(v$nan_filter == TRUE))
+      #print(which(v$nan_filter == TRUE))
   
       print("another head of study")
-      print(names(v$data))
+      #print(names(v$data))
     }
     
     if (exists("v$data") & (length(v$data) == 0)) {
@@ -288,7 +298,7 @@ server <- function(input, output, session) {
   })
   
   v$plot_info_m <- reactive({
-    req(input$meta_analysis)
+    #req(input$meta_analysis)
     req(v$data)
     if (input$tab == "Meta-Analysis") {
       #print('Generating v$plot_info__... for meta-analysis')
@@ -496,22 +506,22 @@ server <- function(input, output, session) {
               
               # plot
               output[[plotname_simci]] <- renderPlot({
-                create_plots(pd_list, plot_type = 'simci', add_description = TRUE)
+                create_plots(pd_list, plot_type = 'simci', add_description = TRUE, estimate = input$estimate)
               })
               
             }
             
             if (grepl("_act_", this_study_or_group) & input$pooling == 'none') {
-              print(paste0('creating nifti for ', this_study_or_group))
+              #print(paste0('creating nifti for ', this_study_or_group))
               v$nifti_list[[this_study_or_group]] <- create_nifti(template, v$data, this_study_or_group, v$combo_name, v$brain_masks_init, estimate = input$estimate)
             }
             
             if (grepl("_fc_", this_study_or_group)) {
-              print(paste0('adding fc data to list for combo :  ', v$combo_name))
+              #print(paste0('adding fc data to list for combo :  ', v$combo_name))
               v$fc_combo_data[[this_study_or_group]] <- v$data[[this_study_or_group]][[v$combo_name]][[input$estimate]]
             }
             
-            print(v$fc_combo_data[[this_study_or_group]][1,1:5])
+            #print(v$fc_combo_data[[this_study_or_group]][1,1:5])
             
             output[[plotname_spatial]] <- NULL
             output[[plotname_spatial]] <- renderPlot({
@@ -539,7 +549,7 @@ server <- function(input, output, session) {
                 }
                 
               }
-            })
+            }, height = 200, width = 250)
           })
           }
         }
@@ -611,6 +621,7 @@ server <- function(input, output, session) {
   observe({
     if (input$tab == "Meta-Analysis") {
       print('filling placeholders with meta-analysis simci plots')
+      print(input$m_pooling)
       #if (input$group_by == "none") {
       # check if v$data is empty
       #print(head(v$plot_info_m()))
@@ -645,10 +656,10 @@ server <- function(input, output, session) {
               study_details <- v$study[j, ]
             }
             
-            if ((v$combo_name %in% names(data)) & !(all(is.na(data[[v$combo_name]][[input$m_estimate]])))) { # if combo_name exists in data (e.g., not all studies have net)
+            if ((v$combo_name_m %in% names(data)) & !(all(is.na(data[[v$combo_name_m]][[input$m_estimate]])))) { # if combo_name exists in data (e.g., not all studies have net)
               
               # prep
-              pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name, mv_combo_name = v$mv_combo_name, estimate = input$m_estimate, plot_info = this_plot_info)
+              pd <- prep_data_for_plot(data = data, study_details = study_details, combo_name = v$combo_name_m, mv_combo_name = v$mv_combo_name_m, estimate = input$m_estimate, plot_info = this_plot_info)
               
               pd_list_m[[n_studies_in_pd_list]] <- pd
               n_studies_in_pd_list <- n_studies_in_pd_list + 1
@@ -668,7 +679,7 @@ server <- function(input, output, session) {
               
               # plot
               output[[plotname]] <- renderPlot({
-                create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE, meta = TRUE)
+                create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE, meta = TRUE, estimate = input$m_estimate)
               })
               
             }

@@ -330,39 +330,91 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
 }
 
 
+# custom colorbar function (bc bug in coloring and size of ortho2)
+# mostly copied from https://github.com/muschellij2/neurobase/blob/master/R/ortho2.R
+# changed text color and added text.size
+
+colorbar_custom <- function(breaks, #the minimum and maximum z values for which 
+                     # colors should be plotted (see \code{\link{image}})
+                     col, # a list of colors (see \code{\link{image}})
+                     text.col = "white", # axis and text label color
+                     labels = TRUE,
+                     maxleft = 0.95,
+                     text.size = 4
+){
+  # taken from vertical.image.legend from package aqfig
+  starting.par.settings <- par(no.readonly = TRUE)
+  on.exit({
+    par(starting.par.settings)
+  })
+  mai <- par("mai")
+  fin <- par("fin")
+  rat = mai[4]/fin[1]
+  rat = max(rat, 1 - maxleft)
+  x.legend.fig <- c(1 - rat, 1)
+  y.legend.fig <- c(mai[1]/fin[2], 1 - (mai[3]/fin[2]))
+  x.legend.plt <- c(x.legend.fig[1] + (0.08 * (x.legend.fig[2] - 
+                                                 x.legend.fig[1])), 
+                    x.legend.fig[2] - (0.6 * (x.legend.fig[2] - 
+                                                x.legend.fig[1])))
+  y.legend.plt <- y.legend.fig
+  cut.pts <- breaks
+  z <- (cut.pts[1:length(col)] + cut.pts[2:(length(col) + 1)])/2
+  par(new = TRUE, pty = "m", plt = c(x.legend.plt, y.legend.plt))
+  image(x = 1, y = z, z = matrix(z, nrow = 1, ncol = length(col)), 
+        col = col, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+  if (isTRUE(labels)) {
+    at = NULL
+  } else {
+    at = z
+  }
+  axis(4, mgp = c(3, 0.2, 0), las = 2, cex.axis = text.size, 
+       tcl = -0.1, 
+       labels = labels,
+       at = at,
+       col.axis = text.col,
+       col = text.col)
+  box()
+  mfg.settings <- par()$mfg
+  par(mfg = mfg.settings, new = FALSE)
+  invisible(NULL)
+}
+
 # plot the nifti
 plot_brain <- function(nifti, anatomical, x, y, z) {
   nifti[nifti == 0] <- NA
   nifti[nifti > 1] <- 1
   nifti[nifti < -1] <- -1
   
-  par(mar = c(1, 1, 1, 4))
+  par(mar = c(1,1,1,3.5))
   ortho2(
     x = anatomical,
     y = nifti,
     crosshairs = TRUE,
     bg = 'white',
     NA.x = TRUE,
-    col.y = colorspace::diverge_hsv(30),
+    text.cex = 10,
+    col.y = colorspace::diverge_hsv(20),
     xyz = c(x, y, z),
     text.color = 'black',
-    #clabels = seq(-0.1, 0.1, length.out = 30),
-    ybreaks = seq(-1, 1, length.out = 31),
+    #clabels = seq(-1, 1, length.out = 30),
+    ybreaks = seq(-1, 1, length.out = 21),
     ycolorbar = TRUE,
     mfrow = c(1, 3)
   )
 
   min_val = -1
   max_val = 1
-  num_breaks = 31
+  num_breaks = 10
   breaks = seq(min_val, max_val, length.out = num_breaks)
   labels = round(seq(min_val, max_val, length.out = num_breaks-1), 2)
   
-  colorbar(
+  colorbar_custom(
     breaks = breaks,
-    col = colorspace::diverge_hsv(30),
+    col = colorspace::diverge_hsv(9),
     labels = labels,
-    text.col = 'black'
+    text.col = 'black',
+    text.size = 0.9
   )
 }
 

@@ -16,7 +16,7 @@ save_plots = FALSE # set to TRUE to save all plots as pngs, MUST BE OFF TO DEPLO
 library(BrainEffeX.utils) # to run locally, install the package from github with: devtools::install_github("neuroprismlab/BrainEffeX_utils")
 source("ui.R")
 source("server.R")
-
+source("helpers.R")
 
 # Run app
 shinyApp(ui, server)
