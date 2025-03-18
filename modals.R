@@ -94,61 +94,70 @@ createDownloadingEffectMapsModal <- function() {
 
 ############################################
 
-# Function to create the dynamic panel content
+# # Function to create the dynamic panel content
 createDynamicPanel <- function(input, study) {
+  # Combine the reactive expression to update when either the Apply Filters or Reset Filters button is clicked
   renderUI({
-    messages <- c()
-    
-    # Dataset message
-    if (is.null(input$dataset) || input$dataset == "*") {
-      messages$dataset <- "• All datasets."
-    } else {
-      messages$dataset <- paste("• The <b>", input$dataset, "</b> dataset(s).")
-    }
-    
-    # Map type message
-    if (is.null(input$map_type) || input$map_type == "*") {
-      messages$map_type <- "• All map types."
-    } else {
-      messages$map_type <- paste("• <b>", input$map_type, "</b> map type.")
-    }
-    
-    # Task message
-    if (is.null(input$task) || length(input$task) == 0) {
-      messages$task <- "• No specific tasks are selected."
-    } else if ("*" %in% input$task) {
-      messages$task <- "• All tasks."
-    } else {
-      messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
-    }
-    
-    # Test type message
-    if (is.null(input$test_type) || input$test_type == "*") {
-      messages$test_type <- "• All test types."
-    } else {
-      messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
-    }
-    
-    # correlation message
-    if (is.null(input$correlation) || length(input$correlation) == 0) {
-      messages$correlation <- "• No specific correlations are selected."
-    } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
-      messages$correlation <- "• All correlations"
-    } else {
-      messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
-    }
-    
-    # Group by message
-    if (!is.null(input$group_by) && input$group_by != "none") {
-      messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
-    }
-    
-    message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
-    
-    tags$div(
-      style = "background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;",
-      tags$p(HTML(message_text))
+    event <- eventReactive(
+      list(input$apply_filters_btn, input$reset_btn), {  # Trigger on either button click
+        messages <- c()
+        
+        # Dataset message
+        if (is.null(input$dataset) || input$dataset == "*") {
+          messages$dataset <- "• All datasets."
+        } else {
+          messages$dataset <- paste("• The <b>", input$dataset, "</b> dataset(s).")
+        }
+        
+        # Map type message
+        if (is.null(input$map_type) || input$map_type == "*") {
+          messages$map_type <- "• All map types."
+        } else {
+          messages$map_type <- paste("• <b>", input$map_type, "</b> map type.")
+        }
+        
+        # Task message
+        if (is.null(input$task) || length(input$task) == 0) {
+          messages$task <- "• No specific tasks are selected."
+        } else if ("*" %in% input$task) {
+          messages$task <- "• All tasks."
+        } else {
+          messages$task <- paste("• The <b>", paste(input$task, collapse = ", "), "</b> task(s).")
+        }
+        
+        # Test type message
+        if (is.null(input$test_type) || input$test_type == "*") {
+          messages$test_type <- "• All test types."
+        } else {
+          messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
+        }
+        
+        # Correlation message
+        if (is.null(input$correlation) || length(input$correlation) == 0) {
+          messages$correlation <- "• No specific correlations are selected."
+        } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
+          messages$correlation <- "• All correlations"
+        } else {
+          messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
+        }
+        
+        # Group by message
+        if (!is.null(input$group_by) && input$group_by != "none") {
+          messages$group_by <- paste("• The results are grouped by <b>", input$group_by, "</b>.")
+        }
+        
+        # Combine the messages into one text
+        message_text <- paste("<b>You are looking at:</b><br>", paste(messages, collapse = "<br>"))
+        
+        tags$div(
+          style = "background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;",
+          tags$p(HTML(message_text))
+        )
+      }
     )
+    
+    # Render the dynamic content based on the eventReactive output
+    event()
   })
 }
 
