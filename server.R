@@ -36,7 +36,7 @@ server <- function(input, output, session) {
   # set reactive parameters for filtering based on options chosen by user
   v <- reactiveValues()
   
-  data_list <- load_data() # load just the initial combo's data
+  data_list <- load_combo_data(combo = "pooling.none.motion.none") # load just the initial combo's data
   v$data_init <- data_list$data # list of effect maps etc
   v$study_init <- data_list$study # table of study information
   v$brain_masks_init <- data_list$brain_masks # list of brain masks
@@ -97,7 +97,7 @@ server <- function(input, output, session) {
     }
   }, priority = 2)
   
-  observeEvent(list(input$tab, input$meta_analysis), ignoreInit = TRUE, {
+  observeEvent(list(input$tab, input$meta_analysis, input$motion, input$pooling), ignoreInit = TRUE, {
     print(paste0("loading data for tab ", input$tab))
     if (input$tab == "Meta-Analysis") {
       print("loading meta-analysis data")
@@ -116,17 +116,17 @@ server <- function(input, output, session) {
       v$mv_combo_name_m <- paste0('pooling.', input$m_pooling, '.motion.', input$m_motion, '.mv.multi')
       print(paste0('v$combo_name_m set to: ', v$combo_name_m))
     } else if (input$tab == "Explorer") {
+      v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
+      v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
+      print(paste0('current combo name: ', v$combo_name))
+      
       print(paste0("loading data for tab ", input$tab))
-      data_list <- load_data() # load just the initial combo's data
+      data_list <- load_combo_data(combo = paste0("pooling.", input$pooling, ".motion.", input$motion)) # load just the initial combo's data
       v$data_init <- data_list$data # list of effect maps etc
       v$study_init <- data_list$study # table of study information
       v$brain_masks_init <- data_list$brain_masks # list of brain masks
       print("done loading explorer data")
       rm(data_list)
-      
-      v$combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.none')
-      v$mv_combo_name <- paste0('pooling.', input$pooling, '.motion.', input$motion, '.mv.multi')
-      print(paste0('current combo name: ', v$combo_name))
     }
   }, priority = 3)
   
@@ -247,8 +247,8 @@ server <- function(input, output, session) {
       v$study <- v$study_init[!v$nan_filter,]
       #print(which(v$nan_filter == TRUE))
   
-      print("another head of study")
-      #print(names(v$data))
+      print("names of v$data")
+      print(names(v$data))
     }
     
     if (exists("v$data") & (length(v$data) == 0)) {
@@ -465,7 +465,7 @@ server <- function(input, output, session) {
       if (length(v$plot_info()$idx) > 0) {
         # print(paste0("num plots: ", v$num_plots))
         for (i in 1:length(v$plot_info()$idx)) {
-          print(paste0('plotting study ', rownames(v$plot_info)[i]))
+          # print(paste0('plotting study ', rownames(v$plot_info)[i]))
           # create a local variable to hold the value of i
           #print(i)
           local({
