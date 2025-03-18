@@ -195,45 +195,6 @@ server <- function(input, output, session) {
     updateSelectInput(session, "pooling", selected = "none")
   })
   
-  # filter data and study by user input selections
-  #observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
- observeEvent(input$apply_filters_btn, {
-    # create an index of the studies that fit each input selection, as well as total
-    # index of studies that fill all input selections simultaneously (v$filter_index$total)
-    isolate({
-    # remove data and study that are NaN
-    
-      
-      if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
-    if (input$tab == "Explorer") {
-      print('removing nans from v$data and v$study')
-      v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-      v$data <- v$data_init[!v$nan_filter]
-      v$study <- v$study_init[!v$nan_filter,]
-      print(which(v$nan_filter == TRUE))
-  
-      print("another head of study")
-      print(names(v$data))
-    }
-    
-    if (exists("v$data") & (length(v$data) == 0)) {
-      print("Filtered all data out. No remaining studies.")
-      return()
-    }
-    
-      if (input$tab == "Explorer") {
-    print(paste0('about to filter, current task is: ', input$task))
-      print('filtering explorer data')
-      v$filter_idx <- get_filter_index(v$data, input, v$study)
-      v$data <- v$data[v$filter_idx$total]
-      v$study <- v$study[v$filter_idx$total,]
-      }
-    })
-    
-  })
   
   v$plot_info <- reactive({
     if ((input$tab == "Explorer") & (length(v$data) > 0)) {
