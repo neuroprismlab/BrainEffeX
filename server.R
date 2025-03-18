@@ -70,7 +70,12 @@ server <- function(input, output, session) {
   })
   observe(print(paste0('initial value of task: ', input$task)))
   # Dynamic panel output
-  output$dynamicPanel <- createDynamicPanel(input, v$study_init)
+  #output$dynamicPanel <- createDynamicPanel(input, v$study_init)
+  observeEvent(c(input$apply_filters_btn, input$reset_btn), {
+    output$dynamicPanel <- renderUI({
+      createDynamicPanel(input, v$study_init)
+    })
+  })
   createModalNavigationObservers(input, session)
   
   # # Observer to handle default correlation display
@@ -80,6 +85,10 @@ server <- function(input, output, session) {
       updateSelectizeInput(session, "correlation", choices = unique(v$beh_choices))
     }
   }, ignoreInit = TRUE)
+  
+  observe({
+    click("apply_filters_btn")
+  })
   
  
   # TODO: maybe try assigning v$data here?
@@ -130,72 +139,72 @@ server <- function(input, output, session) {
     }
   }, priority = 3)
   
-  observeEvent(input$map_type, ignoreInit = TRUE, {
-    print('changed map type. resetting task selection to All.')
-    updateSelectInput(session, "task", selected = "*")
-    #print(input$task)
-    
-    if (input$tab == "Explorer") {
-      if (input$task == "*") {
-        print("Task is already *, filtering now")
-        isolate({
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-          v$data <- v$data_init[!v$nan_filter]
-          v$study <- v$study_init[!v$nan_filter,]
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          
-          v$filter_idx <- get_filter_index(v$data, input, v$study)
-          v$data <- v$data[v$filter_idx$total]
-          v$study <- v$study[v$filter_idx$total,]
-          
-          
-          
-          print("Filtered data immediately in map_type observer:")
-          print(names(v$data))
-        
-      })
-      }
-    }
-  })
-  
-  observeEvent(input$task, ignoreInit = TRUE, {
-    print(paste0('task updated to: ', input$task))
-    print('Filtering data after task update')
-    
-    if (input$tab == "Explorer") {
-        if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
-        
-        v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-        v$data <- v$data_init[!v$nan_filter]
-        v$study <- v$study_init[!v$nan_filter,]
-        
-        if (exists("v$data") & (length(v$data) == 0)) {
-          print("Filtered all data out. No remaining studies.")
-          return()
-        }
-        
-        v$filter_idx <- get_filter_index(v$data, input, v$study)
-        v$data <- v$data[v$filter_idx$total]
-        v$study <- v$study[v$filter_idx$total,]
-      
-      
-      
-      print("Filtered data after task update:")
-      print(names(v$data))
-    }
-  })
+  # observeEvent(input$apply_filters_btn, {
+  #   print('changed map type. resetting task selection to All.')
+  #   updateSelectInput(session, "task", selected = "*")
+  #   #print(input$task)
+  #   
+  #   if (input$tab == "Explorer") {
+  #     if (input$task == "*") {
+  #       print("Task is already *, filtering now")
+  #       isolate({
+  #         
+  #         if (exists("v$data") & (length(v$data) == 0)) {
+  #           print("Filtered all data out. No remaining studies.")
+  #           return()
+  #         }
+  #         v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+  #         v$data <- v$data_init[!v$nan_filter]
+  #         v$study <- v$study_init[!v$nan_filter,]
+  #         
+  #         if (exists("v$data") & (length(v$data) == 0)) {
+  #           print("Filtered all data out. No remaining studies.")
+  #           return()
+  #         }
+  #         
+  #         v$filter_idx <- get_filter_index(v$data, input, v$study)
+  #         v$data <- v$data[v$filter_idx$total]
+  #         v$study <- v$study[v$filter_idx$total,]
+  #         
+  #         
+  #         
+  #         print("Filtered data immediately in map_type observer:")
+  #         print(names(v$data))
+  #       
+  #     })
+  #     }
+  #   }
+  # })
+  # 
+  # observeEvent(input$apply_filters_btn, {
+  #   # print(paste0('task updated to: ', input$task))
+  #   # print('Filtering data after task update')
+  #   
+  #   if (input$tab == "Explorer") {
+  #       if (exists("v$data") & (length(v$data) == 0)) {
+  #       print("Filtered all data out. No remaining studies.")
+  #       return()
+  #     }
+  #       
+  #       v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+  #       v$data <- v$data_init[!v$nan_filter]
+  #       v$study <- v$study_init[!v$nan_filter,]
+  #       
+  #       if (exists("v$data") & (length(v$data) == 0)) {
+  #         print("Filtered all data out. No remaining studies.")
+  #         return()
+  #       }
+  #       
+  #       v$filter_idx <- get_filter_index(v$data, input, v$study)
+  #       v$data <- v$data[v$filter_idx$total]
+  #       v$study <- v$study[v$filter_idx$total,]
+  #     
+  #     
+  #     
+  #     print("Filtered data after task update:")
+  #     print(names(v$data))
+  #   }
+  # })
   
   # filter meta-analysis data to show just available data
   observeEvent(list(v$combo_name_m, input$m_estimate, input$meta_analysis, input$tab), {
@@ -229,19 +238,19 @@ server <- function(input, output, session) {
   # })
   
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
+  observeEvent(input$apply_filters_btn, {
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     isolate({
     # remove data and study that are NaN
     
-      
-      if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
+    if (exists("v$data") & (length(v$data) == 0)) {
+      print("Filtered all data out. No remaining studies.")
+      return()
+    }
+    
     if (input$tab == "Explorer") {
-      print('removing nans from v$data and v$study')
+      print('explorer: removing nans from v$data and v$study')
       v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
       v$data <- v$data_init[!v$nan_filter]
       v$study <- v$study_init[!v$nan_filter,]
@@ -257,7 +266,7 @@ server <- function(input, output, session) {
     }
     
       if (input$tab == "Explorer") {
-    print(paste0('about to filter, current task is: ', input$task))
+      print(paste0('about to filter, current task is: ', input$task))
       print('filtering explorer data')
       v$filter_idx <- get_filter_index(v$data, input, v$study)
       v$data <- v$data[v$filter_idx$total]
@@ -268,6 +277,7 @@ server <- function(input, output, session) {
   })
   
   v$plot_info <- reactive({
+    print(paste0('filter button: ', input$apply_filters_btn))
     if ((input$tab == "Explorer") & (length(v$data) > 0)) {
       print('Generating v$plot_info__... for explorer')
       
@@ -341,7 +351,7 @@ server <- function(input, output, session) {
   })
   
   # update the task selection input with available tasks but do not pre-select any
-  observeEvent(input$dataset, {
+  observeEvent(input$dataset, ignoreInit = TRUE, {
     v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))
     updateSelectInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
   })
@@ -395,6 +405,21 @@ server <- function(input, output, session) {
     }
   })
   
+  ###### Reset filters & Download & Screenshot buttons ######
+  # # Reset all SelectInputs when reset button is clicked
+  observeEvent(input$reset_btn, {
+    v$data <- v$data_init
+    v$study <- v$study_init
+    
+    updateSelectInput(session, "dataset", selected = "*")
+    updateSelectInput(session, "map_type", selected = "*")
+    updateSelectInput(session, "task", selected = "*")
+    updateSelectInput(session, "test_type", selected = "*")
+    updateSelectInput(session, "correlation", selected = character(0)) # Clear selection
+    
+    updateSelectInput(session, "motion", selected = "none")
+    updateSelectInput(session, "pooling", selected = "none")
+  })
   
   ###### Download & Screenshot buttons ######
   exportDownloadData(output, v)
