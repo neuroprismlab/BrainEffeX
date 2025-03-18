@@ -218,7 +218,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
           title = ifelse(title, plot_title, ""),
            x = "", y = "") +
       
-      geom_tile() +
+      geom_raster() +
       scale_fill_gradient2(limits = c(min(melted$value), max(melted$value)),
         low = "blue", mid = "white", high = "red", midpoint = 0) +
       theme_minimal() +
