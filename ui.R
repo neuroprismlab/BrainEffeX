@@ -9,7 +9,7 @@ library(BrainEffeX.utils)
 
 source("modals.R")
 
-date_updated = "Mar-14-2025"
+date_updated = "Mar-17-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -113,6 +113,9 @@ ui <- fluidPage(
              # bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
              # 
              h1(" "),
+             
+             # Button to apply filters
+             actionButton("apply_filters_btn", "Apply Filters"),
 
              # Button to reset filters
              actionButton("reset_btn", "Reset Filters"),
