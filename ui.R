@@ -99,7 +99,7 @@ ui <- fluidPage(
              
              selectInput("estimate",
                          label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                          choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+                          choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
              # 
              # selectInput("plot_combination_style",
              #             label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
@@ -172,7 +172,7 @@ ui <- fluidPage(
                        
                        selectInput("m_estimate",
                                    label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                                   choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+                                   choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
                        
                        h1(" "),
                        # Button to download the plot as PNG

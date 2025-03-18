@@ -465,7 +465,7 @@ server <- function(input, output, session) {
       if (length(v$plot_info()$idx) > 0) {
         # print(paste0("num plots: ", v$num_plots))
         for (i in 1:length(v$plot_info()$idx)) {
-          # print(paste0('plotting study ', rownames(v$plot_info)[i]))
+          print(paste0('plotting study ', rownames(v$plot_info)[i]))
           # create a local variable to hold the value of i
           #print(i)
           local({
@@ -507,7 +507,7 @@ server <- function(input, output, session) {
               # plot
               output[[plotname_simci]] <- renderPlot({
                 create_plots(pd_list, plot_type = 'simci', add_description = TRUE, estimate = input$estimate)
-              })
+              }, height = 200, width = 400)
               
             }
             
@@ -533,18 +533,18 @@ server <- function(input, output, session) {
                   #len <- length(v$fc_combo_data[[this_study_or_group]])
                   print(paste0('pooling data for ', this_study_or_group))
                   if (grepl("ukb", this_study_or_group)) { #ukb only
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = ifelse((input$pooling == 'none'), FALSE, TRUE), rearrange = ifelse((input$pooling == 'none'), TRUE, FALSE))
                   } else { # other
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = TRUE, rearrange = FALSE)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
                   }
                 } else { # not pooled
                   n_nodes <- (((-1 + sqrt(1 + 8 * length(v$fc_combo_data[[this_study_or_group]]))) / 2) + 1)
                   if (n_nodes == 268) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = FALSE, rearrange = TRUE)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
                   } else if (n_nodes == 55) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE, estimate = input$estimate)
                   }
                 }
                 
@@ -607,8 +607,16 @@ server <- function(input, output, session) {
         } else if (length(v$plot_info_m()$idx) > 0) {
           v$plot_output_list_m <- lapply(1:length(v$plot_info_m()$idx), function(i) {
             
-            plotname <- paste0("plot_m", i)
-            plotOutput(plotname, height = "200px", width = "100%")
+            plotname_simci_m <- paste0("plot_m", i)
+            plotname_spatial_m <- paste0("spatial_plot_m", i)
+            #plotOutput(plotname, height = "200px", width = "100%")
+            
+            tagList(
+              fluidRow(
+                column(6, plotOutput(plotname_simci_m, height = "200px", width = "100%")),
+                column(6, plotOutput(plotname_spatial_m, height = "200px", width = "100%"))
+              )
+            )
           })
           
           # convert the list to a tagList, this is necessary for the list of items to display properly
@@ -642,7 +650,8 @@ server <- function(input, output, session) {
           #print(i)
           local({
             my_i <- i
-            plotname <- paste0("plot_m", my_i, sep="")
+            plotname_simci_m <- paste0("plot_m", my_i, sep="")
+            plotname_spatial_m <- paste0("spatial_plot_m", my_i)
             
             this_study_or_group <- rownames(v$plot_info_m())[my_i]
             this_plot_info <- v$plot_info_m()[this_study_or_group,]
@@ -678,11 +687,50 @@ server <- function(input, output, session) {
               fn <- paste0(this_study_or_group, '_', n_studies_in_pd_list, '.png')
               
               # plot
-              output[[plotname]] <- renderPlot({
+              output[[plotname_simci_m]] <- renderPlot({
                 create_plots(pd_list_m, plot_type = 'simci', add_description = TRUE, meta = TRUE, estimate = input$m_estimate)
-              })
+              }, height = 200, width = 400)
               
             }
+            
+            # if voxel space
+            if (v$plot_info_m()$ref[[my_i]] == "voxel" & input$m_pooling == 'none' & input$m_estimate == "d") {
+              v$nifti_list_m[[this_study_or_group]] <- create_nifti(template, v$data, this_study_or_group, v$combo_name_m, v$brain_masks_m_init, estimate = input$m_estimate, meta = TRUE)
+            }
+            
+            # if fc
+            if (v$plot_info_m()$ref[[my_i]] != "voxel") {
+              v$fc_combo_data_m[[this_study_or_group]] <- v$data[[this_study_or_group]][[v$combo_name_m]][[input$m_estimate]]
+            }
+            
+            output[[plotname_spatial_m]] <- NULL
+            output[[plotname_spatial_m]] <- renderPlot({
+              # if voxel
+              if (v$plot_info_m()$ref[[my_i]] == "voxel" & input$m_pooling == 'none') {
+                plot_brain(v$nifti_list_m[[this_study_or_group]], anatomical, x = input$xCoord, y = input$yCoord, z = input$zCoord)
+                
+              } else {
+                if (input$pooling != "none") {
+                  #len <- length(v$fc_combo_data[[this_study_or_group]])
+                  print(paste0('pooling data for ', this_study_or_group))
+                  if (grepl("ukb", this_study_or_group)) { #ukb only
+                    plot_full_mat(v$fc_combo_data_m[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
+                    #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = ifelse((input$pooling == 'none'), FALSE, TRUE), rearrange = ifelse((input$pooling == 'none'), TRUE, FALSE))
+                  } else { # other
+                    plot_full_mat(v$fc_combo_data_m[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
+                    #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
+                  }
+                } else { # not pooled
+                  n_nodes <- (((-1 + sqrt(1 + 8 * length(v$fc_combo_data_m[[this_study_or_group]]))) / 2) + 1)
+                  if (n_nodes == 268) {
+                    plot_full_mat(v$fc_combo_data_m[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
+                  } else if (n_nodes == 55) {
+                    plot_full_mat(v$fc_combo_data_m[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE, estimate = input$estimate)
+                  }
+                }
+                
+              }
+            }, height = 200, width = 250)
           })
         }
       }

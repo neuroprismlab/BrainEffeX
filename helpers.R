@@ -171,7 +171,7 @@
 
 #### Plot full FC matrix given a triangle:
 
-plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output', plot_name = 'matrix.png', title = TRUE) {
+plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping_path = NA, rearrange = TRUE, save = FALSE, out_path = 'output', plot_name = 'matrix.png', title = TRUE, estimate = 'd') {
     # takes an ordered triangle vector (without NAs) and plots the full matrix
     
     #TODO: look into heatmaply package for plotly interactive heatmap!
@@ -214,7 +214,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
 
     heatmap_plot <- ggplot(melted, aes(Var1, Var2, fill = value)) +
 
-    labs(fill = "Cohen's d", 
+    labs(fill = ifelse(estimate == 'r_sq', 'R-squared', "Cohen's d"), 
           title = ifelse(title, plot_title, ""),
            x = "", y = "") +
       
@@ -304,7 +304,7 @@ create_nifti_template <- function(sample_nifti_path = '/Users/neuroprism/Desktop
 
 
 ## create a nifti file from a template and study name
-create_nifti <- function(nifti_template, data, study_name, combo_name, brain_masks, estimate = 'd', out_path = '/Users/neuroprism/Desktop/effect_size_shiny_neurohack/data/', export = FALSE) {
+create_nifti <- function(nifti_template, data, study_name, combo_name, brain_masks, estimate = 'd', out_path = '/Users/neuroprism/Desktop/effect_size_shiny_neurohack/data/', export = FALSE, meta = FALSE) {
   # INPUTS:
   # - study_name: string, the name of the study to use the mask from
   # - brain_masks: list of brain masks (from combined_gl output)
@@ -315,12 +315,19 @@ create_nifti <- function(nifti_template, data, study_name, combo_name, brain_mas
 
   # template <- readNIfTI('/Users/neuroprism/Desktop/effect_size_shiny_neurohack/data/EMOTION_cope3_GroupSize482_dcoeff.nii.gz', read_data = FALSE)
   
-  structured <- brain_masks[[study_name]]$mask
+  if (meta == FALSE) {
+    structured <- brain_masks[[study_name]]$mask
+  } else if (meta == TRUE) {
+    structured <- brain_masks[[study_name]][[combo_name]]$mask
+  }
   
   new_data <- data[[study_name]][[combo_name]][[estimate]]
   
-  structured[structured==1] <- new_data[1,]
-  
+  if (meta == FALSE) {
+    structured[structured==1] <- new_data[1,]
+  } else if (meta == TRUE) {
+    structured[structured==1] <- new_data
+  }
   nifti_template@.Data <- structured
   
   if (export) {
