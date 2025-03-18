@@ -137,69 +137,32 @@ server <- function(input, output, session) {
     updateSelectInput(session, "task", selected = "*")  # Reset task when map type changes
   })
   
-  #observeEvent(input$map_type, ignoreInit = TRUE, {
   observeEvent(input$apply_filters_btn, {
-    if (input$tab == "Explorer") {
-      if (input$task == "*") {
-        print("Task is already *, filtering now")
-        isolate({
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-          v$data <- v$data_init[!v$nan_filter]
-          v$study <- v$study_init[!v$nan_filter,]
-          
-          if (exists("v$data") & (length(v$data) == 0)) {
-            print("Filtered all data out. No remaining studies.")
-            return()
-          }
-          
-          v$filter_idx <- get_filter_index(v$data, input, v$study)
-          v$data <- v$data[v$filter_idx$total]
-          v$study <- v$study[v$filter_idx$total,]
-          
-          
-          
-          print("Filtered data immediately in map_type observer:")
-          print(names(v$data))
+    print("Applying filters...")
+    isolate({
+      
+      if (input$tab == "Explorer") {
         
-      })
-      }
-    }
-  })
-  
-  #observeEvent(input$task, ignoreInit = TRUE, {
-  observeEvent(input$apply_filters_btn, {
-    print(paste0('task updated to: ', input$task))
-    print('Filtering data after task update')
-    
-    if (input$tab == "Explorer") {
-        if (exists("v$data") & (length(v$data) == 0)) {
-        print("Filtered all data out. No remaining studies.")
-        return()
-      }
+        # Reset data before filtering
+        v$data <- v$data_init
+        v$study <- v$study_init
         
-        v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-        v$data <- v$data_init[!v$nan_filter]
-        v$study <- v$study_init[!v$nan_filter,]
+        # Remove NaNs
+        v$nan_filter <- sapply(v$data, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+        v$data <- v$data[!v$nan_filter]
+        v$study <- v$study[!v$nan_filter,]
         
-        if (exists("v$data") & (length(v$data) == 0)) {
+        if (length(v$data) == 0) {
           print("Filtered all data out. No remaining studies.")
           return()
         }
         
+        # Apply user-selected filters
         v$filter_idx <- get_filter_index(v$data, input, v$study)
         v$data <- v$data[v$filter_idx$total]
         v$study <- v$study[v$filter_idx$total,]
-      
-      
-      
-      print("Filtered data after task update:")
-      print(names(v$data))
-    }
+      } 
+    })
   })
   
   # filter meta-analysis data to show just available data
