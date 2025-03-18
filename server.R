@@ -69,8 +69,15 @@ server <- function(input, output, session) {
   updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   observe(print(paste0('initial value of task: ', input$task)))
+  
   # Dynamic panel output
-  output$dynamicPanel <- createDynamicPanel(input, v$study_init)
+    #output$dynamicPanel <- createDynamicPanel(input, v$study_init)
+  observeEvent(c(input$apply_filters_btn, input$reset_btn), {
+    output$dynamicPanel <- renderUI({
+      createDynamicPanel(input, v$study_init)
+    })
+  })
+  
   createModalNavigationObservers(input, session)
   
   # # Observer to handle default correlation display
@@ -80,6 +87,10 @@ server <- function(input, output, session) {
       updateSelectizeInput(session, "correlation", choices = unique(v$beh_choices))
     }
   }, ignoreInit = TRUE)
+  
+  observe({
+    click("apply_filters_btn")
+  })
   
  
   # TODO: maybe try assigning v$data here?
@@ -123,9 +134,11 @@ server <- function(input, output, session) {
   
   observeEvent(input$map_type, ignoreInit = TRUE, {
     print('changed map type. resetting task selection to All.')
-    updateSelectInput(session, "task", selected = "*")
-    #print(input$task)
-    
+    updateSelectInput(session, "task", selected = "*")  # Reset task when map type changes
+  })
+  
+  #observeEvent(input$map_type, ignoreInit = TRUE, {
+  observeEvent(input$apply_filters_btn, {
     if (input$tab == "Explorer") {
       if (input$task == "*") {
         print("Task is already *, filtering now")
@@ -158,7 +171,8 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(input$task, ignoreInit = TRUE, {
+  #observeEvent(input$task, ignoreInit = TRUE, {
+  observeEvent(input$apply_filters_btn, {
     print(paste0('task updated to: ', input$task))
     print('Filtering data after task update')
     
@@ -219,7 +233,8 @@ server <- function(input, output, session) {
   })
   
   # filter data and study by user input selections
-  observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
+  #observeEvent(list(input$dataset, input$estimate, input$test_type, input$correlation, input$motion, input$pooling, input$tab), {
+ observeEvent(input$apply_filters_btn, {
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     isolate({
@@ -387,13 +402,19 @@ server <- function(input, output, session) {
   
   
   ###### Reset filters & Download & Screenshot buttons ######
-  # Reset all SelectInputs when reset button is clicked
+  # # Reset all SelectInputs when reset button is clicked
   observeEvent(input$reset_btn, {
+    v$data <- v$data_init
+    v$study <- v$study_init
+    
     updateSelectInput(session, "dataset", selected = "*")
     updateSelectInput(session, "map_type", selected = "*")
-    updateSelectizeInput(session, "task", selected = "*")
+    updateSelectInput(session, "task", selected = "*")
     updateSelectInput(session, "test_type", selected = "*")
-    updateSelectInput(session, "correlation", selected = "*")
+    updateSelectInput(session, "correlation", selected = character(0)) # Clear selection
+    
+    updateSelectInput(session, "motion", selected = "none")
+    updateSelectInput(session, "pooling", selected = "none")
   })
   
   exportDownloadData(output, v)
