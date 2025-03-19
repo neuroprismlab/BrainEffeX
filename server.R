@@ -61,13 +61,13 @@ server <- function(input, output, session) {
           spinner.color.background = "#ffffff", spinner.size = 1)
   
   observe({
-  # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
-  updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
-  updateSelectInput(session, "map_type", choices = c("All" = "*", unique(v$study_init$map_type)))
-  print(paste0('task choices initially ', unique(v$study_init$test_component_1)))
-  updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
-  updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
-  updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
+    # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
+    updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
+    updateSelectInput(session, "map_type", choices = c("All" = "*", unique(v$study_init$map_type)))
+    print(paste0('task choices initially ', unique(v$study_init$test_component_1)))
+    updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
+    updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
+    updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   observe(print(paste0('initial value of task: ', input$task)))
   # Dynamic panel output
@@ -91,7 +91,7 @@ server <- function(input, output, session) {
     click("apply_filters_btn")
   })
   
- 
+  
   # TODO: maybe try assigning v$data here?
   
   # create combo names depending on active tab
@@ -113,11 +113,11 @@ server <- function(input, output, session) {
       print("loading meta-analysis data")
       load(paste0("data/meta_analysis/meta_", input$meta_analysis, ".RData")) #meta_category.RData") #TMP, loads meta_category variable, need to rename in data files to something generic like data
       #isolate({
-        v$data_m_init <- meta$data # list of effect maps etc
-        v$study_m_init <- unique(meta$study) # table of study information, TMP: checking if it was an accident to have duplicates in study
-        print("head of study info right after loading meta data")
-        print(head(v$study_m_init))
-        v$brain_masks_m_init <- meta$brain_masks # list of brain masks
+      v$data_m_init <- meta$data # list of effect maps etc
+      v$study_m_init <- unique(meta$study) # table of study information, TMP: checking if it was an accident to have duplicates in study
+      print("head of study info right after loading meta data")
+      print(head(v$study_m_init))
+      v$brain_masks_m_init <- meta$brain_masks # list of brain masks
       #})
       print("done loading meta-analysis data")
       rm(meta)
@@ -139,6 +139,12 @@ server <- function(input, output, session) {
       rm(data_list)
     }
   }, priority = 3)
+  
+  observeEvent(input$tab, {
+    if (input$tab == "Explorer") {
+      click("apply_filters_btn")
+    }
+  })
   
   # observeEvent(input$apply_filters_btn, {
   #   print('changed map type. resetting task selection to All.')
@@ -209,7 +215,7 @@ server <- function(input, output, session) {
   
   # filter meta-analysis data to show just available data
   observeEvent(list(v$combo_name_m, input$m_estimate, input$meta_analysis, input$tab), {
-  
+    
     # create an index of the studies that fit each input selection
     # FIRST NEED TO CHECK IF THE COMBO EXISTS IN THE DATA, THEN FILTER FOR NAS
     if (input$tab == 'Meta-Analysis') {
@@ -243,35 +249,35 @@ server <- function(input, output, session) {
     # create an index of the studies that fit each input selection, as well as total
     # index of studies that fill all input selections simultaneously (v$filter_index$total)
     isolate({
-    # remove data and study that are NaN
-    
-    if (exists("v$data") & (length(v$data) == 0)) {
-      print("Filtered all data out. No remaining studies.")
-      return()
-    }
-    
-    if (input$tab == "Explorer") {
-      print('explorer: removing nans from v$data and v$study')
-      v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
-      v$data <- v$data_init[!v$nan_filter]
-      v$study <- v$study_init[!v$nan_filter,]
-      #print(which(v$nan_filter == TRUE))
-  
-      print("names of v$data")
-      print(names(v$data))
-    }
-    
-    if (exists("v$data") & (length(v$data) == 0)) {
-      print("Filtered all data out. No remaining studies.")
-      return()
-    }
-    
+      # remove data and study that are NaN
+      
+      if (exists("v$data") & (length(v$data) == 0)) {
+        print("Filtered all data out. No remaining studies.")
+        return()
+      }
+      
       if (input$tab == "Explorer") {
-      print(paste0('about to filter, current task is: ', input$task))
-      print('filtering explorer data')
-      v$filter_idx <- get_filter_index(v$data, input, v$study)
-      v$data <- v$data[v$filter_idx$total]
-      v$study <- v$study[v$filter_idx$total,]
+        print('explorer: removing nans from v$data and v$study')
+        v$nan_filter <- sapply(v$data_init, function(study) any(is.nan(study[[v$combo_name]][[input$estimate]])))
+        v$data <- v$data_init[!v$nan_filter]
+        v$study <- v$study_init[!v$nan_filter,]
+        #print(which(v$nan_filter == TRUE))
+        
+        print("names of v$data")
+        print(names(v$data))
+      }
+      
+      if (exists("v$data") & (length(v$data) == 0)) {
+        print("Filtered all data out. No remaining studies.")
+        return()
+      }
+      
+      if (input$tab == "Explorer") {
+        print(paste0('about to filter, current task is: ', input$task))
+        print('filtering explorer data')
+        v$filter_idx <- get_filter_index(v$data, input, v$study)
+        v$data <- v$data[v$filter_idx$total]
+        v$study <- v$study[v$filter_idx$total,]
       }
     })
     
@@ -451,7 +457,7 @@ server <- function(input, output, session) {
   
   # insert the right number of plot output objects into the web page
   # if data is not empty, then plot. Check if data is empty:
-  observe({
+  observeEvent(list(input$reset_btn, input$apply_filters_btn), {
     if (input$tab == "Explorer") {
       print("creating placeholders for explorer simci plots")  
       output$histograms <- renderUI({
@@ -480,7 +486,7 @@ server <- function(input, output, session) {
   
   # call renderPlot for each one
   # plots are only actually generated when they are visible on the web page
-  observe({
+  observeEvent(list(input$apply_filters_btn, input$reset_btn), {
     if (input$tab == "Explorer") {
       req(v$plot_info())
       req(input$pooling)
@@ -560,28 +566,28 @@ server <- function(input, output, session) {
                   #len <- length(v$fc_combo_data[[this_study_or_group]])
                   print(paste0('pooling data for ', this_study_or_group))
                   if (grepl("ukb", this_study_or_group)) { #ukb only
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = ifelse((input$pooling == 'none'), FALSE, TRUE), rearrange = ifelse((input$pooling == 'none'), TRUE, FALSE))
                   } else { # other
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
                   }
                 } else { # not pooled
                   n_nodes <- (((-1 + sqrt(1 + 8 * length(v$fc_combo_data[[this_study_or_group]]))) / 2) + 1)
                   if (n_nodes == 268) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
                   } else if (n_nodes == 55) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, title = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, title = FALSE, estimate = input$estimate)
                   }
                 }
                 
               }
             }, height = 200, width = 250)
           })
-          }
         }
       }
-    })
+    }
+  })
   
   # create a reactive value to store the height and width of the plot
   # the height should be double the width only when there are two plots (when there are some studies with 268 node parcellation and some with 55 node parcellation),
