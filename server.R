@@ -64,6 +64,7 @@ server <- function(input, output, session) {
   # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
   updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
   updateSelectInput(session, "map_type", choices = c("All" = "*", unique(v$study_init$map_type)))
+  print(paste0('task choices initially ', unique(v$study_init$test_component_1)))
   updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
   updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
   updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
@@ -351,16 +352,17 @@ server <- function(input, output, session) {
   })
   
   # update the task selection input with available tasks but do not pre-select any
-  observeEvent(input$dataset, ignoreInit = TRUE, {
-    v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))
-    updateSelectInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
-  })
+  # observeEvent(input$dataset, {
+  #   v$task_choices <- c("All" = "*", unique((v$study[["test_component_1"]])))
+  #   updateSelectInput(session, "task", choices = v$task_choices) # Ensure no tasks are selected by default
+  # })
   
   # update the correlation selection input with available correlations but do not pre-select any
-  observeEvent(list(input$dataset, input$map_type, input$test_type), {
-    v$beh_choices <- v$study[, "test_component_2"]
-    updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
-  })
+  # observeEvent(list(input$dataset, input$test_type), {
+  #   v$beh_choices <- v$study[, "test_component_2"]
+  #   print(paste0('updating correlation options to ', v$beh_choices))
+  #   updateSelectInput(session, "correlation", selected = character(0), choices = unique(v$beh_choices)) # Ensure no behs are selected by default
+  # })
   
   # reset input$behavior to NULL if input$test_type is not "r"
   observeEvent(input$test_type, {
@@ -376,7 +378,7 @@ server <- function(input, output, session) {
   })
   
   # update correlation selections to only be the available constrained selections... 
-  observeEvent(input$map_type, ignoreInit = TRUE, {
+  observeEvent(list(input$dataset, input$test_type, input$map_type), ignoreInit = TRUE, {
     # get filter index for matching studies
     if (input$tab == "Explorer") {
       v$filter_idx <- get_filter_index(v$data_init, input, v$study_init)
@@ -558,18 +560,18 @@ server <- function(input, output, session) {
                   #len <- length(v$fc_combo_data[[this_study_or_group]])
                   print(paste0('pooling data for ', this_study_or_group))
                   if (grepl("ukb", this_study_or_group)) { #ukb only
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = ifelse((input$pooling == 'none'), FALSE, TRUE), rearrange = ifelse((input$pooling == 'none'), TRUE, FALSE))
                   } else { # other
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = TRUE, rearrange = FALSE, estimate = input$estimate)
                     #plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, pooled = TRUE, rearrange = FALSE, title = FALSE)
                   }
                 } else { # not pooled
                   n_nodes <- (((-1 + sqrt(1 + 8 * length(v$fc_combo_data[[this_study_or_group]]))) / 2) + 1)
                   if (n_nodes == 268) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = FALSE, title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map268_subnetwork.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), title = FALSE, pooled = FALSE, rearrange = TRUE, estimate = input$estimate)
                   } else if (n_nodes == 55) {
-                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = FALSE, ukb = TRUE, title = FALSE, estimate = input$estimate)
+                    plot_full_mat(v$fc_combo_data[[this_study_or_group]], mapping_path = 'data/parcellations/map55_ukb.csv', save = TRUE, out_path = 'output', plot_name = paste0('matrix-', this_study_or_group, '-', v$combo_name, '.png'), ukb = TRUE, title = FALSE, estimate = input$estimate)
                   }
                 }
                 

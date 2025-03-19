@@ -276,7 +276,7 @@ plot_full_mat <- function(triangle_ordered, pooled = FALSE, ukb = FALSE, mapping
         }
     
     if (save) {
-      ggsave(out_name)
+      ggsave(out_name, dpi = 100)
     }
     
     return(heatmap_plot)
