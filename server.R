@@ -21,6 +21,7 @@ source("helpers.R")
 # When changing filters, the ui changes the number of spaces for graphs but then does not update graphs till apply filters button is hit
 # Add back in the "you are looking at..."
 # Export all the r-squared data and adjust code (currently only working with d)
+# meta everything
 
 
 server <- function(input, output, session) {
