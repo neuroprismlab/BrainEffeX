@@ -20,6 +20,7 @@ source("helpers.R")
 # Fix ordering of plots displayed (after filtering, then the previously displayed graphs stay at the top and don't have the same order as when opened)
 # When changing filters, the ui changes the number of spaces for graphs but then does not update graphs till apply filters button is hit
 # Add back in the "you are looking at..."
+# Export all the r-squared data and adjust code (currently only working with d)
 
 
 server <- function(input, output, session) {
