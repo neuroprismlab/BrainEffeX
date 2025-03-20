@@ -12,6 +12,15 @@ library(stringr)
 
 source("helpers.R")
 
+
+# Add filters choices limiting based on previous filter selection 
+# Make this work with the correlation filter
+# Add Download button
+# Add Screenshot button
+# Fix ordering of plots displayed (after filtering, then the previously displayed graphs stay at the top and don't have the same order as when opened)
+# When changing filters, the ui changes the number of spaces for graphs but then does not update graphs till apply filters button is hit
+
+
 server <- function(input, output, session) {
   ##### Setup #####
   output_dir <- "output"
@@ -38,20 +47,15 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
+  
+  ##### Button Logic #####
+  #clicks apply filter button when app opens so all graphs with default filters display
   observe({
-    click("apply_filters_btn")
+    click("apply_filters_btn") 
   })
   
-  ##### Reset Button Logic #####
-  observeEvent(input$reset_btn, {
-    # First, clear the existing plot outputs (this resets the plotting area)
-    output$histograms <- renderUI({
-      # Placeholder UI with no plots
-      tagList(
-        h4("Please select filters to display data.")
-      )
-    })
-    
+  #reset button
+   observeEvent(input$reset_btn, {
     # Reset filter values to default
     v$filters$dataset <- "*"
     v$filters$map_type <- "*"
@@ -67,9 +71,6 @@ server <- function(input, output, session) {
     updateSelectInput(session, "test_type", selected = "*")
     updateSelectInput(session, "pooling", selected = "none")
     updateSelectInput(session, "motion", selected = "none")
-    
-    # Optionally, trigger the Apply Filters button logic (to update the plot UI with no data)
-    click("apply_filters_btn") # This will automatically trigger the plotting logic and display the placeholder message
   })
   
   ##### Extract information from files #####
