@@ -1,3 +1,8 @@
+# Add: filter choices limiting based on previous filter selection, correlation filter, you are looking at... box
+# Exports: missing regression matrix pngs, export r-squared data and adjust code (currently only working with d)
+# Questions: meta? 
+
+
 library(shinyscreenshot)
 library(gridExtra)
 library(ggplot2)
@@ -11,18 +16,6 @@ library(BrainEffeX.utils)
 library(stringr)
 
 source("helpers.R")
-
-
-# Add filters choices limiting based on previous filter selection 
-# Make this work with the correlation filter
-# Add Download button
-# Add Screenshot button
-# Fix ordering of plots displayed (after filtering, then the previously displayed graphs stay at the top and don't have the same order as when opened)
-# When changing filters, the ui changes the number of spaces for graphs but then does not update graphs till apply filters button is hit
-# Add back in the "you are looking at..."
-# Export all the r-squared data and adjust code (currently only working with d)
-# meta everything
-
 
 server <- function(input, output, session) {
   ##### Setup #####
@@ -48,32 +41,6 @@ server <- function(input, output, session) {
     updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
     updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
-  })
-  
-  
-  ##### Button Logic #####
-  #clicks apply filter button when app opens so all graphs with default filters display
-  observe({
-    click("apply_filters_btn") 
-  })
-  
-  #reset button
-   observeEvent(input$reset_btn, {
-    # Reset filter values to default
-    v$filters$dataset <- "*"
-    v$filters$map_type <- "*"
-    v$filters$task <- "*"
-    v$filters$test_type <- "*"
-    v$filters$pooling <- "none"
-    v$filters$motion <- "none"
-    
-    # Reset the UI elements to default values
-    updateSelectInput(session, "dataset", selected = "*")
-    updateSelectInput(session, "map_type", selected = "*")
-    updateSelectInput(session, "task", selected = "*")
-    updateSelectInput(session, "test_type", selected = "*")
-    updateSelectInput(session, "pooling", selected = "none")
-    updateSelectInput(session, "motion", selected = "none")
   })
   
   ##### Extract information from files #####
@@ -103,17 +70,40 @@ server <- function(input, output, session) {
   file_info_table <- do.call(rbind, lapply(file_names, extract_info))
   print(file_info_table)
   
-  ##### Filter files #####
-  matched_files <- reactive({
-    filtered_files <- filter_files(file_info_table, input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$motion)
-    matched_files <- match_simci_with_matrix(filtered_files)
-   # matched_files <- matched_files[match(v$original_files, matched_files$file_name_simci), ] #sorts files in original order 
-    return(matched_files)
-    print(matched_files)
+  ##### Filter files and plot #####
+  observe({
+    click("apply_filters_btn") 
   })
   
-  ##### Plot #####
+  matched_files <- reactiveVal(NULL)  # Create a reactive value to store results
+  
   observeEvent(input$apply_filters_btn, {
+    filtered_files <- filter_files(file_info_table, input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$motion)
+    matched_result <- match_simci_with_matrix(filtered_files)
+    matched_files(matched_result)
+    print(matched_result)
+    create_explorer_plots(input, output, matched_files(), v)
+  })
+  
+  observeEvent(input$reset_btn, {
+    # Reset input filters to their default values
+    updateSelectInput(session, "dataset", selected = "*")
+    updateSelectInput(session, "map_type", selected = "*")
+    updateSelectInput(session, "task", selected = "*")
+    updateSelectInput(session, "test_type", selected = "*")
+    updateSelectInput(session, "pooling", selected = "none")
+    updateSelectInput(session, "motion", selected = "none")
+    #re-plot
+    matched_files(NULL)
+    filtered_files <- filter_files(file_info_table, "*", "*", "*", "*", "none", "none")
+    matched_result <- match_simci_with_matrix(filtered_files)
+    matched_files(matched_result)
+    create_explorer_plots(input, output, matched_files(), v)
+  })
+  
+  ##### Functions #####
+  #Plotting
+  create_explorer_plots <- function(input, output, matched_files, v) {
     if (input$tab == "Explorer") {
       print("Creating placeholders for explorer plots")
       req(matched_files())
@@ -141,23 +131,23 @@ server <- function(input, output, session) {
       
       print("Filling explorer SimCI and Spatial/Matrix plots")
       for (i in 1:nrow(matched_files())) {
-        print(paste("Processing file", i))  # Add a print here to track progress
+        print(paste("Processing file", i))  
         local({
           my_i <- i
           plotname_simci <- paste0("plot_simci_", my_i)
           plotname_spatial <- paste0("plot_spatial_", my_i)
           
-          simci_image_path <- file.path("output", matched_files()[my_i, 1])  # First column is SimCI file
-          spatial_image_path <- file.path("output", matched_files()[my_i, 2])  # Second column is Matrix/Brain file
+          simci_image_path <- file.path("output", matched_files()[my_i, 1])  
+          spatial_image_path <- file.path("output", matched_files()[my_i, 2])  
           
-          print(paste("SimCI path:", simci_image_path))  # Debugging the file path
-          print(paste("Spatial path:", spatial_image_path))  # Debugging the file path
+          print(paste("SimCI path:", simci_image_path))  
+          print(paste("Spatial path:", spatial_image_path))  
           
           output[[plotname_simci]] <- renderImage({
             if (file.exists(simci_image_path)) {
               list(src = simci_image_path, contentType = 'image/png', width = "100%", height = 200)
             } else {
-              print(paste("SimCI file not found:", simci_image_path))  # Debugging missing file
+              print(paste("SimCI file not found:", simci_image_path))  
               list(src = "www/placeholder.png", contentType = 'image/png', width = "100%", height = 200)
             }
           }, deleteFile = FALSE)
@@ -166,7 +156,7 @@ server <- function(input, output, session) {
             if (file.exists(spatial_image_path)) {
               list(src = spatial_image_path, contentType = 'image/png', width = "100%", height = 200)
             } else {
-              print(paste("Spatial file not found:", spatial_image_path))  # Debugging missing file
+              print(paste("Spatial file not found:", spatial_image_path))  
               list(src = "www/placeholder.png", contentType = 'image/png', width = "100%", height = 200)
             }
           }, deleteFile = FALSE)
@@ -174,9 +164,8 @@ server <- function(input, output, session) {
       }
       print("Done filling explorer plots")
     }
-  })
+  }
   
-  ##### Functions #####
   # Filter filenames based on desired filters
   filter_files <- function(file_info_table, dataset, map_type, task_type, test_type, pooling_type, motion_type) {
     filtered_table <- file_info_table[
