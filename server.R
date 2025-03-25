@@ -1,7 +1,7 @@
-# Add: filter choices limiting based on previous filter selection, correlation filter, you are looking at... box
-# Exports: missing regression matrix pngs, export r-squared data and adjust code (currently only working with d)
-# Questions: meta? 
-
+# TODO:
+# updating dropdowns, resetting dropdowns, etc.
+# correlation is initially empty and does not say all, once you add specific correlations you need to manually delete all
+# integrate new graphs (figure out method to read in and call, matching graphs function no longer needed, update graphing function for 2 graphs merged)
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -22,6 +22,21 @@ server <- function(input, output, session) {
   output_dir <- "output"
   v <- reactiveValues()
   
+  #info displays
+  createModalNavigationObservers(input, session)
+  observeEvent(c(input$apply_filters_btn, input$reset_btn), {
+    output$dynamicPanel <- renderUI({
+      createDynamicPanel(input, v$study_init)
+    })
+  })
+  
+  #clicks button when app opens to display graphs initially with default filters
+  observeEvent(input$tab, {
+    if (input$tab == "Explorer") {
+      click("apply_filters_btn")
+    }
+  })
+  
   data_list <- load_combo_data(combo = "pooling.none.motion.none") # load just the initial combo's data
   v$study_init <- data_list$study
   
@@ -31,7 +46,8 @@ server <- function(input, output, session) {
     task = "*",
     test_type = "*",
     pooling = "none",
-    motion = "none"
+    motion = "none",
+    correlation = "*"
   )
   observe({
     # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
@@ -43,18 +59,30 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
+  observeEvent(input$downloadData, {
+    browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
+  })
+  
+  
   ##### Extract information from files #####
+  
   file_names <- list.files(output_dir) #get filenames
- 
-   #extract filter info from each filename 
+  
+  # Extract filter info from each filename
   extract_info <- function(file_name) {
     graph_type <- str_extract(file_name, "^(simci|matrix|brain)")
     dataset <- str_extract(file_name, "(all|abcd|hbn|hcp|hcp_ep|pnc|slim|ukb)")
     map_type <- str_extract(file_name, "(fc|act|all)")
     task_type <- str_extract(file_name, "(rest|mid|nback|sst|rest_nih|rest_srs|rest_diag|emotion|gambling|relational|social|wm)")
-    test_type <- str_extract(file_name, "(all|r|t|t2)")
+    
+    test_type <- str_extract(file_name, paste0("(?<=", map_type, ")\\w+(?=", task_type, ")"))
+    test_type <- str_replace_all(test_type, "^_|_$", "")
+    
     pooling_type <- str_extract(file_name, "(?<=pooling\\.)\\w+")
-    motion_type <- str_extract(file_name, "(?<=motion\\.)\\w+") 
+    motion_type <- str_extract(file_name, "(?<=motion\\.)\\w+")
+    
+    correlation_name_pattern <- paste0("(?<=", task_type, "_)[^\\-]+(?=-pooling)")
+    correlation_name <- str_extract(file_name, correlation_name_pattern)
     
     return(data.frame(
       file_name = file_name,
@@ -64,24 +92,31 @@ server <- function(input, output, session) {
       task_type = task_type,
       test_type = test_type,
       pooling_type = pooling_type,
-      motion_type = motion_type
+      motion_type = motion_type,
+      correlation_name = correlation_name
     ))
   }
+  
   file_info_table <- do.call(rbind, lapply(file_names, extract_info))
   print(file_info_table)
   
-  ##### Filter files and plot #####
-  observe({
-    click("apply_filters_btn") 
-  })
   
+  ##### Filter files and plot #####
   matched_files <- reactiveVal(NULL)  # Create a reactive value to store results
   
+  # Filters files by user input
+  filtered_files <- reactive({
+    print(input$correlation)
+    filter_files(file_info_table, input$dataset, input$map_type, input$task,
+                 input$test_type, input$pooling, input$motion, input$correlation)
+  })
+  
+  #When apply filters button pressed, plot
   observeEvent(input$apply_filters_btn, {
-    filtered_files <- filter_files(file_info_table, input$dataset, input$map_type, input$task, input$test_type, input$pooling, input$motion)
-    matched_result <- match_simci_with_matrix(filtered_files)
+    filtered_data <- filtered_files()
+    matched_result <- match_simci_with_matrix(filtered_data)
     matched_files(matched_result)
-    print(matched_result)
+    print(matched_files())
     create_explorer_plots(input, output, matched_files(), v)
   })
   
@@ -93,9 +128,10 @@ server <- function(input, output, session) {
     updateSelectInput(session, "test_type", selected = "*")
     updateSelectInput(session, "pooling", selected = "none")
     updateSelectInput(session, "motion", selected = "none")
+    updateSelectInput(session, "correlation", selected = "*")
     #re-plot
     matched_files(NULL)
-    filtered_files <- filter_files(file_info_table, "*", "*", "*", "*", "none", "none")
+    filtered_files <- filter_files(file_info_table, "*", "*", "*", "*", "none", "none", "*")
     matched_result <- match_simci_with_matrix(filtered_files)
     matched_files(matched_result)
     create_explorer_plots(input, output, matched_files(), v)
@@ -167,7 +203,10 @@ server <- function(input, output, session) {
   }
   
   # Filter filenames based on desired filters
-  filter_files <- function(file_info_table, dataset, map_type, task_type, test_type, pooling_type, motion_type) {
+  filter_files <- function(file_info_table, dataset, map_type, task_type, test_type, pooling_type, motion_type, correlation) {
+    if (is.null(correlation)) {
+      correlation <- "*"
+    }
     filtered_table <- file_info_table[
       (dataset == "*" | file_info_table$dataset %in% dataset) &
         (map_type == "*" | file_info_table$map_type %in% map_type) &
@@ -176,9 +215,11 @@ server <- function(input, output, session) {
         ((pooling_type == "none" & file_info_table$pooling_type == "none") |
            (pooling_type != "none" & file_info_table$pooling_type %in% pooling_type)) &
         ((motion_type == "none" & file_info_table$motion_type == "none") |
-           (motion_type != "none" & file_info_table$motion_type %in% motion_type)),
+           (motion_type != "none" & file_info_table$motion_type %in% motion_type))&
+        ((test_type != "r") | (correlation == "*" | file_info_table$correlation_name %in% correlation)),
     ]
     return(filtered_table)
+    print(filtered_table)
   }
   
   #Pair simci files with matrix/brain files
@@ -202,5 +243,5 @@ server <- function(input, output, session) {
     
     return(matched_files)
   }
-
+  
 }
