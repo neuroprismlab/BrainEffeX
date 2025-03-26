@@ -1,7 +1,7 @@
 # TODO:
 # updating dropdowns, resetting dropdowns, etc.
 # correlation is initially empty and does not say all, once you add specific correlations you need to manually delete all
-# integrate new graphs
+# width on plots? what window size will users be under?
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -37,9 +37,14 @@ server <- function(input, output, session) {
     }
   })
   
-  #data_list <- load_combo_data(combo = "pooling.none.motion.none") # load just the initial combo's data
   load("data/study.RData") # will load table called 'study'
   v$study_init <- study
+  
+  observeEvent(input$downloadData, {
+    browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
+  })
+  
+  ##### Filter buttons #####
   
   v$filters <- reactiveValues(
     dataset = "*",
@@ -50,6 +55,7 @@ server <- function(input, output, session) {
     motion = "none",
     correlation = "*"
   )
+  
   observe({
     # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
     updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
@@ -60,16 +66,19 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
-  observeEvent(input$downloadData, {
-    browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
-  })
+  # select all correlations when test type r is selected
+  observeEvent(input$test_type, {
+    if (input$test_type == "r"){
+      updateSelectInput(session, "correlation", selected = "*")
+    }
+  }, ignoreInit=TRUE)
+  
   
   ##### Filter files and plot #####
   # Filters files by user input
   filtered_files <- reactive({
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
                  input$test_type, input$correlation))
-    #print(filtered_files)
   })
   
   #When apply filters button pressed, plot
@@ -110,7 +119,7 @@ server <- function(input, output, session) {
           plotname <- paste0("plot", i)
           tagList(
             fluidRow(
-              column(6, imageOutput(plotname, height = "200px", width = "100%")),
+              column(10, imageOutput(plotname, height = "200px", width = "100%")),
             )
           )
         })
@@ -126,16 +135,15 @@ server <- function(input, output, session) {
           my_i <- i
           plotname<- paste0("plot", my_i)
           
-          image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", study_filtered[my_i, 3], ".svg")
+          image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/single/", study_filtered[my_i, 3], ".png")
           print(paste("File path:", image_path))  
           
           output[[plotname]] <- renderImage({
             if (file.exists(image_path)) {
-              print("image exists")
               list(src = image_path, width = "100%", height = 200)
             } else {
               print(paste("SimCI file not found:", image_path))  
-              list(src = "www/placeholder.png", contentType = 'image/svg+xml', width = "100%", height = 200)
+              list(src = "www/placeholder.png", contentType = 'image/png', width = "100%", height = 200)
             }
           }, deleteFile = FALSE)
         })
