@@ -1,7 +1,4 @@
 # TODO:
-# updating dropdowns, resetting dropdowns, etc.
-# correlation is initially empty and does not say all, once you add specific correlations you need to manually delete all
-# width on plots? what window size will users be under?
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -19,7 +16,6 @@ source("helpers.R")
 
 server <- function(input, output, session) {
   ##### Setup #####
-  output_dir <- "cns"
   v <- reactiveValues()
   
   #info displays
@@ -72,6 +68,12 @@ server <- function(input, output, session) {
       updateSelectInput(session, "correlation", selected = "*")
     }
   }, ignoreInit=TRUE)
+  # when specific correlation is selected, remove "all"
+  observeEvent(input$correlation, {
+    if ("*" %in% input$correlation && length(input$correlation) > 1) {
+      updateSelectInput(session, "correlation", selected = setdiff(input$correlation, "*"))
+    }
+  }, ignoreInit = TRUE)
   
   
   ##### Filter files and plot #####
@@ -80,11 +82,29 @@ server <- function(input, output, session) {
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
                  input$test_type, input$correlation))
   })
+
+  observe({
+    filtered_data <- filtered_files()
+    if (input$dataset == "*" || !any(filtered_data$dataset == input$dataset)) {
+      updateSelectInput(session, "dataset", choices = c("All" = "*", unique(filtered_data$dataset)))
+    }
+    if (input$map_type == "*" || !any(filtered_data$map_type == input$map_type)) {
+      updateSelectInput(session, "map_type", choices = c("All" = "*", unique(filtered_data$map_type)))
+    }
+    if (input$task == "*" || !any(filtered_data$test_component_1 == input$task)) {
+      updateSelectInput(session, "task", choices = c("All" = "*", unique(filtered_data$test_component_1)))
+    }
+    if (input$test_type == "*" || !any(filtered_data$orig_stat_type == input$test_type)) {
+      updateSelectInput(session, "test_type", choices = c("All" = "*", unique(filtered_data$orig_stat_type)))
+    }
+    if (input$test_type == "r" && (input$correlation == "*" || !any(filtered_data$test_component_2 == input$correlation))) {
+      updateSelectInput(session, "correlation", choices = c("All" = "*", unique(filtered_data[filtered_data$orig_stat_type == "r", "test_component_2"])))
+    }
+  })
   
   #When apply filters button pressed, plot
   observeEvent(input$apply_filters_btn, {
     study_filtered <- filtered_files()
-    print("study_filered: ")
     print(study_filtered)
     create_explorer_plots(input, output, study_filtered, v)
   })
