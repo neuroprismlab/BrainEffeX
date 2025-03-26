@@ -3,6 +3,9 @@
 # Loading data, filtering, and plotting
 ####################################################################
 
+#check information (add effect size measure information button)
+#correlation button broken
+
 library(shinyscreenshot)
 library(gridExtra)
 library(ggplot2)
@@ -29,7 +32,7 @@ server <- function(input, output, session) {
   phen_keys <- read.csv('data/phen_key.csv')
   output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
   
-  # Calls correct path based on single or meta
+  #Calls correct path based on single or meta
   observe({
     if (input$tab == "Meta-Analysis") {
       v$grouped = "meta"
@@ -81,21 +84,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
-  # Select all correlations when test type r is selected, remove "all" when specific correlation is selected
-  observeEvent(input$test_type, {
-    if (input$test_type == "r"){
-      updateSelectInput(session, "correlation", selected = "*")
-    }
-  }, ignoreInit=TRUE)
-  observeEvent(input$correlation, {
-    if ("*" %in% input$correlation && length(input$correlation) > 1) {
-      updateSelectInput(session, "correlation", selected = setdiff(input$correlation, "*"))
-    }
-  }, ignoreInit = TRUE)
-  
-  
   ##### Filter files and plot #####
-  # Filters files by user input
   #Filter files with every change in filter
   filtered_files <- reactive({
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
@@ -144,53 +133,55 @@ server <- function(input, output, session) {
   })
   
   ##### Functions #####
-  #Plotting
+ #Plotting
   create_explorer_plots <- function(input, output, study_filtered, v) {
-    if (input$tab == "Explorer") {
-      print("Creating placeholders for explorer plots")
-      req(study_filtered)
-      print("Filtered files loaded")
-      
-      output$histograms <- renderUI({
-        validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
-        print("Generating UI elements")
-        
-        v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
-          plotname <- paste0("plot", i)
-          tagList(
-            fluidRow(
-              column(10, imageOutput(plotname, height = "200px", width = "550px")),
-            )
+  if (input$tab == "Explorer") {
+    print("Creating placeholders for explorer plots")
+    req(study_filtered)
+    print("Filtered files loaded")
+    
+    # Removing files that don't exist
+    study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
+      image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[i, 3], ".png")
+      file.exists(image_path)
+    }), ]
+
+    output$histograms <- renderUI({
+      validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
+      print("Generating UI elements")
+
+      v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
+        plotname <- paste0("plot", i)
+        tagList(
+          fluidRow(
+            #column(10, imageOutput(plotname, height = "200px", width = "550px"))
+            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
           )
-        })
-        
-        do.call(tagList, v$plot_output_list)
+        )
       })
-      print("Done creating placeholders for plots")
-      
-      print("Filling explorer SimCI and Spatial/Matrix plots")
-      for (i in 1:nrow(study_filtered)) {
-        print(paste("Processing file", i))  
-        local({
-          my_i <- i
-          plotname<- paste0("plot", my_i)
-          
-          image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[my_i, 3], ".png")
-          print(paste("File path:", image_path))  
-          
-          output[[plotname]] <- renderImage({
-            if (file.exists(image_path)) {
-              list(src = image_path, width = "100%", height = 200)
-            } else {
-              print(paste("File not found:", image_path))  
-              list(src = "www/placeholder.png", contentType = 'image/png', width = "100%", height = 200)
-            }
-          }, deleteFile = FALSE)
-        })
-      }
-      print("Done filling explorer plots")
+
+      do.call(tagList, v$plot_output_list)
+    })
+    print("Done creating placeholders for plots")
+
+    print("Filling explorer SimCI and Spatial/Matrix plots")
+    for (i in 1:nrow(study_filtered)) {
+      print(paste("Processing file", i))
+      local({
+        my_i <- i
+        plotname<- paste0("plot", my_i)
+
+        image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[my_i, 3], ".png")
+
+        output[[plotname]] <- renderImage({
+          # No need to check for file existence since we already filtered out missing files
+          list(src = image_path, width = "100%", height = 200)
+        }, deleteFile = FALSE)
+      })
     }
+    print("Done filling explorer plots")
   }
+}
   
   # Filter filenames based on desired filters
   filter_files <- function(file_info, dataset, map_type, task_type, test_type, correlation) {
