@@ -1,4 +1,7 @@
-# TODO:
+####################################################################
+# BrainEffeX Server
+# Loading data, filtering, and plotting
+####################################################################
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -18,7 +21,24 @@ server <- function(input, output, session) {
   ##### Setup #####
   v <- reactiveValues()
   
-  #info displays
+  #Load in explorer tab info
+  load("data/study.RData")
+  v$study_init <- study
+  
+  #Load in meta tab info
+  phen_keys <- read.csv('data/phen_key.csv')
+  output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
+  
+  # Calls correct path based on single or meta
+  observe({
+    if (input$tab == "Meta-Analysis") {
+      v$grouped = "meta"
+    } else if (input$tab == "Explorer") {
+      v$grouped = "single"
+    }
+  })
+  
+  #Info displays
   createModalNavigationObservers(input, session)
   observeEvent(c(input$apply_filters_btn, input$reset_btn), {
     output$dynamicPanel <- renderUI({
@@ -26,22 +46,20 @@ server <- function(input, output, session) {
     })
   })
   
-  #clicks button when app opens to display graphs initially with default filters
+  #Clicks button when app opens to display graphs initially with default filters
   observeEvent(input$tab, {
     if (input$tab == "Explorer") {
       click("apply_filters_btn")
     }
   })
   
-  load("data/study.RData") # will load table called 'study'
-  v$study_init <- study
-  
+  #Link to find data
   observeEvent(input$downloadData, {
     browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
   })
   
   ##### Filter buttons #####
-  
+  #Initializing filter values 
   v$filters <- reactiveValues(
     dataset = "*",
     map_type = "*",
@@ -52,6 +70,7 @@ server <- function(input, output, session) {
     correlation = "*"
   )
   
+  # Extract filter options from unfiltered study information
   observe({
     # Update UI selectInput choices dynamically (moved out of "ui" so only pass data directly to server)
     updateSelectInput(session, "dataset", choices = c("All" = "*", unique(v$study_init$dataset)))
@@ -62,13 +81,12 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
-  # select all correlations when test type r is selected
+  # Select all correlations when test type r is selected, remove "all" when specific correlation is selected
   observeEvent(input$test_type, {
     if (input$test_type == "r"){
       updateSelectInput(session, "correlation", selected = "*")
     }
   }, ignoreInit=TRUE)
-  # when specific correlation is selected, remove "all"
   observeEvent(input$correlation, {
     if ("*" %in% input$correlation && length(input$correlation) > 1) {
       updateSelectInput(session, "correlation", selected = setdiff(input$correlation, "*"))
@@ -78,11 +96,13 @@ server <- function(input, output, session) {
   
   ##### Filter files and plot #####
   # Filters files by user input
+  #Filter files with every change in filter
   filtered_files <- reactive({
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
                  input$test_type, input$correlation))
   })
 
+  #Update filter options based on previously selected filters (if filter is not all and if filter)
   observe({
     filtered_data <- filtered_files()
     if (input$dataset == "*" || !any(filtered_data$dataset == input$dataset)) {
@@ -139,7 +159,7 @@ server <- function(input, output, session) {
           plotname <- paste0("plot", i)
           tagList(
             fluidRow(
-              column(10, imageOutput(plotname, height = "200px", width = "100%")),
+              column(10, imageOutput(plotname, height = "200px", width = "550px")),
             )
           )
         })
@@ -155,14 +175,14 @@ server <- function(input, output, session) {
           my_i <- i
           plotname<- paste0("plot", my_i)
           
-          image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/single/", study_filtered[my_i, 3], ".png")
+          image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[my_i, 3], ".png")
           print(paste("File path:", image_path))  
           
           output[[plotname]] <- renderImage({
             if (file.exists(image_path)) {
               list(src = image_path, width = "100%", height = 200)
             } else {
-              print(paste("SimCI file not found:", image_path))  
+              print(paste("File not found:", image_path))  
               list(src = "www/placeholder.png", contentType = 'image/png', width = "100%", height = 200)
             }
           }, deleteFile = FALSE)
