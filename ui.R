@@ -9,10 +9,11 @@ library(BrainEffeX.utils)
 
 source("modals.R")
 
-date_updated = "Mar-17-2025"
+date_updated = "Mar-27-2025"
 
 # User interface ----
 ui <- fluidPage(
+
   # theme = shinytheme("spacelab"),
   useShinyjs(),
   
@@ -54,7 +55,7 @@ ui <- fluidPage(
   
   navset_tab( 
     nav_panel("Explorer", fluidRow( # top row
-      column(3, # inputs
+      column(4, # inputs
              helpText("Select from the following options to visualize effect sizes:"),
              
              selectInput("dataset",
@@ -99,7 +100,8 @@ ui <- fluidPage(
              
              selectInput("estimate",
                          label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                          choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+                          choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
+             bsTooltip("effect_size_icon", "Select the measure of effect size.", "right", options = list(container = "body")),
              # 
              # selectInput("plot_combination_style",
              #             label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
@@ -116,15 +118,15 @@ ui <- fluidPage(
              
              # Button to apply filters
              actionButton("apply_filters_btn", "Apply Filters"),
-
+             
              # Button to reset filters
              actionButton("reset_btn", "Reset Filters"),
              
              # Button to download the plot as PNG
-             downloadButton("downloadData", "Download Data"),
-             
-             # Button to take a screenshot of the app
-             actionButton("screenshot", "Take a screenshot"),
+             actionButton("downloadData", "Download Data"),
+             # 
+             # # Button to take a screenshot of the app
+             # actionButton("screenshot", "Take a screenshot"),
              
              h1(" "),
              # h5("Helpful reminders"),
@@ -146,7 +148,7 @@ ui <- fluidPage(
              h6(paste("Version 1.5; Last updated ", date_updated)),
       ),
       
-      column(9, align = "centre", # simCI plots
+      column(8, align = "centre", # simCI plots
              uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
              # h5("Helpful reminders"),
              h4("The plots below visualize all edges or voxels in each study."),
@@ -154,7 +156,7 @@ ui <- fluidPage(
                        helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                        helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
              ),
-             downloadButton("downloadPlots", "Download Plots"),
+             #downloadButton("downloadPlots", "Download Plots"),
              wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
       ),
     )), # end of fluidRow
@@ -179,7 +181,7 @@ ui <- fluidPage(
                        
                        selectInput("m_estimate",
                                    label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
-                                   choices = c("Cohen's d" = 'd', "Pearson's r" = 'r_sq'), selected = 'd'),
+                                   choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
                        
                        h1(" "),
                        # Button to download the plot as PNG
