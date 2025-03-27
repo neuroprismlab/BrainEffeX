@@ -2,9 +2,7 @@
 # BrainEffeX Server
 # Loading data, filtering, and plotting
 ####################################################################
-
 #check information (add effect size measure information button)
-#correlation button broken
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -87,6 +85,7 @@ server <- function(input, output, session) {
   ##### Filter files and plot #####
   #Filter files with every change in filter
   filtered_files <- reactive({
+    print(input$correlation)
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
                  input$test_type, input$correlation))
   })
@@ -106,8 +105,10 @@ server <- function(input, output, session) {
     if (input$test_type == "*" || !any(filtered_data$orig_stat_type == input$test_type)) {
       updateSelectInput(session, "test_type", choices = c("All" = "*", unique(filtered_data$orig_stat_type)))
     }
-    if (input$test_type == "r" && (input$correlation == "*" || !any(filtered_data$test_component_2 == input$correlation))) {
-      updateSelectInput(session, "correlation", choices = c("All" = "*", unique(filtered_data[filtered_data$orig_stat_type == "r", "test_component_2"])))
+    if (input$test_type == "r" &&
+        ("*" %in% input$correlation || !any(filtered_data$test_component_2 %in% input$correlation))) {
+      updateSelectInput(session, "correlation",
+                        choices = c("All" = "*", unique(filtered_data[filtered_data$orig_stat_type == "r", "test_component_2"])))
     }
   })
   
@@ -183,18 +184,22 @@ server <- function(input, output, session) {
   }
 }
   
-  # Filter filenames based on desired filters
+ # Filter filenames based on desired filters
   filter_files <- function(file_info, dataset, map_type, task_type, test_type, correlation) {
     if (is.null(correlation)) {
       correlation <- "*"
     }
+    
     filtered_table <- file_info[
       (dataset == "*" | file_info$dataset %in% dataset) &
         (map_type == "*" | file_info$map_type %in% map_type) &
         (task_type == "*" | file_info$test_component_1 %in% task_type) &
         (test_type == "*" | file_info$orig_stat_type %in% test_type) &
-        ((test_type != "r") | (correlation == "*" | file_info$test_component_2 %in% correlation)),
+        ((test_type != "r") | ("*" %in% correlation | file_info$test_component_2 %in% correlation)),  # Fixed condition
     ]
+    
     return(filtered_table)
   }
 }
+
+  
