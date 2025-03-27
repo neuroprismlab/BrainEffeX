@@ -56,7 +56,7 @@ ui <- fluidPage(
   navset_tab( 
     nav_panel("Explorer", fluidRow( # top row
       column(4, # inputs
-             helpText("Select from the following options to visualize effect sizes:"),
+             helpText("Select from the following filters to visualize effect sizes:"),
              
              selectInput("dataset",
                          label = tagList("Dataset", icon("info-circle", id = "dataset_icon")),
@@ -86,6 +86,16 @@ ui <- fluidPage(
                            multiple = TRUE, selected = NULL),
                bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
              ),
+             # # Button to apply filters
+             # actionButton("apply_filters_btn", "Apply Filters"),
+             
+             # Button to reset filters
+             actionButton("reset_btn", "Reset Filters"),
+             
+             
+             br(),
+             br(),
+             helpText("Parameters:"),
              
              selectInput("motion",
                          label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
@@ -116,11 +126,6 @@ ui <- fluidPage(
              # 
              h1(" "),
              
-             # Button to apply filters
-             actionButton("apply_filters_btn", "Apply Filters"),
-             
-             # Button to reset filters
-             actionButton("reset_btn", "Reset Filters"),
              
              # Button to download the plot as PNG
              actionButton("downloadData", "Download Data"),
@@ -202,7 +207,7 @@ ui <- fluidPage(
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
                        ),
-                       downloadButton("downloadPlots_m", "Download Plots"),
+                       #downloadButton("downloadPlots_m", "Download Plots"),
                        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
                        #plotOutput("m_plots", width = "100%", height = "100%")
                 ),
