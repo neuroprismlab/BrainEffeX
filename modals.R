@@ -35,7 +35,7 @@ createUnderstandingPlotsModal1 <- function() {
     size = "large",
     tags$div(
       tags$p("Explore the expected effect sizes of the studies that match the provided filters."),
-      tags$p(tags$b(tags$i("The plots in the middle")),"visualize all edges or voxels in each study:"),
+      tags$p(tags$b(tags$i("The plots in the middle(on the left?)")),"visualize all edges or voxels in each study:"),
       tags$ul(
         tags$li("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
         tags$li(tags$i("Red")," indicates simultaneous CIs overlapping with 0,", tags$i("green"), "indicates no overlap."),
@@ -57,9 +57,9 @@ createUnderstandingPlotsModal2 <- function() {
     size = "large",
     tags$div(
       tags$p("Explore the expected effect sizes of the studies that match the provided filters."),
-      tags$p(tags$b(tags$i("The plots in the right panels")),"show the effect maps spatially:"),
+      tags$p(tags$b(tags$i("The plots in the right panels(on the right?)")),"show the effect maps spatially:"),
       tags$ul(
-        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters."),
+        tags$li("Effect size matrices show the average effect sizes across all studies that fit the selected parameters (this changed right once each simci had a corresponding graph?)."),
         tags$li("Activation Maps help you to visualize the effect maps from activation studies on the brain.")
       ),
       tags$div(style = "text-align: center;",
@@ -70,18 +70,20 @@ createUnderstandingPlotsModal2 <- function() {
   )
 }
 
-# Modal 4: Downloading Effect Maps
+# Modal 4: Downloading Effect Maps button to access the raw data files stored on OSF
 
 createDownloadingEffectMapsModal <- function() {
   bsModal(
-    id = "instructionsModal4", title = "Downloading Effect Maps", trigger = NULL,
+    #id = "instructionsModal4", title = "Downloading Effect Maps", trigger = NULL,
+    id = "instructionsModal4", title = "Downloading Data", trigger = NULL,
     size = "large",
     tags$div(
-      tags$p("How to download effect maps from BrainEffeX:"),
+      tags$p("How to download data from BrainEffeX:"),
       tags$ul(
-        tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
-        tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
-        tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
+        tags$li("Click the", tags$b(tags$i("'Download Data'")), "button to access the raw data files stored on OSF.")),
+        #tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
+        #tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
+        #tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage3", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
@@ -133,13 +135,21 @@ createDynamicPanel <- function(input, study) {
         }
         
         # Correlation message
+        # if (is.null(input$correlation) || length(input$correlation) == 0) {
+        #   messages$correlation <- "• No specific correlations are selected."
+        # } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
+        #   messages$correlation <- "• All correlations"
+        # } else {
+        #   messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
+        # }
         if (is.null(input$correlation) || length(input$correlation) == 0) {
           messages$correlation <- "• No specific correlations are selected."
-        } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
+        } else if (length(input$correlation) == length(unique(study[["var2"]])) || "*" %in% input$correlation) {
           messages$correlation <- "• All correlations"
         } else {
           messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
         }
+        
         
         # Group by message
         if (!is.null(input$group_by) && input$group_by != "none") {
