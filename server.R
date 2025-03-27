@@ -133,9 +133,12 @@ server <- function(input, output, session) {
   #When apply filters button pressed, plot
   # observeEvent(input$apply_filters_btn, {
   observe({
-    study_filtered <- filtered_files()
+    if (input$tab == "Explorer") {
+      print("Explorer tab selected")
+      study_filtered <- filtered_files()
     print(study_filtered)
     create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
+    }
   })
   
   observeEvent(input$reset_btn, {
@@ -245,6 +248,7 @@ server <- function(input, output, session) {
       image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
       file.exists(image_path)
     }), ] #### TEST THIS
+    print(study_filtered)
 
     output$m_plots <- renderUI({
       validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
