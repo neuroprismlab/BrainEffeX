@@ -166,7 +166,7 @@ ui <- fluidPage(
                        h1(""),
                        selectInput("meta_analysis", 
                                    label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                                   choices = c("Statistic" = 'statistic', "Category" = 'category')), 
+                                   choices = c("Statistic" = 'orig_stat_type', "Category" = 'category')), 
                        bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
                        selectInput("m_motion",
                                    label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),

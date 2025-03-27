@@ -26,7 +26,13 @@ server <- function(input, output, session) {
   load("data/study.RData")
   v$study_init <- study
   
-  #Load in meta tab info
+  # Load in meta tab info
+  load("data/meta_analysis/study_meta_category.RData")
+  v$study_meta_category <- study_meta_category
+  load("data/meta_analysis/study_meta_statistic.RData")
+  v$study_meta_statistic <- study_meta_statistic
+
+  #Load in phen key info
   phen_keys <- read.csv('data/phen_key.csv')
   output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
   
@@ -116,7 +122,7 @@ server <- function(input, output, session) {
   observeEvent(input$apply_filters_btn, {
     study_filtered <- filtered_files()
     print(study_filtered)
-    create_explorer_plots(input, output, study_filtered, v)
+    create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
   })
   
   observeEvent(input$reset_btn, {
@@ -130,12 +136,31 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", selected = "*")
     #re-plot
     study_filtered <- filter_files(v$study_init, "*", "*", "*", "*", "*")
-    create_explorer_plots(input, output, study_filtered, v)
+    create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
   })
+
+  observeEvent(list(input$tab, input$meta_analysis, input$m_motion, input$m_pooling, input$m_estimate), {
+    print("tab clicked")
+    if (input$tab == "Meta-Analysis") {
+      print("tab is meta-analysis")
+      print(input$meta_analysis)
+      if (input$meta_analysis == "category") {
+        print("meta is category, updating study_meta")
+        study_meta <- v$study_meta_category
+        print(study_meta)
+      } else if (input$meta_analysis == "orig_stat_type") {
+        print("meta is statistic, updating study_meta")
+        study_meta <- v$study_meta_statistic
+        print(study_meta)
+      }
+      create_explorer_plots(input, output, study_meta, v, meta = v$grouped)
+    }
+  })
+
   
   ##### Functions #####
  #Plotting
-  create_explorer_plots <- function(input, output, study_filtered, v) {
+  create_explorer_plots <- function(input, output, study_filtered, v, meta) {
   if (input$tab == "Explorer") {
     print("Creating placeholders for explorer plots")
     req(study_filtered)
@@ -143,7 +168,7 @@ server <- function(input, output, session) {
     
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[i, 3], ".png")
+      image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[i, 3], ".png")
       file.exists(image_path)
     }), ]
 
@@ -172,7 +197,61 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("plot", my_i)
 
-        image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", v$grouped, "/", study_filtered[my_i, 3], ".png")
+        image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[my_i, 3], ".png")
+
+        output[[plotname]] <- renderImage({
+          # No need to check for file existence since we already filtered out missing files
+          list(src = image_path, width = "100%", height = 200)
+        }, deleteFile = FALSE)
+      })
+    }
+    print("Done filling explorer plots")
+  }
+
+  if (input$tab == "Meta-Analysis") {
+    print("Creating placeholders for meta plots")
+    print(paste0("input$meta_analysis: ", input$meta_analysis))
+    print(paste0("input$m_estimate: ", input$m_estimate))
+    print(paste0("input$m_motion: ", input$m_motion))
+    print(paste0("input$m_pooling: ", input$m_pooling))
+    # if (input$meta_analysis == "category") {
+    #   study_meta <- v$study_meta_category
+    # } else if (input$meta_analysis == "orig_stat_type") {
+    #   study_meta <- v$study_meta_statistic
+    # }
+
+    # Removing files that don't exist
+    study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
+      image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
+      file.exists(image_path)
+    }), ] #### TEST THIS
+
+    output$m_plots <- renderUI({
+      validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
+      print("Generating UI elements")
+
+      v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
+        plotname <- paste0("m_plot", i)
+        tagList(
+          fluidRow(
+            #column(10, imageOutput(plotname, height = "200px", width = "550px"))
+            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
+          )
+        )
+      })
+
+      do.call(tagList, v$plot_output_list)
+    })
+    print("Done creating placeholders for plots")
+
+    print("Filling explorer SimCI and Spatial/Matrix plots")
+    for (i in 1:nrow(study_filtered)) {
+      print(paste("Processing file", i))
+      local({
+        my_i <- i
+        plotname<- paste0("m_plot", my_i)
+
+        image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
 
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
