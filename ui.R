@@ -130,8 +130,8 @@ ui <- fluidPage(
              # Button to download the plot as PNG
              actionButton("downloadData", "Download Data"),
              # 
-             # # Button to take a screenshot of the app
-             # actionButton("screenshot", "Take a screenshot"),
+             # Button to take a screenshot of the app
+             actionButton("screenshot", "Take a screenshot"),
              
              h1(" "),
              # h5("Helpful reminders"),
