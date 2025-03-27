@@ -93,6 +93,13 @@ server <- function(input, output, session) {
     updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
   })
   
+  observeEvent(input$screenshot, {
+    screenshot()
+  })
+  observeEvent(input$screenshot_m, {
+    screenshot()
+  })
+  
   ##### Filter files and plot #####
   #Filter files with every change in filter
   filtered_files <- reactive({
