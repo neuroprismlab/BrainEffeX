@@ -2,7 +2,6 @@
 # BrainEffeX Server
 # Loading data, filtering, and plotting
 ####################################################################
-#check information (add effect size measure information button)
 
 library(shinyscreenshot)
 library(gridExtra)
@@ -26,7 +25,6 @@ server <- function(input, output, session) {
   load("data/study.RData")
   v$study_init <- study
   
-  
   # Load in meta tab info
   load("data/meta_analysis/study_meta_category.RData")
   v$study_meta_category <- study_meta_category
@@ -46,20 +44,26 @@ server <- function(input, output, session) {
     }
   })
   
-  #Info displays
+  # #Info displays
+  # createModalNavigationObservers(input, session)
+  # observeEvent(c(input$apply_filters_btn, input$reset_btn), {
+  #   output$dynamicPanel <- renderUI({
+  #     createDynamicPanel(input, v$study_init)
+  #   })
+  # })
   createModalNavigationObservers(input, session)
-  observeEvent(c(input$apply_filters_btn, input$reset_btn), {
+  observe({
     output$dynamicPanel <- renderUI({
       createDynamicPanel(input, v$study_init)
     })
   })
   
-  #Clicks button when app opens to display graphs initially with default filters
-  observeEvent(input$tab, {
-    if (input$tab == "Explorer") {
-      click("apply_filters_btn")
-    }
-  })
+  # #Clicks button when app opens to display graphs initially with default filters
+  # observeEvent(input$tab, {
+  #   if (input$tab == "Explorer") {
+  #     click("apply_filters_btn")
+  #   }
+  # })
   
   #Link to find data
   observeEvent(input$downloadData, {
@@ -100,7 +104,6 @@ server <- function(input, output, session) {
   #Update filter options based on previously selected filters (if filter is not all and if filter)
   observe({
     filtered_data <- filtered_files()
-    print(paste0('data f'))
     if (input$dataset == "*" || !any(filtered_data$dataset == input$dataset)) {
       updateSelectInput(session, "dataset", choices = c("All" = "*", unique(filtered_data$dataset)))
     }
@@ -121,7 +124,8 @@ server <- function(input, output, session) {
   })
   
   #When apply filters button pressed, plot
-  observeEvent(input$apply_filters_btn, {
+  # observeEvent(input$apply_filters_btn, {
+  observe({
     study_filtered <- filtered_files()
     print(study_filtered)
     create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
@@ -133,13 +137,20 @@ server <- function(input, output, session) {
     updateSelectInput(session, "map_type", selected = "*")
     updateSelectInput(session, "task", selected = "*")
     updateSelectInput(session, "test_type", selected = "*")
-    updateSelectInput(session, "pooling", selected = "none")
-    updateSelectInput(session, "motion", selected = "none")
+    # updateSelectInput(session, "pooling", selected = "none")
+    # updateSelectInput(session, "motion", selected = "none")
     updateSelectInput(session, "correlation", selected = "*")
+    
+    print("re-filtering data with reset inputs")
+    print(paste0("input$task: ", input$task))
+    print(paste0("input$motion: ", input$motion))
+    print(paste0("input$pooling: ", input$pooling))
+    print(paste0("input$correlation: ", input$correlation))
     #re-plot
     study_filtered <- filter_files(v$study_init, "*", "*", "*", "*", "*")
     create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
   })
+  
 
   observeEvent(list(input$tab, input$meta_analysis, input$m_motion, input$m_pooling, input$m_estimate), {
     print("tab clicked")
@@ -170,7 +181,7 @@ server <- function(input, output, session) {
     
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- tolower(paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[i, 3], ".png"))
+      image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[i, 3], ".png")
       file.exists(image_path)
     }), ]
 
@@ -183,7 +194,7 @@ server <- function(input, output, session) {
         tagList(
           fluidRow(
             #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "300px", width = "685px"), style = "margin-bottom: 20px"))
+            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
           )
         )
       })
@@ -194,16 +205,16 @@ server <- function(input, output, session) {
 
     print("Filling explorer SimCI and Spatial/Matrix plots")
     for (i in 1:nrow(study_filtered)) {
-      print(paste("Processing file", i))
+      #print(paste("Processing file", i))
       local({
         my_i <- i
         plotname<- paste0("plot", my_i)
 
-        image_path <- tolower(paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[my_i, 3], ".png"))
+        image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[my_i, 3], ".png")
 
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 250)
+          list(src = image_path, width = "100%", height = 200)
         }, deleteFile = FALSE)
       })
     }
@@ -224,7 +235,7 @@ server <- function(input, output, session) {
 
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- tolower(paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png"))
+      image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
       file.exists(image_path)
     }), ] #### TEST THIS
 
@@ -237,7 +248,7 @@ server <- function(input, output, session) {
         tagList(
           fluidRow(
             #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "300px", width = "685px"), style = "margin-bottom: 20px"))
+            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
           )
         )
       })
@@ -253,11 +264,11 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("m_plot", my_i)
 
-        image_path <- tolower(paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png"))
+        image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
 
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 250)
+          list(src = image_path, width = "100%", height = 200)
         }, deleteFile = FALSE)
       })
     }
