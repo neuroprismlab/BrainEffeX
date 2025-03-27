@@ -19,7 +19,7 @@ createGettingStartedModal <- function() {
         tags$li("Motion Method"),
         tags$li("Pooling Method"),
       ),
-     tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
+      tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
       tags$div(style = "text-align: center;",
                actionButton("nextToPage2", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
       )
@@ -81,9 +81,9 @@ createDownloadingEffectMapsModal <- function() {
       tags$p("How to download data from BrainEffeX:"),
       tags$ul(
         tags$li("Click the", tags$b(tags$i("'Download Data'")), "button to access the effect the effect map data stored on OSF.")),
-        #tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
-        #tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
-        #tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
+      #tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
+      #tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
+      #tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage3", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
@@ -100,8 +100,8 @@ createDownloadingEffectMapsModal <- function() {
 createDynamicPanel <- function(input, study) {
   # Combine the reactive expression to update when either the Apply Filters or Reset Filters button is clicked
   renderUI({
-    event <- eventReactive(
-      list(input$apply_filters_btn, input$reset_btn), {  # Trigger on either button click
+    #event <- eventReactive(
+      #list(input$apply_filters_btn, input$reset_btn), {  # Trigger on either button click
         messages <- c()
         
         # Dataset message
@@ -166,10 +166,9 @@ createDynamicPanel <- function(input, study) {
       }
     )
     
-    # Render the dynamic content based on the eventReactive output
-    event()
-  })
-}
+    # # Render the dynamic content based on the eventReactive output
+    # event()
+  }
 
 # Modal event observers for navigation
 createModalNavigationObservers <- function(input, session) {
@@ -205,7 +204,7 @@ createModalNavigationObservers <- function(input, session) {
     toggleModal(session, "instructionsModal4", toggle = "close")
     toggleModal(session, "instructionsModal3", toggle = "open")
   })
-
+  
   observeEvent(input$closePage4, {
     toggleModal(session, "instructionsModal4", toggle = "close")
   })
