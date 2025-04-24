@@ -1,5 +1,5 @@
 # Brain EffeX
-This repository contains the code for the BrainEffeX web app for exploring fMRI effect sizes. 
+This repository contains the code for the [BrainEffeX web app](https://neuroprismlab.shinyapps.io/BrainEffeX/) for exploring fMRI effect sizes. 
 
 The preprint for this web app is available at https://osf.io/preprints/osf/kryn4_v1.
 
