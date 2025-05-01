@@ -10,6 +10,7 @@ Effect size estimation is crucial for power analysis and experiment deisgn, but 
 ## Preparing Inputs
 The inputs for this app are prepared in the [Calculate_EffeX Repository](https://github.com/neuroprismlab/calculate_effeX). First, effect map data is calculated and properly formatted. 
 > Effect map data is hosted [here](https://osf.io/cwnjd/files/osfstorage), as the file exceeds GitHub's size limits.
+
 The script 'generate_figures.R' inputs this effect map data and exports the visualizations. These visualizations are stored in a folder called 'figures', and are inputted into the web app. 
 
 The R package containing useful functions used in this app (and in related publications) can be found in the [BrainEffeX_utils Repository](https://github.com/neuroprismlab/BrainEffeX_utils).
