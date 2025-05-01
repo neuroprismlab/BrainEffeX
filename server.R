@@ -21,6 +21,10 @@ server <- function(input, output, session) {
   ##### Setup #####
   v <- reactiveValues()
   
+  #figs_path = "./cns/"
+  #testing:
+  figs_path = "/Users/neuroprism/Desktop/BrainEffeX-1/figures/shiny/"
+  
   #Load in explorer tab info
   load("data/study.RData")
   v$study_init <- study
@@ -38,9 +42,9 @@ server <- function(input, output, session) {
   #Calls correct path based on single or meta
   observe({
     if (input$tab == "Meta-Analysis") {
-      v$grouped = "meta"
+      v$grouped = "meta_simci-spatial"
     } else if (input$tab == "Explorer") {
-      v$grouped = "single"
+      v$grouped = "single_simci-spatial"
     }
   })
   
@@ -191,7 +195,7 @@ server <- function(input, output, session) {
     
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[i, 3], ".png")
+      image_path <- paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[i, 3], ".png")
       file.exists(image_path)
     }), ]
 
@@ -204,7 +208,7 @@ server <- function(input, output, session) {
         tagList(
           fluidRow(
             #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
+            column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
           )
         )
       })
@@ -220,11 +224,11 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("plot", my_i)
 
-        image_path <- paste0("./cns/", input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "/", study_filtered[my_i, 3], ".png")
+        image_path <- paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[my_i, 3], ".png")
 
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 200)
+          list(src = image_path, width = "100%", height = 300)
         }, deleteFile = FALSE)
       })
     }
@@ -245,7 +249,7 @@ server <- function(input, output, session) {
 
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
+      image_path <- paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png")
       file.exists(image_path)
     }), ] #### TEST THIS
     print(study_filtered)
@@ -259,7 +263,7 @@ server <- function(input, output, session) {
         tagList(
           fluidRow(
             #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "200px", width = "550px"), style = "margin-bottom: 20px"))
+            column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
           )
         )
       })
@@ -275,11 +279,11 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("m_plot", my_i)
 
-        image_path <- paste0("./cns/", input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", "meta_", input$meta_analysis, "/", study_filtered[i, "name"], ".png")
-
+        image_path <- paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png")
+        
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 200)
+          list(src = image_path, width = "100%", height = 300)
         }, deleteFile = FALSE)
       })
     }
