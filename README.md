@@ -41,7 +41,7 @@ To support **BrainEffeX** as a growing resource, we welcome contributions of lar
 ### 💻 Developer contributions
 - If you'd like to contribute features to the BrainEffeX app, please submit a pull request.
 
-If you have suggestions, please submit an issue or contact us by email: shearer.h@northeastern.edu
+For any questions or feedback, please submit an [issue](https://github.com/neuroprismlab/BrainEffeX/issues) or contact us by email: shearer.h@northeastern.edu
 
 ---
 ## Run BrainEffeX Locally
