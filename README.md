@@ -21,11 +21,13 @@ The R package containing useful functions used in this app (and in related publi
 
 ---
 ## Contributions
-To support BrainEffeX as a growing resource, we welcome contributions of large sample fMRI datasets (n>500). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
+To support **BrainEffeX** as a growing resource, we welcome contributions of large sample fMRI datasets (n>500). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
 
-Data Contribtions: If you have data to contribute to the app, please see the README.md file in the 'for_contributors' folder within this repository. 
+### 📊 Data Contributions
+- If you have data to contribute to the app, please see the README.md file in the 'for_contributors' folder within this repository. 
 
-Developer contributions: If you'd like to contribute features to the BrainEffeX app, please submit a pull request.
+### 💻 Developer contributions
+- If you'd like to contribute features to the BrainEffeX app, please submit a pull request.
 
 If you have suggestions, please submit an issue or contact us by email: shearer.h@northeastern.edu
 
