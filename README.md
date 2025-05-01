@@ -4,7 +4,7 @@ This repository contains the code for the [BrainEffeX web app](https://neuropris
 ---
 ## Purpose
 Effect size estimation is crucial for power analysis and experiment deisgn, but poses unique challenges in fMRI research due to the complexity of the data and analysis techniques. Here, we utalized large fMRI datasets to obtain precise univariate and multivariate effect size estimates from "typical" fMRI study designs: brain-behavior correlation, task vs. rest, and between-group analyses of functional connecitivity and task-based activation maps. This is an interactive web application for exploring these effect maps. 
-> The preprint for this web app is available [here](https://osf.io/preprints/osf/kryn4_v2).
+> The preprint for this web app is available on [OSF](https://osf.io/preprints/osf/kryn4_v2).
 
 ---
 ## Repository Structure
@@ -23,11 +23,11 @@ BrainEffeX/
 ```
 
 ---
-## Preparing Inputs
-The inputs for this app are prepared in the [calculate_effeX Repository](https://github.com/neuroprismlab/calculate_effeX). Group-level statistical maps are computed, then converted to effect size estimates.
-> These effect size maps can be found [here](https://osf.io/cwnjd/files/osfstorage), as the file exceeds GitHub's size limits.
+## Data and Inputs
+Group level statistical maps are computed and converted to effect size estimates using scripts within the [calculate_effeX repository](https://github.com/neuroprismlab/calculate_effeX). 
+> The resulting effect size maps are avaliable on [OSF](https://osf.io/cwnjd/files/osfstorage), as they exceed GitHub's file size limitations. 
 
-The script 'generate_figures.R' inputs this effect map data and exports the visualizations. These visualizations are stored in a folder called 'figures', and are inputted into **BrainEffeX**. 
+The script 'generate_figures.R' uses these maps to create the visualizations, which are saved in a figures folder and then loaded into **BrainEffeX**.
 
 The R package containing useful functions used in this app (and in related publications) can be found in the [BrainEffeX_utils Repository](https://github.com/neuroprismlab/BrainEffeX_utils).
 
@@ -55,7 +55,7 @@ If you have suggestions, please submit an issue or contact us by email: shearer.
 ## Citation
 If you use this pipeline in your work, please cite:
 
-Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. OSF. doi.org/10.31219/osf.io/kryn4_v2
+>Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. OSF. doi.org/10.31219/osf.io/kryn4_v2
 
 [![DOI](https://img.shields.io/badge/DOI-10.31219/osf.io/kryn4.v2-blue.svg)](https://doi.org/10.31219/osf.io/kryn4_v2)
 
