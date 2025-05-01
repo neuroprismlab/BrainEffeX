@@ -1,10 +1,10 @@
-# BrainEffeX
+# BrainEffeX <img src="www/nplogo.png" alt="NP Logo" style="width:50px; height:50px; vertical-align: middle;"/>
 This repository contains the code for the [BrainEffeX web app](https://neuroprismlab.shinyapps.io/BrainEffeX/) for exploring fMRI effect sizes. 
 
 ---
 ## Purpose
 Effect size estimation is crucial for power analysis and experiment deisgn, but poses unique challenges in fMRI research due to the complexity of the data and analysis techniques. Here, we utalized large fMRI datasets to obtain precise univariate and multivariate effect size estimates from "typical" fMRI study designs: brain-behavior correlation, task vs. rest, and between-group analyses of functional connecitivity and task-based activation maps. This is an interactive web application for exploring these effect maps. 
-> The preprint for this web app is avilable [here](https://osf.io/preprints/osf/kryn4_v2).
+> The preprint for this web app is available [here](https://osf.io/preprints/osf/kryn4_v2).
 
 ---
 ## Repository Structure
@@ -57,10 +57,7 @@ If you have suggestions, please submit an issue or contact us by email: shearer.
 ## Citation
 If you use this pipeline in your work, please cite:
 
-Shearer, H. (2025, April 23). BrainEffeX. https://doi.org/10.17605/OSF.IO/CWNJD
+Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. OSF. doi.org/10.31219/osf.io/kryn4_v2
 
-[![DOI](10.17605/OSF.IO/CWNJD)](https://doi.org/10.31219/osf.io/kryn4_v2)
-
-CITATION
-DOI tag
+[![DOI](https://img.shields.io/badge/DOI-10.31219/osf.io/kryn4.v2-blue.svg)](https://doi.org/10.31219/osf.io/kryn4_v2)
 
