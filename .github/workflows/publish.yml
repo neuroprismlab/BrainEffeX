@@ -1,0 +1,29 @@
+on:
+  push:
+     branches:
+       - main
+
+name: Deploy BrainEffeX app to shinyapps.io
+
+jobs:
+  deploy-shiny:
+    name: Deploy to shinyapps.io
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.ACCESS_TOKEN }}
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        
+    steps:
+       - name: 🛎️ Checkout repository
+         uses: actions/checkout@v2
+         with:
+           fetch-depth: 0
+       - id: deploy
+         name: 💎 Deploy to shinyapps.io
+         uses: qwert666/shinyapps-actions@main
+         env:
+           SHINY_USERNAME: 'neuroprismlab' # put your own username here!
+           SHINY_TOKEN: ${{ secrets.TOKEN }}
+           SHINY_SECRET: ${{ secrets.SECRET }}
+           APP_NAME: 'BrainEffeX_auto' # this will show in the app's url
+           APP_DIR: ''
