@@ -57,6 +57,10 @@ If you have suggestions, please submit an issue or contact us by email: shearer.
 ## Citation
 If you use this pipeline in your work, please cite:
 
+Shearer, H. (2025, April 23). BrainEffeX. https://doi.org/10.17605/OSF.IO/CWNJD
+
+[![DOI](10.17605/OSF.IO/CWNJD)](https://doi.org/10.31219/osf.io/kryn4_v2)
+
 CITATION
 DOI tag
 
