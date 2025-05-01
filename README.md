@@ -1,4 +1,4 @@
-# Brain EffeX
+# BrainEffeX
 This repository contains the code for the [BrainEffeX web app](https://neuroprismlab.shinyapps.io/BrainEffeX/) for exploring fMRI effect sizes. 
 
 ---
