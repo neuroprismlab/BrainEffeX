@@ -5,7 +5,6 @@ This repository contains the code for the [BrainEffeX web app](https://neuropris
 ## Purpose
 Effect size estimation is crucial for power analysis and experiment deisgn, but poses unique challenges in fMRI research due to the complexity of the data and analysis techniques. Here, we utalized large fMRI datasets to obtain precise univariate and multivariate effect size estimates from "typical" fMRI study designs: brain-behavior correlation, task vs. rest, and between-group analyses of functional connecitivity and task-based activation maps. This is an interactive web application for exploring these effect maps. 
 > The preprint for this web app is avilable [here (https://osf.io/preprints/osf/kryn4_v1).
----
 > Effect map data is hosted [here](https://osf.io/cwnjd/files/osfstorage), as the file exceeds GitHub's size limits. 
 
 The code for the analysis that produced the data fed into the app can be found at https://github.com/neuroprismlab/calculate_effeX. 
