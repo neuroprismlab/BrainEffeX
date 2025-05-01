@@ -8,14 +8,12 @@ Effect size estimation is crucial for power analysis and experiment deisgn, but 
 
 ---
 ## Repository Structure
+Relavent files:
 ```
-BrainEffeX/
-└── .github/ISSUE_TEMPLATE/   # Data contribution form? FIX                   
-└── data                      # Data structures 
-└── figures                   # Visualizations of effect size estimates displayed on app      
-└── for_contributors          # Intructions for contributors             
-└── www                    
-├── .gitignore   
+BrainEffeX/                 
+└── data                     # Data structures 
+└── figures                  # Visualizations of effect size estimates displayed on app      
+└── for_contributors         # Intructions for contributors             
 ├── README.md                # Project overview and usage
 ├── app.R                    # Main script that launches the Shiny app
 ├── helpers.R                # Functions called in server.R
