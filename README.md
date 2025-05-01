@@ -20,10 +20,12 @@ The R package containing useful functions used in this app (and in related publi
 To support BrainEffeX as a growing resource, we welcome contributions of large sample fMRI datasets (n>500). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
 If you have data to contribute to the app, please see the README.md file in the 'for_contributors' folder within this repository. 
 
+---
 ### To run the BrainEffeX app locally on your computer with RStudio:
 ADD IN UTILS PACKAGE
 1. Clone this repository to your computer
 2. Install the Shiny package in RStudio
-3. Open the cloned repo directory in RStudio
-4. Open the app.R file
-5. Click 'run app' near the top right of the script window (button has a green play button)
+3. Install the BrainEffeX Utils package in R or RStudio (for instructions on adding this package, refer to the README.md file in the [BrainEffeX_utils Repository](https://github.com/neuroprismlab/BrainEffeX_utils))
+4. Open the cloned repo directory in RStudio
+5. Open the app.R file
+6. Click 'run app' near the top right of the script window (button has a green play button)
