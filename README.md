@@ -1,7 +1,7 @@
 # Brain EffeX
 This repository contains the code for the [BrainEffeX web app](https://neuroprismlab.shinyapps.io/BrainEffeX/) for exploring fMRI effect sizes. 
 
-The preprint for this web app is available at https://osf.io/preprints/osf/kryn4_v1.
+The preprint for this web app is available [here] (https://osf.io/preprints/osf/kryn4_v1).
 
 Effect map data is hosted at https://osf.io/cwnjd/files/osfstorage (file too large for Github).
 
