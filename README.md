@@ -7,7 +7,7 @@ Effect size estimation is crucial for power analysis and experiment deisgn, but 
 > The preprint for this web app is avilable [here](https://osf.io/preprints/osf/kryn4_v2).
 
 ---
-## Repository Structures
+## Repository Structure
 ```
 BrainEffeX/
 └── .github/ISSUE_TEMPLATE/   # Data contribution form? FIX                   
