@@ -24,7 +24,7 @@ BrainEffeX/
 
 ---
 ## Preparing Inputs
-The inputs for this app are prepared in the [Calculate_EffeX Repository](https://github.com/neuroprismlab/calculate_effeX). Group-level statistical maps are computed, then converted to effect size estimates.
+The inputs for this app are prepared in the [calculate_effeX Repository](https://github.com/neuroprismlab/calculate_effeX). Group-level statistical maps are computed, then converted to effect size estimates.
 > These effect size maps can be found [here](https://osf.io/cwnjd/files/osfstorage), as the file exceeds GitHub's size limits.
 
 The script 'generate_figures.R' inputs this effect map data and exports the visualizations. These visualizations are stored in a folder called 'figures', and are inputted into **BrainEffeX**. 
@@ -44,7 +44,7 @@ To support **BrainEffeX** as a growing resource, we welcome contributions of lar
 If you have suggestions, please submit an issue or contact us by email: shearer.h@northeastern.edu
 
 ---
-## To run the BrainEffeX app locally on your computer with RStudio:
+## Run BrainEffeX Locally
 1. Clone this repository to your computer
 2. Install the Shiny package in RStudio
 3. Open the cloned repo directory in RStudio
