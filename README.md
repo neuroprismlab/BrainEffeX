@@ -16,7 +16,7 @@ The script 'generate_figures.R' inputs this effect map data and exports the visu
 The R package containing useful functions used in this app (and in related publications) can be found in the [BrainEffeX_utils Repository](https://github.com/neuroprismlab/BrainEffeX_utils).
 
 ---
-## Contributions
+## Data Contributions
 To support BrainEffeX as a growing resource, we welcome contributions of large sample fMRI datasets (n>500). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
 If you have data to contribute to the app, please see the README.md file in the 'for_contributors' folder within this repository. 
 
