@@ -9,7 +9,7 @@ library(BrainEffeX.utils)
 
 source("modals.R")
 
-date_updated = "Mar-27-2025"
+date_updated = "May-1-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -86,8 +86,6 @@ ui <- fluidPage(
                            multiple = TRUE, selected = NULL),
                bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
              ),
-             # # Button to apply filters
-             # actionButton("apply_filters_btn", "Apply Filters"),
              
              # Button to reset filters
              actionButton("reset_btn", "Reset Filters"),
@@ -112,18 +110,6 @@ ui <- fluidPage(
                          label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
                           choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
              bsTooltip("effect_size_icon", "Select the measure of effect size.", "right", options = list(container = "body")),
-             # 
-             # selectInput("plot_combination_style",
-             #             label = tagList("Plot Combination", icon("info-circle", id = "plot_combo_icon")),
-             #             choices = c("Single" = 'single', "Overlapping" = 'overlapping', "Meta" = 'meta'), 
-             #             selected = 'none'),
-             # bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
-             # 
-             # selectInput("group_by", 
-             #             label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-             #             choices = c("None" = 'none', "Statistic" = 'orig_stat_type', "Category" = 'category')), 
-             # bsTooltip("group_by_icon", "Choose how to group the analysis results.", "right", options = list(container = "body")),
-             # 
              h1(" "),
              
              
@@ -134,14 +120,8 @@ ui <- fluidPage(
              actionButton("screenshot", "Take a screenshot"),
              
              h1(" "),
-             # h5("Helpful reminders"),
-             # wellPanel(style = "background-color: #ffffff;", 
-             #           helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-             #           helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
-             #           ),
              h1(" "),
              
-             # add a small scrollable table of phenotypic keys and definitions
              
              conditionalPanel(
                condition = "input.test_type.indexOf('r') > -1",
@@ -155,13 +135,11 @@ ui <- fluidPage(
       
       column(8, align = "centre", # simCI plots
              uiOutput("dynamicPanel"),  # helper menu: dynamic panel in center
-             # h5("Helpful reminders"),
              h4("The plots below visualize all edges or voxels in each study."),
              wellPanel(style = "background-color: #ffffff;", 
                        helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                        helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
              ),
-             #downloadButton("downloadPlots", "Download Plots"),
              wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("histograms"), type = 1)),
       ),
     )), # end of fluidRow
@@ -189,8 +167,6 @@ ui <- fluidPage(
                                    choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
                        
                        h1(" "),
-                       # Button to download the plot as PNG
-                       # downloadButton("downloadData", "Download Data"),
                        
                        # Button to take a screenshot of the app
                        actionButton("screenshot_m", "Take a screenshot"),
@@ -200,16 +176,12 @@ ui <- fluidPage(
                 
                 column(9, align = "centre", # plots
                        # simCI plot on the left, accompanying spatial plot on right
-                       
-                       # h5("Helpful reminders"),
                        h4("The plots below visualize all edges or voxels in each meta-analysis"),
                        wellPanel(style = "background-color: #ffffff;", 
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
                        ),
-                       #downloadButton("downloadPlots_m", "Download Plots"),
                        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
-                       #plotOutput("m_plots", width = "100%", height = "100%")
                 ),
                 
                 
