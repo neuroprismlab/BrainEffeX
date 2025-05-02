@@ -2,6 +2,7 @@ on:
   push:
      branches:
        - main
+       - gh-pages
 
 name: Deploy BrainEffeX app to shinyapps.io
 
