@@ -2,7 +2,6 @@ on:
   push:
      branches:
        - main
-       - gh-pages
 
 name: Deploy BrainEffeX app to shinyapps.io
 
@@ -24,7 +23,7 @@ jobs:
          uses: qwert666/shinyapps-actions@main
          env:
            SHINY_USERNAME: 'halleeshearer'
-           SHINY_TOKEN: ${{ secrets.SHINYAPP_TOKEN }}
-           SHINY_SECRET: ${{ secrets.SHINYAPP_SECRET }}
+           SHINY_TOKEN: ${{ secrets.TOKEN }}
+           SHINY_SECRET: ${{ secrets.SECRET }}
            APP_NAME: 'BrainEffeX_auto'
            APP_DIR: ''
