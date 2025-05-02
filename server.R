@@ -23,7 +23,7 @@ server <- function(input, output, session) {
   
   #figs_path = "./cns/"
   #testing:
-  figs_path = "/Users/neuroprism/Desktop/BrainEffeX-1/figures/shiny/"
+  figs_path = "figures/shiny/"
   
   #Load in explorer tab info
   load("data/study.RData")
@@ -195,7 +195,7 @@ server <- function(input, output, session) {
     
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[i, 3], ".png")
+      image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[i, 3], ".png"))
       file.exists(image_path)
     }), ]
 
@@ -224,7 +224,7 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("plot", my_i)
 
-        image_path <- paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[my_i, 3], ".png")
+        image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[my_i, 3], ".png"))
 
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
@@ -249,7 +249,7 @@ server <- function(input, output, session) {
 
     # Removing files that don't exist
     study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png")
+      image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
       file.exists(image_path)
     }), ] #### TEST THIS
     print(study_filtered)
@@ -279,7 +279,7 @@ server <- function(input, output, session) {
         my_i <- i
         plotname<- paste0("m_plot", my_i)
 
-        image_path <- paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png")
+        image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
         
         output[[plotname]] <- renderImage({
           # No need to check for file existence since we already filtered out missing files
