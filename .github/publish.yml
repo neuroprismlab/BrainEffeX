@@ -1,0 +1,25 @@
+on:
+  push:
+     branches:
+       - main
+
+name: Deploy BrainEffeX app to shinyapps.io
+
+jobs:
+  deploy-shiny:
+    name: Deploy to shinyapps.io
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.ACCESS_TOKEN }}
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        
+    steps:
+       - name: 🛎️ Checkout repository
+         uses: actions/checkout@v2
+         with:
+           fetch-depth: 0
+       - id: deploy
+         name: 💎 Deploy to shinyapps.io
+         run: |
+           Rscript -e "rsconnect::setAccountInfo(name='halleeshearer', token=${{secrets.TOKEN}}, secret=${{secrets.SECRET}})"
+           Rscript -e "rsconnect::deployApp(appName = 'BrainEffeX_auto')" 
