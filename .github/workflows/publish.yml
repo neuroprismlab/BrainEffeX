@@ -1,29 +1,30 @@
 on:
   push:
-     branches:
-       - main
+    branches:
+      - main
 
 name: Deploy BrainEffeX app to shinyapps.io
 
 jobs:
-  deploy-shiny:
-    name: Deploy to shinyapps.io
+  deploy:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_PAT: ${{ secrets.ACCESS_TOKEN }}
-      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        
+
     steps:
-       - name: 🛎️ Checkout repository
-         uses: actions/checkout@v2
-         with:
-           fetch-depth: 0
-       - id: deploy
-         name: 💎 Deploy to shinyapps.io
-         uses: qwert666/shinyapps-actions@main
-         env:
-           SHINY_USERNAME: 'halleeshearer'
-           SHINY_TOKEN: ${{ secrets.TOKEN }}
-           SHINY_SECRET: ${{ secrets.SECRET }}
-           APP_NAME: 'BrainEffeX_auto'
-           APP_DIR: ''
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install rsconnect
+        run: Rscript -e "install.packages('rsconnect')"
+
+      - name: Deploy to shinyapps.io
+        env:
+          SHINYAPPS_NAME: 'BrainEffeX_auto'
+          SHINYAPPS_ACCOUNT: 'halleeshearer'
+          SHINYAPPS_TOKEN: ${{ secrets.TOKEN }}
+          SHINYAPPS_SECRET: ${{ secrets.SECRET }}
+        run: |
+          Rscript -e "rsconnect::setAccountInfo(name=Sys.getenv('SHINYAPPS_ACCOUNT'), token=Sys.getenv('SHINYAPPS_TOKEN'), secret=Sys.getenv('SHINYAPPS_SECRET'))"
+          Rscript -e "rsconnect::deployApp(appDir='.', appName=Sys.getenv('SHINYAPPS_NAME'), force=TRUE)"
