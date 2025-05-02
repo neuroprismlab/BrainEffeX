@@ -22,9 +22,9 @@ jobs:
        - id: deploy
          name: 💎 Deploy to shinyapps.io
          uses: qwert666/shinyapps-actions@main
-    env:
-        SHINY_USERNAME: 'halleeshearer'
-        SHINY_TOKEN: ${{ secrets.SHINYAPP_TOKEN }}
-        SHINY_SECRET: ${{ secrets.SHINYAPP_SECRET }}
-        APP_NAME: 'BrainEffeX_auto'
-        APP_DIR: ''
+         env:
+           SHINY_USERNAME: 'halleeshearer'
+           SHINY_TOKEN: ${{ secrets.SHINYAPP_TOKEN }}
+           SHINY_SECRET: ${{ secrets.SHINYAPP_SECRET }}
+           APP_NAME: 'BrainEffeX_auto'
+           APP_DIR: ''
