@@ -2,18 +2,18 @@
 # BrainEffeX Server
 # Loading data, filtering, and plotting
 ####################################################################
-
-library(shinyscreenshot)
-library(gridExtra)
-library(ggplot2)
-library(reshape)
-library(fields)
-library(oro.nifti)
-library(neurobase)
-library(shinyjs)
-library(bslib)
-library(BrainEffeX.utils)
-library(stringr)
+# 
+# library(shinyscreenshot)
+# library(gridExtra)
+# library(ggplot2)
+# library(reshape)
+# library(fields)
+# library(oro.nifti)
+# library(neurobase)
+# library(shinyjs)
+# library(bslib)
+# library(BrainEffeX.utils)
+# library(stringr)
 
 source("helpers.R")
 
@@ -34,7 +34,7 @@ server <- function(input, output, session) {
   v$study_meta_category <- study_meta_category
   load("data/meta_analysis/study_meta_statistic.RData")
   v$study_meta_statistic <- study_meta_statistic
-
+  
   #Load in phen key info
   phen_keys <- read.csv('data/phen_key.csv')
   output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
@@ -109,9 +109,9 @@ server <- function(input, output, session) {
   filtered_files <- reactive({
     print(input$correlation)
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
-                 input$test_type, input$correlation))
+                        input$test_type, input$correlation))
   })
-
+  
   #Update filter options based on previously selected filters (if filter is not all and if filter)
   observe({
     filtered_data <- filtered_files()
@@ -140,8 +140,8 @@ server <- function(input, output, session) {
     if (input$tab == "Explorer") {
       print("Explorer tab selected")
       study_filtered <- filtered_files()
-    print(study_filtered)
-    create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
+      print(study_filtered)
+      create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
     }
   })
   
@@ -165,8 +165,8 @@ server <- function(input, output, session) {
     create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
   })
   
-
-  observeEvent(list(input$tab, input$meta_analysis, input$m_motion, input$m_pooling, input$m_estimate), {
+  
+  observe({
     print("tab clicked")
     if (input$tab == "Meta-Analysis") {
       print("tab is meta-analysis")
@@ -183,115 +183,115 @@ server <- function(input, output, session) {
       create_explorer_plots(input, output, study_meta, v, meta = v$grouped)
     }
   })
-
+  
   
   ##### Functions #####
- #Plotting
+  #Plotting
   create_explorer_plots <- function(input, output, study_filtered, v, meta) {
-  if (input$tab == "Explorer") {
-    print("Creating placeholders for explorer plots")
-    req(study_filtered)
-    print("Filtered files loaded")
-    
-    # Removing files that don't exist
-    study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[i, 3], ".png"))
-      file.exists(image_path)
-    }), ]
-
-    output$histograms <- renderUI({
-      validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
-      print("Generating UI elements")
-
-      v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
-        plotname <- paste0("plot", i)
-        tagList(
-          fluidRow(
-            #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
-          )
-        )
-      })
-
-      do.call(tagList, v$plot_output_list)
-    })
-    print("Done creating placeholders for plots")
-
-    print("Filling explorer SimCI and Spatial/Matrix plots")
-    for (i in 1:nrow(study_filtered)) {
-      #print(paste("Processing file", i))
-      local({
-        my_i <- i
-        plotname<- paste0("plot", my_i)
-
-        image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[my_i, 3], ".png"))
-
-        output[[plotname]] <- renderImage({
-          # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 300)
-        }, deleteFile = FALSE)
-      })
-    }
-    print("Done filling explorer plots")
-  }
-
-  if (input$tab == "Meta-Analysis") {
-    print("Creating placeholders for meta plots")
-    print(paste0("input$meta_analysis: ", input$meta_analysis))
-    print(paste0("input$m_estimate: ", input$m_estimate))
-    print(paste0("input$m_motion: ", input$m_motion))
-    print(paste0("input$m_pooling: ", input$m_pooling))
-    # if (input$meta_analysis == "category") {
-    #   study_meta <- v$study_meta_category
-    # } else if (input$meta_analysis == "orig_stat_type") {
-    #   study_meta <- v$study_meta_statistic
-    # }
-
-    # Removing files that don't exist
-    study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
-      image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
-      file.exists(image_path)
-    }), ] #### TEST THIS
-    print(study_filtered)
-
-    output$m_plots <- renderUI({
-      validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
-      print("Generating UI elements")
-
-      v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
-        plotname <- paste0("m_plot", i)
-        tagList(
-          fluidRow(
-            #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-            column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
-          )
-        )
-      })
-
-      do.call(tagList, v$plot_output_list)
-    })
-    print("Done creating placeholders for plots")
-
-    print("Filling explorer SimCI and Spatial/Matrix plots")
-    for (i in 1:nrow(study_filtered)) {
-      print(paste("Processing file", i))
-      local({
-        my_i <- i
-        plotname<- paste0("m_plot", my_i)
-
-        image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
+    if (input$tab == "Explorer") {
+      print("Creating placeholders for explorer plots")
+      req(study_filtered)
+      print("Filtered files loaded")
+      
+      # Removing files that don't exist
+      study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
+        image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[i, 3], ".png"))
+        file.exists(image_path)
+      }), ]
+      
+      output$histograms <- renderUI({
+        validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
+        print("Generating UI elements")
         
-        output[[plotname]] <- renderImage({
-          # No need to check for file existence since we already filtered out missing files
-          list(src = image_path, width = "100%", height = 300)
-        }, deleteFile = FALSE)
+        v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
+          plotname <- paste0("plot", i)
+          tagList(
+            fluidRow(
+              #column(10, imageOutput(plotname, height = "200px", width = "550px"))
+              column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
+            )
+          )
+        })
+        
+        do.call(tagList, v$plot_output_list)
       })
+      print("Done creating placeholders for plots")
+      
+      print("Filling explorer SimCI and Spatial/Matrix plots")
+      for (i in 1:nrow(study_filtered)) {
+        #print(paste("Processing file", i))
+        local({
+          my_i <- i
+          plotname<- paste0("plot", my_i)
+          
+          image_path <- tolower(paste0(figs_path, input$estimate, "/motion_", input$motion, "/pooling_", input$pooling, "/", meta, "_", input$estimate, "/", study_filtered[my_i, 3], ".png"))
+          
+          output[[plotname]] <- renderImage({
+            # No need to check for file existence since we already filtered out missing files
+            list(src = image_path, width = "100%", height = 300)
+          }, deleteFile = FALSE)
+        })
+      }
+      print("Done filling explorer plots")
     }
-    print("Done filling explorer plots")
+    
+    if (input$tab == "Meta-Analysis") {
+      print("Creating placeholders for meta plots")
+      print(paste0("input$meta_analysis: ", input$meta_analysis))
+      print(paste0("input$m_estimate: ", input$m_estimate))
+      print(paste0("input$m_motion: ", input$m_motion))
+      print(paste0("input$m_pooling: ", input$m_pooling))
+      # if (input$meta_analysis == "category") {
+      #   study_meta <- v$study_meta_category
+      # } else if (input$meta_analysis == "orig_stat_type") {
+      #   study_meta <- v$study_meta_statistic
+      # }
+      
+      # Removing files that don't exist
+      study_filtered <- study_filtered[sapply(1:nrow(study_filtered), function(i) {
+        image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
+        file.exists(image_path)
+      }), ] #### TEST THIS
+      print(study_filtered)
+      
+      output$m_plots <- renderUI({
+        validate(need(nrow(study_filtered) > 0, "No data available for the selected parameters."))
+        print("Generating UI elements")
+        
+        v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
+          plotname <- paste0("m_plot", i)
+          tagList(
+            fluidRow(
+              #column(10, imageOutput(plotname, height = "200px", width = "550px"))
+              column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
+            )
+          )
+        })
+        
+        do.call(tagList, v$plot_output_list)
+      })
+      print("Done creating placeholders for plots")
+      
+      print("Filling explorer SimCI and Spatial/Matrix plots")
+      for (i in 1:nrow(study_filtered)) {
+        print(paste("Processing file", i))
+        local({
+          my_i <- i
+          plotname<- paste0("m_plot", my_i)
+          
+          image_path <- tolower(paste0(figs_path, input$m_estimate, "/motion_", input$m_motion, "/pooling_", input$m_pooling, "/", meta, "_", input$m_estimate, "/", study_filtered[i, "name"], ".png"))
+          
+          output[[plotname]] <- renderImage({
+            # No need to check for file existence since we already filtered out missing files
+            list(src = image_path, width = "100%", height = 300)
+          }, deleteFile = FALSE)
+        })
+      }
+      print("Done filling explorer plots")
+    }
   }
-}
   
- # Filter filenames based on desired filters
+  # Filter filenames based on desired filters
   filter_files <- function(file_info, dataset, map_type, task_type, test_type, correlation) {
     if (is.null(correlation)) {
       correlation <- "*"
@@ -309,4 +309,4 @@ server <- function(input, output, session) {
   }
 }
 
-  
+
