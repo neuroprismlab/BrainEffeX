@@ -1,10 +1,10 @@
 ####################################################################
 # BrainEffeX UI
 ####################################################################
-# library(shinyjs)
-# library(bslib)
-# library(shinyBS)
-# library(shinycssloaders)
+library(shinyjs)
+library(bslib)
+library(shinyBS)
+library(shinycssloaders)
 #library(BrainEffeX.utils)
 
 source("modals.R")
@@ -205,7 +205,7 @@ ui <- fluidPage(
                        h4("The plots below visualize all edges or voxels in each meta-analysis"),
                        wellPanel(style = "background-color: #ffffff;", 
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-                                 helpText("Simultaneous confidence intervals (95% CI across all edges/voxels). Red indicates simultaneous CIs overlapping with 0, green indicates no overlap."),
+                                 helpText("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
                        ),
                        #downloadButton("downloadPlots_m", "Download Plots"),
                        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),

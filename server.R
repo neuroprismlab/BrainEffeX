@@ -2,18 +2,8 @@
 # BrainEffeX Server
 # Loading data, filtering, and plotting
 ####################################################################
-# 
-# library(shinyscreenshot)
-# library(gridExtra)
-# library(ggplot2)
-# library(reshape)
-# library(fields)
-# library(oro.nifti)
-# library(neurobase)
-# library(shinyjs)
-# library(bslib)
-# library(BrainEffeX.utils)
-# library(stringr)
+library(shinyjs)
+library(bslib)
 
 source("helpers.R")
 
@@ -48,26 +38,12 @@ server <- function(input, output, session) {
     }
   })
   
-  # #Info displays
-  # createModalNavigationObservers(input, session)
-  # observeEvent(c(input$apply_filters_btn, input$reset_btn), {
-  #   output$dynamicPanel <- renderUI({
-  #     createDynamicPanel(input, v$study_init)
-  #   })
-  # })
   createModalNavigationObservers(input, session)
   observe({
     output$dynamicPanel <- renderUI({
       createDynamicPanel(input, v$study_init)
     })
   })
-  
-  # #Clicks button when app opens to display graphs initially with default filters
-  # observeEvent(input$tab, {
-  #   if (input$tab == "Explorer") {
-  #     click("apply_filters_btn")
-  #   }
-  # })
   
   #Link to find data
   observeEvent(input$downloadData, {

@@ -14,6 +14,11 @@ library(devtools) # for installing/loading utils
 library(dplyr)
 library(devtools)
 library(png)
+library(reshape2)
+#library(BrainEffeX.utils)
+library(neurobase)
+library(colorspace)
+
 
 ## Load utils
 
@@ -32,7 +37,7 @@ library(png)
 # library(BrainEffeX.utils)
 
 # set working directory to the BrainEffeX local cloned repo
-repo_location = "/Users/neuroprism/Desktop/BrainEffeX-1/"
+repo_location = "/Users/shearer.h/Google Drive/My Drive/Github/BrainEffeX/"
 setwd(repo_location)
 
 testing = FALSE
@@ -57,9 +62,10 @@ all_effect_size_types <- c('d','r_sq')              # c('d', 'r_sq', 'd.full_res
 
 all_motion <- c('none', 'regression', 'threshold')  # c('none', 'regression', 'threshold') # TODO: stat_control -> "...regression...$d", full_residualization -> "...regression...$d.full_res"
 all_pooling <- c('none', 'net') #  # c('none','net')
+do_multi <- c(FALSE)
 
-all_plot_combination_styles <- c('single')   # c('single','meta','overlapping') # note: overlapping can only be used for manuscript
-all_grouping_var <- c('none', 'orig_stat_type', 'category')  # c('none', 'category', 'orig_stat_type') # used only for meta & overlap plots - TODO: separate out?
+all_plot_combination_styles <- c('meta')   # c('single','meta','overlapping') # note: overlapping can only be used for manuscript
+all_grouping_var <- c('orig_stat_type', 'category')  # c('none', 'category', 'orig_stat_type') # used only for meta & overlap plots - TODO: separate out?
 all_manuscript_plot_types <- c('simci', 'spatial')  # c('simci', 'spatial', 'density', 'power') # only used for plot_output_style = 'manuscript'
 
 make_plots <- TRUE
@@ -379,12 +385,12 @@ for (pooling in all_pooling) {
                     # if (pooling == "net" && study_details$map_type == "act") {
                     #   next
                     # } #testing
-                    panel_list[[i]] <- create_plots(pd_list, plot_type = 'simci', effect_type = effect_size_type, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
-                    panel_list_2[[i]] <- create_plots(pd_list_2, plot_type = 'spatial', effect_type = effect_size_type, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list[[i]] <- create_plots(pd_list, plot_type = 'simci', effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list_2[[i]] <- create_plots(pd_list_2, plot_type = 'spatial', effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
                     
                   } else {
                     
-                    panel_list[[i]] <- create_plots(pd_list, plot_type = plot_type, effect_type = effect_size_type, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list[[i]] <- create_plots(pd_list, plot_type = plot_type, effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
                     
                   }
                   
