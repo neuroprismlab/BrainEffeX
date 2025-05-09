@@ -24,6 +24,7 @@ library(colorspace)
 repo_location = "/Users/shearer.h/Google Drive/My Drive/Github/BrainEffeX/"
 setwd(repo_location)
 
+# set to true to save plots into a testing directory rather than figures directory
 testing = FALSE
 
 ## User-defined paths & parameters
