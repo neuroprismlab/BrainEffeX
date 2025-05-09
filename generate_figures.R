@@ -15,26 +15,10 @@ library(dplyr)
 library(devtools)
 library(png)
 library(reshape2)
-#library(BrainEffeX.utils)
+install_github("neuroprismlab/braineffex_utils", ref = "hs-sn-merge")
+library(BrainEffeX.utils) # currently uses the hs-sn-merge branch
 library(neurobase)
 library(colorspace)
-
-
-## Load utils
-
-# Option 1. simple add local scripts to path (for dev):
-#utils_package_local <- "/Users/stephanienoble/Library/CloudStorage/GoogleDrive-s.noble@northeastern.edu/My Drive/Lab/xMore/Software/scripts/R/myscripts/effect_size/misc/BrainEffeX_utils/"
-#load_all(utils_package_local)
-
-# Option 2. full install of local package (for dev):
-# utils_package_local <- "/Users/stephanienoble/Library/CloudStorage/GoogleDrive-s.noble@northeastern.edu/My Drive/Lab/xMore/Software/scripts/R/myscripts/effect_size/misc/BrainEffeX_utils/"
-# install(utils_package_local)
-# library(BrainEffeX.utils)
-
-# Option 3. install package from github:
-# utils_github_path <- "neuroprismlab/BrainEffeX_utils"
-# install_github(utils_github_path)
-# library(BrainEffeX.utils)
 
 # set working directory to the BrainEffeX local cloned repo
 repo_location = "/Users/shearer.h/Google Drive/My Drive/Github/BrainEffeX/"
@@ -52,7 +36,6 @@ out_basename_basename <- "figures/"
 if (testing) {
   out_basename_basename <- paste0(repo_location, "testing/")
 }
-
 
 # plot params - USER-DEFINED
 
@@ -321,7 +304,6 @@ for (pooling in all_pooling) {
               # 1. Prep
               
               for (j in plot_info$idx[[i]]) {
-                print(plot_info$idx[[i]])
                 # change metadata based on whether using meta-analysis
                 
                 if (plot_combination_style == 'meta') {
@@ -385,12 +367,12 @@ for (pooling in all_pooling) {
                     # if (pooling == "net" && study_details$map_type == "act") {
                     #   next
                     # } #testing
-                    panel_list[[i]] <- create_plots(pd_list, plot_type = 'simci', effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
-                    panel_list_2[[i]] <- create_plots(pd_list_2, plot_type = 'spatial', effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list[[i]] <- create_plots(pd_list, plot_type = 'simci', effect_type = effect_size_type, do_multivariate = do_multi, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list_2[[i]] <- create_plots(pd_list_2, plot_type = 'spatial', effect_type = effect_size_type, do_multivariate = do_multi, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
                     
                   } else {
                     
-                    panel_list[[i]] <- create_plots(pd_list, plot_type = plot_type, effect_type = effect_size_type, do_multivariate = FALSE, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
+                    panel_list[[i]] <- create_plots(pd_list, plot_type = plot_type, effect_type = effect_size_type, do_multivariate = do_multi, add_description = add_plt_description, do_minimal_title = use_minimal_title, log_list[[i]], meta = plot_combination_style == "meta")
                     
                   }
                   

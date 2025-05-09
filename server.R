@@ -4,6 +4,7 @@
 ####################################################################
 library(shinyjs)
 library(bslib)
+library(shinyscreenshot)
 
 source("helpers.R")
 

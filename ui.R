@@ -9,7 +9,7 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "Mar-27-2025"
+date_updated = "May-08-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -40,15 +40,28 @@ ui <- fluidPage(
            
     ),
     column(4, 
-           tags$div(style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%;", 
-                    tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
-                    h5("The NeuroPrism Lab", style = "margin-top: 5px;"))
+           tags$a(
+             href = "https://neuroprismlab.github.io/",  # Replace with your actual lab URL
+             target = "_blank",  # Optional: opens in new tab
+             tags$div(
+               style = "display: flex; flex-direction: column; align-items: flex-end; height: 100%; text-decoration: none;",
+               tags$img(src = "nplogo.png", class = "logo", style = "height: 90px; margin-right:10px"),
+               h5("The NeuroPrism Lab", style = "margin-top: 5px; color: black;")
+             )
+           )
+           
     ),
     
     actionButton(
       "showInstructions",
       "How to Use This App",
       style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
+    
+    tags$a(href = "https://osf.io/preprints/osf/kryn4_v3", 
+           #target = "_blank", 
+           class = "btn btn-primary",
+           style = "color: #fff; background-color: #5c8a54; border-color: #4d7346; margin-left:15px",
+           "View Preprint")
   ),
   
   hr(), # space
@@ -151,6 +164,12 @@ ui <- fluidPage(
              ),
              
              h6(paste("Version 1.5; Last updated ", date_updated)),
+             
+             tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
+                    target = "_blank", 
+                    icon("github", class = "fa-2x"), 
+                    style = "color: #000; margin-left: 10px; text-decoration: none;")
+             
       ),
       
       column(8, align = "centre", # simCI plots
