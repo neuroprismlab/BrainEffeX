@@ -70,7 +70,7 @@ if (!file.exists(paste0(data_dir, combined_data_file_name))) {
   osf_download(file, path = file.path(data_dir))
   if (combined_data_file_name %in% list.files(data_dir)) {
     # file already exists
-    print("Main data file succesfully downloaded from OSF")
+    print("Main data file successfully downloaded from OSF")
   } else {
     # file does not exist
     print("Data could not be downloaded from OSF. Try manually downloading and moving the file to the data directory from https://osf.io/cwnjd.")
@@ -87,7 +87,7 @@ if (!file.exists(paste0(data_dir, meta_data_file_name))) {
   osf_download(file, path = file.path(data_dir))
   if (meta_data_file_name %in% list.files(data_dir)) {
     # file already exists
-    print("Meta-analysis data file succesfully downloaded from OSF")
+    print("Meta-analysis data file successfully downloaded from OSF")
   } else {
     # file does not exist
     print("Data could not be downloaded from OSF. Try manually downloading and moving the file to the data directory from https://osf.io/cwnjd.")

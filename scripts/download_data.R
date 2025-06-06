@@ -22,7 +22,7 @@ if ("effect_maps_public.RData" %in% list.files(data_dir)) {
     osf_download(data_file, path = file.path(paste0(current_dir, "/data/")))
     if ("effect_maps_public.RData" %in% list.files(data_dir)) {
         # file already exists
-        print("Data succesfully downloaded")
+        print("Data successfully downloaded")
     } else {
         # file does not exist
         print("Data could not be downloaded from OSF. Try manually downloading and moving the file to the data directory from https://osf.io/cwnjd.")

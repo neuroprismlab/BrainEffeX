@@ -148,7 +148,7 @@
 #   }
 #   
 #   
-#   # plot and shade the cofidence intervals:
+#   # plot and shade the confidence intervals:
 #   # green for intervals that are entirely below zero
 #   polygon(c(1:below_cross_idx, rev(1:below_cross_idx)), 
 #           c(sorted_upper_bounds[1:below_cross_idx], rev(sorted_lower_bounds[1:below_cross_idx])), 
