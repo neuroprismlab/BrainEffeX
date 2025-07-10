@@ -57,11 +57,16 @@ ui <- fluidPage(
       "How to Use This App",
       style = "color: #fff; background-color: #337ab7; border-color: #2e6da4; margin-left:15px"),
     
-    tags$a(href = "https://osf.io/preprints/osf/kryn4_v3", 
-           #target = "_blank", 
-           class = "btn btn-primary",
-           style = "color: #fff; background-color: #5c8a54; border-color: #4d7346; margin-left:15px",
-           "View Preprint")
+    # tags$a(href = "https://osf.io/preprints/osf/kryn4_v3", 
+    #        #target = "_blank", 
+    #        class = "btn btn-primary",
+    #        style = "color: #fff; background-color: #5c8a54; border-color: #4d7346; margin-left:15px",
+    #        "View Preprint")
+    
+    actionButton("openLink", 
+                 "View Preprint",
+                 onclick = "window.open('https://osf.io/preprints/osf/kryn4_v3', '_blank')",
+                 style = "color: #fff; background-color: #5c8a54; border-color: #4d7346; margin-left:15px")
   ),
   
   hr(), # space

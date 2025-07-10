@@ -45,10 +45,15 @@ server <- function(input, output, session) {
       createDynamicPanel(input, v$study_init)
     })
   })
+  # 
+  # #Link to find data
+  # observeEvent(input$downloadData, {
+  #   browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
+  # })
+  # 
   
-  #Link to find data
   observeEvent(input$downloadData, {
-    browseURL("https://osf.io/cwnjd/files/osfstorage?view_only=")
+    shinyjs::runjs("window.open('https://osf.io/cwnjd/files/osfstorage?view_only=', '_blank');")
   })
   
   ##### Filter buttons #####
