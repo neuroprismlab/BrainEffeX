@@ -17,7 +17,7 @@ createGettingStartedModal <- function() {
         tags$li("Test type"),
         tags$li("Correlations (if applicable)"),
         tags$li("Motion Method"),
-        tags$li("Pooling"),
+        tags$li("Pooling Method"),
       ),
       tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
       tags$div(style = "text-align: center;",
@@ -29,7 +29,7 @@ createGettingStartedModal <- function() {
 
 # Modal 2: Understanding the Plots
 
-createUnderstandingPlotsModal <- function() {
+createUnderstandingPlotsModal1 <- function() {
   bsModal(
     id = "instructionsModal2", title = "Understanding the Plots", trigger = NULL,
     size = "large",
@@ -41,11 +41,6 @@ createUnderstandingPlotsModal <- function() {
         tags$li(tags$i("Red")," indicates simultaneous CIs overlapping with 0,", tags$i("green"), "indicates no overlap."),
         tags$li(tags$i("Multivariate Effect sizes")," are displayed under the plots."),
       ),
-      tags$p(tags$b(tags$i("The plots on the right")),"show the effect maps spatially:"),
-      tags$ul(
-        tags$li("Effect size matrices show the effect sizes for each edge for functional connectivity studies. Networks are labelled on the axes."),
-        tags$li("Activation Maps help you visualize the effect maps from activation studies on the brain.")
-      ),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage1", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
                actionButton("nextToPage3", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
@@ -54,20 +49,18 @@ createUnderstandingPlotsModal <- function() {
   )
 }
 
-# Modal 3: Meta tab
+# Modal 3: Understanding the Plots
 
-createUnderstandingMetaAnalysisTab <- function() {
+createUnderstandingPlotsModal2 <- function() {
   bsModal(
-    id = "instructionsModal3", title = "Understanding the Meta-Analysis Tab", trigger = NULL,
+    id = "instructionsModal3", title = "Understanding the Plots", trigger = NULL,
     size = "large",
     tags$div(
-      tags$p("Results from meta-analyses of effect sizes across test types (r, t, t2) and categories (age, biometric, psychiatric, cognitive, sex) can be found on the Meta-Analysis tab."),
-      tags$p("Simultaneous confidence interval plots are displayed to the left and spatial maps are displayed to the right."),
-      tags$p("Use",tags$b(tags$i("the menu to the left")),"to filter the meta-analysis by:"),
+      tags$p("Explore the expected effect sizes of the studies that match the provided filters."),
+      tags$p(tags$b(tags$i("The plots on the right")),"show the effect maps spatially:"),
       tags$ul(
-        tags$li("What do you want to group by? (Statistic or Category)"),
-        tags$li("Motion Method"),
-        tags$li("Pooling "),
+        tags$li("Effect size matrices show the effect sizes for each edge for functional connectivity studies. Networks are labelled on the axes."),
+        tags$li("Activation Maps help you visualize the effect maps from activation studies on the brain.")
       ),
       tags$div(style = "text-align: center;",
                actionButton("prevToPage2", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
@@ -142,6 +135,13 @@ createDynamicPanel <- function(input, study) {
     }
     
     # Correlation message
+    # if (is.null(input$correlation) || length(input$correlation) == 0) {
+    #   messages$correlation <- "• No specific correlations are selected."
+    # } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
+    #   messages$correlation <- "• All correlations"
+    # } else {
+    #   messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
+    # }
     if (is.null(input$correlation) || length(input$correlation) == 0) {
       messages$correlation <- "• No specific correlations are selected."
     } else if (length(input$correlation) == length(unique(study[["var2"]])) || "*" %in% input$correlation) {
