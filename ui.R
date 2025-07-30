@@ -9,7 +9,7 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "May-08-2025"
+date_updated = "July-30-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -168,7 +168,7 @@ ui <- fluidPage(
                DT::dataTableOutput("keys"),
              ),
              
-             h6(paste("Version 1.5; Last updated ", date_updated)),
+             h6(paste("Version 1.6; Last updated ", date_updated)),
              
              tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
                     target = "_blank", 
@@ -196,21 +196,22 @@ ui <- fluidPage(
                        selectInput("meta_analysis", 
                                    label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
                                    choices = c("Category" = 'category')), 
-                       bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
+                       bsTooltip("group_by_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
                        selectInput("m_motion",
-                                   label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                                   label = tagList("Motion Method", icon("info-circle", id = "meta_motion_icon")),
                                    choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
                                    selected = 'none'),
-                       bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+                       bsTooltip("meta_motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
                        
                        selectInput("m_pooling",
-                                   label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
+                                   label = tagList("Pooling", icon("info-circle", id = "meta_pooling_icon")),
                                    choices = c("None" = 'none', "Network-level" = 'net')),
-                       bsTooltip("pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
+                       bsTooltip("meta_pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
                        
                        selectInput("m_estimate",
-                                   label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                                   label = tagList("Effect Size Measure", icon("info-circle", id = "meta_effect_size_icon")),
                                    choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
+                       bsTooltip("meta_effect_size_icon", "Choose effect size estimate to visualize.", "right", options = list(container = "body")),
                        
                        h1(" "),
                        # Button to download the plot as PNG
@@ -226,7 +227,8 @@ ui <- fluidPage(
                        # simCI plot on the left, accompanying spatial plot on right
                        
                        # h5("Helpful reminders"),
-                       h4("The plots below visualize all edges or voxels in each meta-analysis"),
+                       h3("The plots below visualize all edges or voxels in each meta-analysis"),
+                       h4("Meta-analyses were conducted for each category of studies. The rma.mv function in the R package metafor was used for mass univariate meta-analysis of effect sizes at each voxel, edge, network, or multivariate measure. Studies were nested by dataset within each category to account for dependence between studies within a dataset."),
                        wellPanel(style = "background-color: #ffffff;", 
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
