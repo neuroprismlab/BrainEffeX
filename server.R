@@ -5,6 +5,7 @@
 library(shinyjs)
 library(bslib)
 library(shinyscreenshot)
+library(DT)
 
 source("helpers.R")
 
@@ -166,6 +167,34 @@ server <- function(input, output, session) {
     }
   })
   
+  output$studyInfoTable <- DT::renderDataTable({
+    
+    # Read the CSV file
+    study_extra <- read.csv("data/study_extra.csv", stringsAsFactors = FALSE)
+    study_extra <- study_extra[,c("name", "dataset", "test_component_1", "task_details", "test_component_2", "measure_details", "category")]
+    colnames(study_extra) <- c("Study Name", "Dataset", "Task", "Task Details", "Measure", "Measure Details", "Category")
+    # Create the data table with all columns from the CSV
+    DT::datatable(
+      study_extra,
+      options = list(
+        autoWidth = TRUE,
+        scrollX = TRUE,
+        searching = TRUE,
+        filter = 'none',
+        lengthMenu = c(10, 15, 25, 50, 100),
+        columnDefs = list(
+          list(width = '150px', targets = 0),  # name
+          list(width = '70px', targets = 1),   # dataset
+          list(width = '70px', targets = 2),  # test_component_1
+          list(width = '200px', targets = 3),  # test_component_2
+          list(width = '150px', targets = 4),   # category
+          list(width = '250px', targets = 5),  # task_details
+          list(width = '150px', targets = 6)   # measure_details
+        )
+      ),
+      rownames = FALSE
+    )
+  }, server = FALSE)
   
   ##### Functions #####
   #Plotting

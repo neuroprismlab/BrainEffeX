@@ -87,7 +87,9 @@ ui <- fluidPage(
              bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
              
              selectInput("task",
-                            label = tagList("Task", icon("info-circle", id = "task_icon")),
+                            label = tagList("Task", icon("info-circle", id = "task_icon"),
+                                            actionButton("taskInfoBtn", "Task Info", 
+                                                         style = "font-size: 12px; padding: 2px 8px; margin-left: 5px; background-color: #f8f9fa; border: 1px solid #dee2e6;")),
                             choices = c("All" = "*")),
              bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
@@ -240,7 +242,21 @@ ui <- fluidPage(
                 
                 
               )
-    ), id = "tab"), 
+    ), 
+  
+  nav_panel("Study Info", 
+            fluidRow(
+              column(12,
+                     h3("Study Information"),
+                     p("This table provides detailed information about all studies available in the datasets."),
+                     br(),
+                     wellPanel(
+                       style = "background-color: #ffffff;",
+                       DT::dataTableOutput("studyInfoTable", width = "100%")
+                     )
+              )
+            )
+  ), id = "tab"),
   
   
   #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
@@ -249,3 +265,5 @@ ui <- fluidPage(
   createUnderstandingPlotsModal2(),
   createDownloadingEffectMapsModal()
 )
+
+
