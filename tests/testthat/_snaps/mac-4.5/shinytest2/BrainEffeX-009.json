@@ -1,0 +1,464 @@
+{
+  "input": {
+    "closePage4": 1,
+    "correlation": null,
+    "dataset": "HCP_EP",
+    "downloadData": 0,
+    "estimate": "d",
+    "instructionsModal1": false,
+    "instructionsModal2": false,
+    "instructionsModal3": false,
+    "instructionsModal4": false,
+    "m_estimate": "d",
+    "m_motion": "none",
+    "m_pooling": "none",
+    "map_type": "*",
+    "meta_analysis": "orig_stat_type",
+    "motion": "none",
+    "nextToPage2": 1,
+    "nextToPage3": 1,
+    "nextToPage4": 1,
+    "openLink": 0,
+    "pooling": "none",
+    "prevToPage1": 0,
+    "prevToPage2": 0,
+    "prevToPage3": 0,
+    "reset_btn": 0,
+    "screenshot": 0,
+    "screenshot_m": 0,
+    "showInstructions": 0,
+    "tab": "Explorer",
+    "task": "*",
+    "test_type": "*"
+  },
+  "output": {
+    "dynamicPanel": {
+      "html": "<div id=\"outb82cb2756785137c\" class=\"shiny-html-output\"><\/div>",
+      "deps": [
+
+      ]
+    },
+    "histograms": {
+      "html": "<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot1\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot2\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot3\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot4\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot5\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "keys": {
+      "x": {
+        "filter": "none",
+        "vertical": false,
+        "container": "<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Variable<\/th>\n      <th>Description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>",
+        "options": {
+          "rownames": false,
+          "paging": false,
+          "scroller": true,
+          "scrollY": "400px",
+          "scrollX": false,
+          "autoWidth": true,
+          "columnDefs": [
+            {
+              "name": "Variable",
+              "targets": 0
+            },
+            {
+              "name": "Description",
+              "targets": 1
+            }
+          ],
+          "order": [
+
+          ],
+          "orderClasses": false,
+          "ajax": {
+            "type": "POST",
+            "data": "function(d) {\nd.search.caseInsensitive = true;\nd.search.smart = true;\nd.escape = true;\nvar encodeAmp = function(x) { x.value = x.value.replace(/&/g, \"%26\"); }\nencodeAmp(d.search);\n$.each(d.columns, function(i, v) {encodeAmp(v.search);});\n}"
+          },
+          "serverSide": true,
+          "processing": true
+        },
+        "selection": {
+          "mode": "multiple",
+          "selected": null,
+          "target": "row",
+          "selectable": null
+        }
+      },
+      "evals": [
+        "options.ajax.data"
+      ],
+      "jsHooks": [
+
+      ],
+      "deps": [
+        {
+          "name": "jquery",
+          "version": "3.6.0",
+          "src": {
+            "href": "jquery-3.6.0"
+          },
+          "meta": null,
+          "script": "jquery-3.6.0.min.js",
+          "stylesheet": null,
+          "head": null,
+          "attachment": null,
+          "all_files": true
+        },
+        {
+          "name": "dt-core",
+          "version": "1.13.6",
+          "src": {
+            "href": "dt-core-1.13.6"
+          },
+          "meta": null,
+          "script": "js/jquery.dataTables.min.js",
+          "stylesheet": [
+            "css/jquery.dataTables.min.css",
+            "css/jquery.dataTables.extra.css"
+          ],
+          "head": null,
+          "attachment": null,
+          "package": null,
+          "all_files": false
+        },
+        {
+          "name": "crosstalk",
+          "version": "1.2.1",
+          "src": {
+            "href": "crosstalk-1.2.1"
+          },
+          "meta": null,
+          "script": "js/crosstalk.min.js",
+          "stylesheet": "css/crosstalk.min.css",
+          "head": null,
+          "attachment": null,
+          "all_files": true
+        }
+      ]
+    },
+    "outb82cb2756785137c": {
+      "html": "<div style=\"background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;\">\n  <p><b>You are looking at:<\/b><br> • The <b> HCP_EP <\/b> dataset(s).<br>• All map types.<br>• All tasks.<br>• All test types.<br>• No specific correlations are selected.<\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "plot1": {
+      "src": "[image data hash: 521775a03b01a8d0ebea89b98636b3c2]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot10": {
+      "src": "[image data hash: 0102df502d554ef7f760bc6ad11396aa]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot11": {
+      "src": "[image data hash: bd6aa1cbbda2a9351acd5dae1c1715b7]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot12": {
+      "src": "[image data hash: 6b5b861ae525c0a6629792e504559764]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot13": {
+      "src": "[image data hash: c22cbfaa916f514970a7c1060cdede5a]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot14": {
+      "src": "[image data hash: 8be4eae221b078aa01a35536ef94fc6f]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot15": {
+      "src": "[image data hash: 2b60a23230b90dd442deb28e40290e13]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot16": {
+      "src": "[image data hash: c71331046566217a3f35231d295d9b03]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot17": {
+      "src": "[image data hash: 0f4e085ea7d797c9e9eb73fd69a67723]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot18": {
+      "src": "[image data hash: 89c25d84bf88f39ac6afeef462db0275]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot19": {
+      "src": "[image data hash: 881f6b97edecb4a75ea1096f9239cba1]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot2": {
+      "src": "[image data hash: 4ba40f27bc7e8eb1a74698bff51f9ebc]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot20": {
+      "src": "[image data hash: a4640ab2fed9494f96c1edbf66b39f30]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot21": {
+      "src": "[image data hash: 9d1e3b22cc0abaa4fdbfc78146e0e95b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot22": {
+      "src": "[image data hash: 185ccfaded2f6b7b3c82bc1fa7d24fff]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot23": {
+      "src": "[image data hash: 81d1d1c7d80563afaa7967d300a1b963]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot24": {
+      "src": "[image data hash: 6fe20075ffb14601fd7d8a6c005afa4c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot25": {
+      "src": "[image data hash: 3808b9232b4fa65282cd7d90c852dd0e]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot26": {
+      "src": "[image data hash: 31d5e985bf6219b4f530bbd954831a92]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot27": {
+      "src": "[image data hash: 37a044623d5b898a7c2c6ced957ff09c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot28": {
+      "src": "[image data hash: 41bace9efb706a662587fbf7b32b6520]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot29": {
+      "src": "[image data hash: bf530fc5bb65e54930de66427c0c3843]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot3": {
+      "src": "[image data hash: b8c4a88acf95b4a55461fff60ee78cd9]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot30": {
+      "src": "[image data hash: e1c696e0cc4d8387fd9fad49a3edb2fd]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot31": {
+      "src": "[image data hash: c63297cb44ea12ff128a8843aedd1502]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot32": {
+      "src": "[image data hash: d3ddf050a974701844cd7a12efe9ee75]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot33": {
+      "src": "[image data hash: 02ab5f5e5d9b74c22c8f8995e017ade7]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot34": {
+      "src": "[image data hash: c10ec259ee30fc856b38854af3195295]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot35": {
+      "src": "[image data hash: 28142031ec017334becd4f173cffa987]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot36": {
+      "src": "[image data hash: 521775a03b01a8d0ebea89b98636b3c2]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot37": {
+      "src": "[image data hash: 4ba40f27bc7e8eb1a74698bff51f9ebc]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot38": {
+      "src": "[image data hash: b8c4a88acf95b4a55461fff60ee78cd9]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot39": {
+      "src": "[image data hash: 1f401776c0c07ebde5709c4f2706e74d]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot4": {
+      "src": "[image data hash: 1f401776c0c07ebde5709c4f2706e74d]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot40": {
+      "src": "[image data hash: ee2a84aaf6fc07563795836397dde2cc]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot41": {
+      "src": "[image data hash: c9c4f96d1fdb544ea199d389736621d1]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot42": {
+      "src": "[image data hash: a636ac6fe93dc9294f40544dd1febba6]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot43": {
+      "src": "[image data hash: dc776fdb89cff4fe93077d9af41fb823]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot44": {
+      "src": "[image data hash: d9a6ae41ec47b9673277e5efceba163f]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot45": {
+      "src": "[image data hash: 0102df502d554ef7f760bc6ad11396aa]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot46": {
+      "src": "[image data hash: bd6aa1cbbda2a9351acd5dae1c1715b7]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot47": {
+      "src": "[image data hash: 6b5b861ae525c0a6629792e504559764]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot48": {
+      "src": "[image data hash: c22cbfaa916f514970a7c1060cdede5a]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot49": {
+      "src": "[image data hash: 8966c820726ca1cc481380a82b0ef728]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot5": {
+      "src": "[image data hash: ee2a84aaf6fc07563795836397dde2cc]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot50": {
+      "src": "[image data hash: 5dc6ae09b4e00e3e5f3d520ccbc35082]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot51": {
+      "src": "[image data hash: 3cd0b53fe93237766bfd094dc1c76c03]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot52": {
+      "src": "[image data hash: 69562db279085e5a0dec6eec8c440e84]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot53": {
+      "src": "[image data hash: 01834dd40240ce1f5aa930ff6a879bad]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot54": {
+      "src": "[image data hash: 9d23386878c0ecb052842cdec634b1b4]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot55": {
+      "src": "[image data hash: a74066c3b8d2c5c0ebcbf1b4cd101dbb]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot56": {
+      "src": "[image data hash: 3095fa296aa0fa94a16a927150fddfb0]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot57": {
+      "src": "[image data hash: ebc852937d2e847ad55eb403d19f704b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot58": {
+      "src": "[image data hash: d54a52de812fe650dc302a9bdb7bff2d]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot59": {
+      "src": "[image data hash: 84b29f3f7cf467e4df4a8b4357ff3698]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot6": {
+      "src": "[image data hash: c9c4f96d1fdb544ea199d389736621d1]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot60": {
+      "src": "[image data hash: fb8eb2cfdcc41af23d49775c66f6e8da]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot61": {
+      "src": "[image data hash: ee8862e8a724973224ef07fadb9895db]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot62": {
+      "src": "[image data hash: 7e78a8c1117ac33e91a152e3de3bab4a]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot63": {
+      "src": "[image data hash: 1689842aee8d61643e31ff22a5ddf932]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot7": {
+      "src": "[image data hash: a636ac6fe93dc9294f40544dd1febba6]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot8": {
+      "src": "[image data hash: dc776fdb89cff4fe93077d9af41fb823]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot9": {
+      "src": "[image data hash: d9a6ae41ec47b9673277e5efceba163f]",
+      "width": "100%",
+      "height": 300
+    }
+  },
+  "export": {
+
+  }
+}

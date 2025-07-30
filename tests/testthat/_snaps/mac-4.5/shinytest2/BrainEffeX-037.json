@@ -1,0 +1,515 @@
+{
+  "input": {
+    "closePage4": 1,
+    "correlation": null,
+    "dataset": "*",
+    "downloadData": 0,
+    "estimate": "r_sq",
+    "instructionsModal1": false,
+    "instructionsModal2": false,
+    "instructionsModal3": false,
+    "instructionsModal4": false,
+    "m_estimate": "r_sq",
+    "m_motion": "regression",
+    "m_pooling": "net",
+    "map_type": "*",
+    "meta_analysis": "category",
+    "motion": "threshold",
+    "nextToPage2": 1,
+    "nextToPage3": 1,
+    "nextToPage4": 1,
+    "openLink": 0,
+    "pooling": "net",
+    "prevToPage1": 0,
+    "prevToPage2": 0,
+    "prevToPage3": 0,
+    "reset_btn": 0,
+    "screenshot": 0,
+    "screenshot_m": 0,
+    "showInstructions": 1,
+    "tab": "Meta-Analysis",
+    "task": "*",
+    "test_type": "*"
+  },
+  "output": {
+    "dynamicPanel": {
+      "html": "<div id=\"outb82cb2756785137c\" class=\"shiny-html-output\"><\/div>",
+      "deps": [
+
+      ]
+    },
+    "histograms": {
+      "html": "<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot1\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot2\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot3\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot4\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot5\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot6\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot7\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot8\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot9\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot10\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot11\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot12\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot13\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot14\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot15\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot16\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot17\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot18\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot19\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot20\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot21\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot22\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot23\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot24\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot25\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot26\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot27\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot28\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot29\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot30\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot31\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot32\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot33\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot34\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot35\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot36\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot37\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot38\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot39\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot40\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot41\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot42\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot43\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot44\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot45\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot46\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot47\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot48\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot49\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"plot50\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "keys": {
+      "x": {
+        "filter": "none",
+        "vertical": false,
+        "container": "<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Variable<\/th>\n      <th>Description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>",
+        "options": {
+          "rownames": false,
+          "paging": false,
+          "scroller": true,
+          "scrollY": "400px",
+          "scrollX": false,
+          "autoWidth": true,
+          "columnDefs": [
+            {
+              "name": "Variable",
+              "targets": 0
+            },
+            {
+              "name": "Description",
+              "targets": 1
+            }
+          ],
+          "order": [
+
+          ],
+          "orderClasses": false,
+          "ajax": {
+            "type": "POST",
+            "data": "function(d) {\nd.search.caseInsensitive = true;\nd.search.smart = true;\nd.escape = true;\nvar encodeAmp = function(x) { x.value = x.value.replace(/&/g, \"%26\"); }\nencodeAmp(d.search);\n$.each(d.columns, function(i, v) {encodeAmp(v.search);});\n}"
+          },
+          "serverSide": true,
+          "processing": true
+        },
+        "selection": {
+          "mode": "multiple",
+          "selected": null,
+          "target": "row",
+          "selectable": null
+        }
+      },
+      "evals": [
+        "options.ajax.data"
+      ],
+      "jsHooks": [
+
+      ],
+      "deps": [
+        {
+          "name": "jquery",
+          "version": "3.6.0",
+          "src": {
+            "href": "jquery-3.6.0"
+          },
+          "meta": null,
+          "script": "jquery-3.6.0.min.js",
+          "stylesheet": null,
+          "head": null,
+          "attachment": null,
+          "all_files": true
+        },
+        {
+          "name": "dt-core",
+          "version": "1.13.6",
+          "src": {
+            "href": "dt-core-1.13.6"
+          },
+          "meta": null,
+          "script": "js/jquery.dataTables.min.js",
+          "stylesheet": [
+            "css/jquery.dataTables.min.css",
+            "css/jquery.dataTables.extra.css"
+          ],
+          "head": null,
+          "attachment": null,
+          "package": null,
+          "all_files": false
+        },
+        {
+          "name": "crosstalk",
+          "version": "1.2.1",
+          "src": {
+            "href": "crosstalk-1.2.1"
+          },
+          "meta": null,
+          "script": "js/crosstalk.min.js",
+          "stylesheet": "css/crosstalk.min.css",
+          "head": null,
+          "attachment": null,
+          "all_files": true
+        }
+      ]
+    },
+    "m_plot1": {
+      "src": "[image data hash: 2e97d9e94540f23eb54fac273b043285]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot2": {
+      "src": "[image data hash: 87afd04a0764be95de1a7e85609d623f]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot3": {
+      "src": "[image data hash: 6aeb88d6eb6848e64734d16247d7448f]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot4": {
+      "src": "[image data hash: 66718bc34974cfa18274921079ed150b]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot5": {
+      "src": "[image data hash: 16050f0ab7563b5f113bf56b6207d0a7]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot6": {
+      "src": "[image data hash: 01acdd1ba448a3779a9a36b61dd5bedc]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot7": {
+      "src": "[image data hash: 9c59fca0c99ff58d9d8c25de11db406b]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot8": {
+      "src": "[image data hash: ed17a51d96f2fcba2d5516ae56c2544a]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plot9": {
+      "src": "[image data hash: 6845c925714f90bb5c826a6de33b1331]",
+      "width": "100%",
+      "height": 300
+    },
+    "m_plots": {
+      "html": "<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot1\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot2\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot3\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot4\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot5\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot6\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot7\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>\n<div class=\"row\">\n  <div class=\"col-sm-10\">\n    <div style=\"margin-bottom: 30px\">\n      <div id=\"m_plot8\" class=\"shiny-image-output\" style=\"width:700px;height:300px;\"><\/div>\n    <\/div>\n  <\/div>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "outb82cb2756785137c": {
+      "html": "<div style=\"background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; border-radius: 5px; text-align: center;\">\n  <p><b>You are looking at:<\/b><br> • All datasets.<br>• All map types.<br>• All tasks.<br>• All test types.<br>• No specific correlations are selected.<\/p>\n<\/div>",
+      "deps": [
+
+      ]
+    },
+    "plot1": {
+      "src": "[image data hash: 5c633509e39ca9463a717cc296d78fe5]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot10": {
+      "src": "[image data hash: 4825e6fa552e3d6f12342edee8dcb00b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot11": {
+      "src": "[image data hash: d1b7fb61eaf2c10a5a2723b839b1d032]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot12": {
+      "src": "[image data hash: a1fe3585ec9be3c16470983239d85318]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot13": {
+      "src": "[image data hash: 78bd70cc68671390b35a5c61b64fcbd4]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot14": {
+      "src": "[image data hash: 04569ea77d96c46ed72ca32c782c60a5]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot15": {
+      "src": "[image data hash: b8d76c84ed88a5eccef5553b87c03f3b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot16": {
+      "src": "[image data hash: c893e5f01f157846d762d5cd19cbd5c7]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot17": {
+      "src": "[image data hash: 7907f9b360e0e04bc97f1a02d91ffd59]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot18": {
+      "src": "[image data hash: 0719808d17cfcc8805759deeb79d49cb]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot19": {
+      "src": "[image data hash: dc00a6e9e07c0d60f77bd6c267a0a159]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot2": {
+      "src": "[image data hash: f3ff216a910312a2bca213ac0a2d3097]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot20": {
+      "src": "[image data hash: 090cf348d554e89c795d15cb3d8dc3c0]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot21": {
+      "src": "[image data hash: fc15eeb40fc0b096f197ec3d14eadc9c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot22": {
+      "src": "[image data hash: 5fefd3e363e9c15340866ba5c5def758]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot23": {
+      "src": "[image data hash: f6ee000846e541333ddbd7f6cb575e93]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot24": {
+      "src": "[image data hash: a199c74b68507d10563b5f9c66ed6efa]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot25": {
+      "src": "[image data hash: 38b1e63f77d914f40087fa05ebd31c05]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot26": {
+      "src": "[image data hash: 6420aa6d7ad8270365cebfd21c264b6f]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot27": {
+      "src": "[image data hash: 284398bc55bfed8765be9a92aeadb344]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot28": {
+      "src": "[image data hash: 65c5095148cf7666891bccc8b1bf0ffe]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot29": {
+      "src": "[image data hash: cab3869452e814df185d3f713093e2bf]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot3": {
+      "src": "[image data hash: d761a83d0fa3377f84faf81dc9dae157]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot30": {
+      "src": "[image data hash: 70ecd945f9c7777128dcc09a2599469e]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot31": {
+      "src": "[image data hash: b2fa7ccf8f82a0c87f87aa2b56903acc]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot32": {
+      "src": "[image data hash: f6c1b626cd2240944ddf9cb36ef8ed2b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot33": {
+      "src": "[image data hash: eba2e7140edefee2c677b8f9817972e3]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot34": {
+      "src": "[image data hash: ac4fb9ab0bc8a6650470a7cb5a2f2b76]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot35": {
+      "src": "[image data hash: f35ec30fd92d714f388f9369a55457de]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot36": {
+      "src": "[image data hash: 10660392365f877dc533d7d3db06d4b6]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot37": {
+      "src": "[image data hash: 3321e779902d12bcb573f637cb4d214b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot38": {
+      "src": "[image data hash: 59dddba666f336b2e45896c7180ea632]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot39": {
+      "src": "[image data hash: 3a31eec5fae33ccf34680dc493e18533]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot4": {
+      "src": "[image data hash: b354ec48f150d2cf514f584bd67c7f3c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot40": {
+      "src": "[image data hash: e6e1db27e1f8efa158f4c1e48aa95853]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot41": {
+      "src": "[image data hash: cf64879a4604842e6f21ca17a9dc9334]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot42": {
+      "src": "[image data hash: b1bb6c5c15544ffc67adc7a29f0645ae]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot43": {
+      "src": "[image data hash: b265465b4478dbac8922343372caa382]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot44": {
+      "src": "[image data hash: 966aee3d3d1968d0c96c51488dca8b78]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot45": {
+      "src": "[image data hash: 734c54fb593dd9d59f52b3a51b6694f3]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot46": {
+      "src": "[image data hash: 9784857972b06fa83da8398a8e821043]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot47": {
+      "src": "[image data hash: 3a103a5e6e2812ff638a08c7edd2687c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot48": {
+      "src": "[image data hash: 94a3db7bddc29660d928c70252776f68]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot49": {
+      "src": "[image data hash: 1f2a3501e0e0128e0a4ce2716aef4c43]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot5": {
+      "src": "[image data hash: 19aec772e9bc8d9208f671dd2aebea20]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot50": {
+      "src": "[image data hash: ad38876a5f175fddb9c8748d114a3f73]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot51": {
+      "src": "[image data hash: cf4aaa6f3c47ff04f37beb54fa9d4b9f]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot52": {
+      "src": "[image data hash: 8834be91e6f4a9cff3609c2c65844309]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot53": {
+      "src": "[image data hash: 0ed8d93a70cece45cdaccc41a960fc50]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot54": {
+      "src": "[image data hash: 0322914c0dfaa05105f6dbc361c04581]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot55": {
+      "src": "[image data hash: 49348f5a4504e819d1de28c349c6798b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot56": {
+      "src": "[image data hash: 17e490299556075ded9db7b48d186de3]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot57": {
+      "src": "[image data hash: bd6b3e8552fee89d59c65a681e884811]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot58": {
+      "src": "[image data hash: 5c00d2ffc6b7bdee0d321b706f5b873c]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot59": {
+      "src": "[image data hash: 6c914d051d5eabfa0a719ebefb53974a]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot6": {
+      "src": "[image data hash: d1eb485d07a5c01c799519c7738e56dd]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot60": {
+      "src": "[image data hash: c4efe0c76bf1de798fe0bdc0aa497bcb]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot61": {
+      "src": "[image data hash: 29ab0d94f8380731ceac5960e19ddf3b]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot62": {
+      "src": "[image data hash: a4599fe7f3c3c30b332bad8a0f2a6c23]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot63": {
+      "src": "[image data hash: 6848b0ec0d50511174b3b0e9749cc745]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot7": {
+      "src": "[image data hash: a3109f0fbfcf864f63cf61164c83403f]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot8": {
+      "src": "[image data hash: 3e64b792eef08b3c7834196dbf23ab06]",
+      "width": "100%",
+      "height": 300
+    },
+    "plot9": {
+      "src": "[image data hash: 1ba52177ce1f298065d668d468979914]",
+      "width": "100%",
+      "height": 300
+    }
+  },
+  "export": {
+
+  }
+}
