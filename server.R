@@ -29,7 +29,7 @@ server <- function(input, output, session) {
   
   #Load in phen key info
   phen_keys <- read.csv('data/phen_key.csv')
-  output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
+  #output$keys <- DT::renderDataTable(phen_keys, options = list(rownames = FALSE, paging = FALSE, scroller = TRUE, scrollY = "400px", scrollX = FALSE, autoWidth = TRUE), rownames = FALSE)
   
   #Calls correct path based on single or meta
   observe({

@@ -89,7 +89,7 @@ ui <- fluidPage(
              selectInput("task",
                             label = tagList("Task", icon("info-circle", id = "task_icon")),
                             choices = c("All" = "*")),
-             bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
+             bsTooltip("task_icon", "Choose one or more tasks for the analysis. See more information about each task in the Study Info tab. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
              selectInput("test_type",
                          label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
@@ -102,7 +102,7 @@ ui <- fluidPage(
                            label = tagList("Correlation", icon("info-circle", id = "correlation_icon")),
                            choices = c("All" = "*"),
                            multiple = TRUE, selected = NULL),
-               bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
+               bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See study info tab for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
              ),
              # # Button to apply filters
              # actionButton("apply_filters_btn", "Apply Filters"),
@@ -161,12 +161,12 @@ ui <- fluidPage(
              
              # add a small scrollable table of phenotypic keys and definitions
              
-             conditionalPanel(
-               condition = "input.test_type.indexOf('r') > -1",
-               h4("Variable names"),
-               helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
-               DT::dataTableOutput("keys"),
-             ),
+             # conditionalPanel(
+             #   condition = "input.test_type.indexOf('r') > -1",
+             #   h4("Variable names"),
+             #   helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
+             #   DT::dataTableOutput("keys"),
+             # ),
              
              h6(paste("Version 1.6; Last updated ", date_updated)),
              
