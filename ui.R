@@ -87,9 +87,7 @@ ui <- fluidPage(
              bsTooltip("map_type_icon", "Select the type of map for analysis (e.g., FC or activation).", "right", options = list(container = "body")),
              
              selectInput("task",
-                            label = tagList("Task", icon("info-circle", id = "task_icon"),
-                                            actionButton("taskInfoBtn", "Task Info", 
-                                                         style = "font-size: 12px; padding: 2px 8px; margin-left: 5px; background-color: #f8f9fa; border: 1px solid #dee2e6;")),
+                            label = tagList("Task", icon("info-circle", id = "task_icon")),
                             choices = c("All" = "*")),
              bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
@@ -263,6 +261,7 @@ ui <- fluidPage(
   createGettingStartedModal(),
   createUnderstandingPlotsModal1(),
   createUnderstandingPlotsModal2(),
+  createMetaAnalysisModal(), 
   createDownloadingEffectMapsModal()
 )
 
