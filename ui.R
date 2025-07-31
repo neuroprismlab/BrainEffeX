@@ -96,14 +96,11 @@ ui <- fluidPage(
                          choices = c("All" = "*")),
              bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
              
-             conditionalPanel(
-               condition = "input.test_type.indexOf('r') > -1",
-               selectInput("correlation",
-                           label = tagList("Correlation", icon("info-circle", id = "correlation_icon")),
-                           choices = c("All" = "*"),
-                           multiple = TRUE, selected = NULL),
-               bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See study info tab for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
-             ),
+             selectInput("measure",
+                         label = tagList("Measure", icon("info-circle", id = "measure_icon")),
+                         choices = c("All" = "*"),
+                         multiple = TRUE, selected = NULL),
+             bsTooltip("measure_icon", "Select measure variables to view. If no variables are selected, all available options will be displayed by default. See study info tab for more detailed descriptions of the measure names.", "right", options = list(container = "body")),
              # # Button to apply filters
              # actionButton("apply_filters_btn", "Apply Filters"),
              

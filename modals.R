@@ -15,7 +15,7 @@ createGettingStartedModal <- function() {
         tags$li("Map type (FC or activation)"), 
         tags$li("Available Tasks"),
         tags$li("Test type"),
-        tags$li("Correlations (if applicable)"),
+        tags$li("Measures (if applicable)"),
         tags$li("Motion Method"),
         tags$li("Pooling Method"),
       ),
@@ -145,20 +145,12 @@ createDynamicPanel <- function(input, study) {
       messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
     }
     
-    # Correlation message
-    # if (is.null(input$correlation) || length(input$correlation) == 0) {
-    #   messages$correlation <- "• No specific correlations are selected."
-    # } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
-    #   messages$correlation <- "• All correlations"
-    # } else {
-    #   messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
-    # }
-    if (is.null(input$correlation) || length(input$correlation) == 0) {
-      messages$correlation <- "• No specific correlations are selected."
-    } else if (length(input$correlation) == length(unique(study[["var2"]])) || "*" %in% input$correlation) {
-      messages$correlation <- "• All correlations"
+    if (is.null(input$measure) || length(input$measure) == 0) {
+      messages$measure <- "• No specific measures are selected."
+    } else if (length(input$measure) == length(unique(study[["var2"]])) || "*" %in% input$measure) {
+      messages$measure <- "• All measures"
     } else {
-      messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
+      messages$measure <- paste("• The <b>", paste(input$measure, collapse = ", "), "</b> measures(s).")
     }
     
     

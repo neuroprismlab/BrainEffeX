@@ -66,7 +66,7 @@ server <- function(input, output, session) {
     test_type = "*",
     pooling = "none",
     motion = "none",
-    correlation = "*"
+    measure = "*"
   )
   
   # Extract filter options from unfiltered study information
@@ -77,7 +77,7 @@ server <- function(input, output, session) {
     print(paste0('task choices initially ', unique(v$study_init$test_component_1)))
     updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
     updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
-    updateSelectInput(session, "correlation", choices = c("All" = "*", unique(v$study_init[v$study_init$orig_stat_type == "r", "test_component_2"])))
+    updateSelectInput(session, "measure", choices = c("All" = "*", unique(v$study_init[,"test_component_2"])[(!is.na(unique(v$study_init[,"test_component_2"]))) & (!grepl("REST", unique(v$study_init[,"test_component_2"])))]))
   })
   
   observeEvent(input$screenshot, {
@@ -90,9 +90,9 @@ server <- function(input, output, session) {
   ##### Filter files and plot #####
   #Filter files with every change in filter
   filtered_files <- reactive({
-    print(input$correlation)
+    print(input$measure)
     return(filter_files(v$study_init, input$dataset, input$map_type, input$task,
-                        input$test_type, input$correlation))
+                        input$test_type, input$measure))
   })
   
   #Update filter options based on previously selected filters (if filter is not all and if filter)
@@ -111,8 +111,8 @@ server <- function(input, output, session) {
       updateSelectInput(session, "test_type", choices = c("All" = "*", unique(filtered_data$orig_stat_type)))
     }
     if (input$test_type == "r" &&
-        ("*" %in% input$correlation || !any(filtered_data$test_component_2 %in% input$correlation))) {
-      updateSelectInput(session, "correlation",
+        ("*" %in% input$measure || !any(filtered_data$test_component_2 %in% input$measure))) {
+      updateSelectInput(session, "measure",
                         choices = c("All" = "*", unique(filtered_data[filtered_data$orig_stat_type == "r", "test_component_2"])))
     }
   })
@@ -136,13 +136,13 @@ server <- function(input, output, session) {
     updateSelectInput(session, "test_type", selected = "*")
     # updateSelectInput(session, "pooling", selected = "none")
     # updateSelectInput(session, "motion", selected = "none")
-    updateSelectInput(session, "correlation", selected = "*")
+    updateSelectInput(session, "measure", selected = "*")
     
     print("re-filtering data with reset inputs")
     print(paste0("input$task: ", input$task))
     print(paste0("input$motion: ", input$motion))
     print(paste0("input$pooling: ", input$pooling))
-    print(paste0("input$correlation: ", input$correlation))
+    print(paste0("input$measure: ", input$measure))
     #re-plot
     study_filtered <- filter_files(v$study_init, "*", "*", "*", "*", "*")
     create_explorer_plots(input, output, study_filtered, v, meta = v$grouped)
@@ -304,9 +304,9 @@ server <- function(input, output, session) {
   }
   
   # Filter filenames based on desired filters
-  filter_files <- function(file_info, dataset, map_type, task_type, test_type, correlation) {
-    if (is.null(correlation)) {
-      correlation <- "*"
+  filter_files <- function(file_info, dataset, map_type, task_type, test_type, measure) {
+    if (is.null(measure)) {
+      measure <- "*"
     }
     
     filtered_table <- file_info[
@@ -314,7 +314,7 @@ server <- function(input, output, session) {
         (map_type == "*" | file_info$map_type %in% map_type) &
         (task_type == "*" | file_info$test_component_1 %in% task_type) &
         (test_type == "*" | file_info$orig_stat_type %in% test_type) &
-        ((test_type != "r") | ("*" %in% correlation | file_info$test_component_2 %in% correlation)),  # Fixed condition
+        ("*" %in% measure | file_info$test_component_2 %in% measure),
     ]
     
     return(filtered_table)
