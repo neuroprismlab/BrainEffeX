@@ -240,7 +240,7 @@ server <- function(input, output, session) {
           
           output[[plotname]] <- renderImage({
             # No need to check for file existence since we already filtered out missing files
-            list(src = image_path, width = "100%", height = 300)
+            list(src = image_path, width = "100%", height = "300px")
           }, deleteFile = FALSE)
         })
       }
@@ -272,10 +272,35 @@ server <- function(input, output, session) {
         
         v$plot_output_list <- lapply(1:nrow(study_filtered), function(i) {
           plotname <- paste0("m_plot", i)
+          
+          # Get both category and reference space for this meta-analysis
+          current_category <- study_filtered[i, "group_level"]
+          current_ref <- study_filtered[i, "ref"] 
+          
+          # Get studies included in this specific category-reference combination
+          included_studies <- get_meta_studies(current_category, current_ref, v$study_init)
+          
           tagList(
+            # Plot on top
             fluidRow(
-              #column(10, imageOutput(plotname, height = "200px", width = "550px"))
-              column(10, div(imageOutput(plotname, height = "300px", width = "700px"), style = "margin-bottom: 30px"))
+              column(12, 
+                     div(imageOutput(plotname, height = "300px", width = "100%"),
+                         style = "margin-bottom: 15px;")
+              )
+            ),
+            # Study list underneath
+            fluidRow(
+              column(12,
+                     div(
+                       h5(paste("Studies in", current_category, "meta-analysis:"), 
+                          style = "margin-bottom: 5px;"),
+                       h6(paste("Reference space:", current_ref), 
+                          style = "color: #666; margin-bottom: 10px; font-size: 12px;"),
+                       div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 50px; font-size: 13px; columns: 2; column-gap: 20px;",
+                           HTML(included_studies)
+                       )
+                     )
+              )
             )
           )
         })
@@ -295,7 +320,7 @@ server <- function(input, output, session) {
           
           output[[plotname]] <- renderImage({
             # No need to check for file existence since we already filtered out missing files
-            list(src = image_path, width = "100%", height = 300)
+            list(src = image_path, width = "700", height = 300)
           }, deleteFile = FALSE)
         })
       }
@@ -318,6 +343,27 @@ server <- function(input, output, session) {
     ]
     
     return(filtered_table)
+  }
+  
+  # get list of studies in each meta-analysis
+  get_meta_studies <- function(category_name, ref_space, study_init) {
+    # Filter studies by both category and reference space
+    print(study_init)
+    meta_studies <- study_init[study_init$category == category_name & 
+                                 grepl(ref_space, study_init$ref, ignore.case = TRUE), ]
+    
+    if (nrow(meta_studies) == 0) {
+      return(paste0("<p><em>No studies found for ", category_name, " (", ref_space, ") meta-analysis.</em></p>"))
+    }
+    
+    # Create a formatted list
+    study_list <- paste0(
+      "<div style='margin-bottom: 5px; padding: 3px;'>",
+      "• ", meta_studies$name,
+      "</div>"
+    )
+    
+    return(paste(study_list, collapse = ""))
   }
 }
 
