@@ -77,7 +77,7 @@ server <- function(input, output, session) {
     print(paste0('task choices initially ', unique(v$study_init$test_component_1)))
     updateSelectInput(session, "task", choices = c("All" = "*", unique(v$study_init$test_component_1)))
     updateSelectInput(session, "test_type", choices = c("All" = "*", unique(v$study_init$orig_stat_type)))
-    updateSelectInput(session, "measure", choices = c("All" = "*", unique(v$study_init[,"test_component_2"])[(!is.na(unique(v$study_init[,"test_component_2"]))) & (!grepl("REST", unique(v$study_init[,"test_component_2"])))]))
+    updateSelectInput(session, "measure", choices = c("All" = "*", unique(v$study_init[,"test_component_2"])[(!is.na(unique(v$study_init[,"test_component_2"]))) & (!grepl("rest", unique(v$study_init[,"test_component_2"])))]))
   })
   
   observeEvent(input$screenshot, {
