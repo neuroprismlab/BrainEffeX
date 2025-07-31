@@ -183,16 +183,17 @@ server <- function(input, output, session) {
         filter = 'none',
         lengthMenu = c(10, 15, 25, 50, 100),
         columnDefs = list(
-          list(width = '150px', targets = 0),  # name
+          list(width = '120px', targets = 0),  # name
           list(width = '70px', targets = 1),   # dataset
-          list(width = '70px', targets = 2),  # test_component_1
-          list(width = '200px', targets = 3),  # test_component_2
-          list(width = '150px', targets = 4),   # category
-          list(width = '250px', targets = 5),  # task_details
-          list(width = '150px', targets = 6)   # measure_details
+          list(width = '70px', targets = 2),  # task
+          list(width = '300px', targets = 3),  # task details
+          list(width = '150px', targets = 4),   # measure
+          list(width = '150px', targets = 5),  # measure details
+          list(width = '150px', targets = 6)   # category
         )
       ),
-      rownames = FALSE
+      rownames = FALSE,
+      class = 'cell-border stripe' 
     )
   }, server = FALSE)
   
