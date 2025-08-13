@@ -247,7 +247,7 @@ ui <- fluidPage(
                      br(),
                      wellPanel(
                        style = "background-color: #ffffff;",
-                       DT::dataTableOutput("studyInfoTable", width = "100%")
+                       withSpinner(DT::dataTableOutput("studyInfoTable", width = "100%"))
                      )
               )
             )
