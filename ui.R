@@ -9,7 +9,7 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "May-08-2025"
+date_updated = "July-30-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -89,21 +89,18 @@ ui <- fluidPage(
              selectInput("task",
                             label = tagList("Task", icon("info-circle", id = "task_icon")),
                             choices = c("All" = "*")),
-             bsTooltip("task_icon", "Choose one or more tasks for the analysis. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
+             bsTooltip("task_icon", "Choose one or more tasks for the analysis. See more information about each task in the Study Info tab. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
              
              selectInput("test_type",
                          label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
                          choices = c("All" = "*")),
              bsTooltip("test_type_icon", "Select the statistical test type for the analysis: Correlations (r), task vs. rest (t), or between-group (t2) analyses.", "right", options = list(container = "body")),
              
-             conditionalPanel(
-               condition = "input.test_type.indexOf('r') > -1",
-               selectInput("correlation",
-                           label = tagList("Correlation", icon("info-circle", id = "correlation_icon")),
-                           choices = c("All" = "*"),
-                           multiple = TRUE, selected = NULL),
-               bsTooltip("correlation_icon", "Select correlation variables for correlation analysis. If no correlation variables are selected, all available options will be displayed by default. See table below for more detailed descriptions of the variable names.", "right", options = list(container = "body"))
-             ),
+             selectInput("measure",
+                         label = tagList("Measure", icon("info-circle", id = "measure_icon")),
+                         choices = c("All" = "*"),
+                         multiple = TRUE, selected = NULL),
+             bsTooltip("measure_icon", "Select measure variables to view. If no variables are selected, all available options will be displayed by default. See study info tab for more detailed descriptions of the measure names.", "right", options = list(container = "body")),
              # # Button to apply filters
              # actionButton("apply_filters_btn", "Apply Filters"),
              
@@ -161,14 +158,14 @@ ui <- fluidPage(
              
              # add a small scrollable table of phenotypic keys and definitions
              
-             conditionalPanel(
-               condition = "input.test_type.indexOf('r') > -1",
-               h4("Variable names"),
-               helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
-               DT::dataTableOutput("keys"),
-             ),
+             # conditionalPanel(
+             #   condition = "input.test_type.indexOf('r') > -1",
+             #   h4("Variable names"),
+             #   helpText("For correlation studies (r), find more detailed definitions of variable names in this table."),
+             #   DT::dataTableOutput("keys"),
+             # ),
              
-             h6(paste("Version 1.5; Last updated ", date_updated)),
+             h6(paste("Version 1.6; Last updated ", date_updated)),
              
              tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
                     target = "_blank", 
@@ -195,22 +192,23 @@ ui <- fluidPage(
                        h1(""),
                        selectInput("meta_analysis", 
                                    label = tagList("What do you want to group by?", icon("info-circle", id = "group_by_icon")),
-                                   choices = c("Statistic" = 'orig_stat_type', "Category" = 'category')), 
-                       bsTooltip("meta_analysis_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
+                                   choices = c("Category" = 'category')), 
+                       bsTooltip("group_by_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
                        selectInput("m_motion",
-                                   label = tagList("Motion Method", icon("info-circle", id = "motion_icon")),
+                                   label = tagList("Motion Method", icon("info-circle", id = "meta_motion_icon")),
                                    choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
                                    selected = 'none'),
-                       bsTooltip("motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
+                       bsTooltip("meta_motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
                        
                        selectInput("m_pooling",
-                                   label = tagList("Pooling", icon("info-circle", id = "pooling_icon")),
+                                   label = tagList("Pooling", icon("info-circle", id = "meta_pooling_icon")),
                                    choices = c("None" = 'none', "Network-level" = 'net')),
-                       bsTooltip("pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
+                       bsTooltip("meta_pooling_icon", "Pool the data by network.", "right", options = list(container = "body")),
                        
                        selectInput("m_estimate",
-                                   label = tagList("Effect Size Measure", icon("info-circle", id = "effect_size_icon")),
+                                   label = tagList("Effect Size Measure", icon("info-circle", id = "meta_effect_size_icon")),
                                    choices = c("Cohen's d" = 'd', "R Squared" = 'r_sq'), selected = 'd'),
+                       bsTooltip("meta_effect_size_icon", "Choose effect size estimate to visualize.", "right", options = list(container = "body")),
                        
                        h1(" "),
                        # Button to download the plot as PNG
@@ -226,7 +224,8 @@ ui <- fluidPage(
                        # simCI plot on the left, accompanying spatial plot on right
                        
                        # h5("Helpful reminders"),
-                       h4("The plots below visualize all edges or voxels in each meta-analysis"),
+                       h3("The plots below visualize all edges or voxels in each meta-analysis"),
+                       h4("Meta-analyses were conducted for each category of studies. The rma.mv function in the R package metafor was used for mass univariate meta-analysis of effect sizes at each voxel, edge, network, or multivariate measure. Studies were nested by dataset within each category to account for dependence between studies within a dataset."),
                        wellPanel(style = "background-color: #ffffff;", 
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
                                  helpText("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
@@ -238,12 +237,29 @@ ui <- fluidPage(
                 
                 
               )
-    ), id = "tab"), 
+    ), 
+  
+  nav_panel("Study Info", 
+            fluidRow(
+              column(12,
+                     h3("Study Information"),
+                     p("This table provides detailed information about all studies available in the datasets."),
+                     br(),
+                     wellPanel(
+                       style = "background-color: #ffffff;",
+                       DT::dataTableOutput("studyInfoTable", width = "100%")
+                     )
+              )
+            )
+  ), id = "tab"),
   
   
   #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
   createGettingStartedModal(),
   createUnderstandingPlotsModal1(),
   createUnderstandingPlotsModal2(),
+  createMetaAnalysisModal(), 
   createDownloadingEffectMapsModal()
 )
+
+

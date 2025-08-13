@@ -15,11 +15,12 @@ createGettingStartedModal <- function() {
         tags$li("Map type (FC or activation)"), 
         tags$li("Available Tasks"),
         tags$li("Test type"),
-        tags$li("Correlations (if applicable)"),
+        tags$li("Measures (if applicable)"),
         tags$li("Motion Method"),
         tags$li("Pooling Method"),
       ),
       tags$p("Refer to the",tags$b(tags$i("tips")),"next to each input for additional guidance!"),
+      tags$p("Find more details about each study, including task and measure details, on the ", tags$b(tags$i("Study Info")), " tab."),
       tags$div(style = "text-align: center;",
                actionButton("nextToPage2", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
       )
@@ -70,24 +71,34 @@ createUnderstandingPlotsModal2 <- function() {
   )
 }
 
-# Modal 4: Downloading Effect Maps button to access the raw data files stored on OSF
+createMetaAnalysisModal <- function() {
+  bsModal(
+    id = "instructionsModal4", title = "Meta Analysis", trigger = NULL,
+    size = "large",
+    tags$div(
+      tags$p("The", tags$b("Meta-Analysis"), "tab shows effect sizes from meta-analyses across study categories."),
+      tags$p("Meta-analyses were conducted for each category of studies using the rma.mv function in the R package metafor."),
+      tags$div(style = "text-align: center;",
+               actionButton("prevToPage3", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("nextToPage5", "Next", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+      )
+    )
+  )
+}
 
 createDownloadingEffectMapsModal <- function() {
   bsModal(
-    #id = "instructionsModal4", title = "Downloading Effect Maps", trigger = NULL,
-    id = "instructionsModal4", title = "Downloading Data", trigger = NULL,
+    id = "instructionsModal5", title = "Downloading Data", trigger = NULL,
     size = "large",
     tags$div(
       tags$p("How to download data from BrainEffeX:"),
       tags$ul(
-        tags$li("Click the", tags$b(tags$i("'Download Data'")), "button to access the effect the effect map data stored on OSF.")),
-      #tags$li("Click the", tags$b(tags$i("'Download Data'")), "button after filtering to download effect maps."),
-      #tags$li("After downloading, you can use the effect maps further, and apply your own masks if needed.")),
-      #tags$p("Use the", tags$b(tags$i("'Download Matrices'")), "button or", tags$b(tags$i("'Download Brain Image'")),"to download the matrices or brain image separately."),
+        tags$li("Click the", tags$b(tags$i("'Download Data'")), "button to access the effect data stored on OSF.")
+      ),
       tags$p("Use the", tags$b(tags$i("'How to Use This App'")), "button at any time to revisit these instructions."),
       tags$div(style = "text-align: center;",
-               actionButton("prevToPage3", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
-               actionButton("closePage4", "Close", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
+               actionButton("prevToPage4", "Previous", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;"),
+               actionButton("closePage5", "Close", style = "margin-top: 10px; background-color: #337ab7; color: white; border: none; padding: 10px 20px; font-size: 16px;")
       )
     )
   )
@@ -134,20 +145,12 @@ createDynamicPanel <- function(input, study) {
       messages$test_type <- paste("• The <b>", input$test_type, "</b> test type(s).")
     }
     
-    # Correlation message
-    # if (is.null(input$correlation) || length(input$correlation) == 0) {
-    #   messages$correlation <- "• No specific correlations are selected."
-    # } else if (length(input$correlation) == length(unique(study[["var2"]])) || input$correlation == "*") {
-    #   messages$correlation <- "• All correlations"
-    # } else {
-    #   messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
-    # }
-    if (is.null(input$correlation) || length(input$correlation) == 0) {
-      messages$correlation <- "• No specific correlations are selected."
-    } else if (length(input$correlation) == length(unique(study[["var2"]])) || "*" %in% input$correlation) {
-      messages$correlation <- "• All correlations"
+    if (is.null(input$measure) || length(input$measure) == 0) {
+      messages$measure <- "• No specific measures are selected."
+    } else if (length(input$measure) == length(unique(study[["var2"]])) || "*" %in% input$measure) {
+      messages$measure <- "• All measures"
     } else {
-      messages$correlation <- paste("• The <b>", paste(input$correlation, collapse = ", "), "</b> correlation(s).")
+      messages$measure <- paste("• The <b>", paste(input$measure, collapse = ", "), "</b> measures(s).")
     }
     
     
@@ -176,36 +179,56 @@ createModalNavigationObservers <- function(input, session) {
     toggleModal(session, "instructionsModal1", toggle = 'open')
   })
   
+  # Page 1 -> Page 2
   observeEvent(input$nextToPage2, {
     toggleModal(session, "instructionsModal1", toggle = 'close')
     toggleModal(session, "instructionsModal2", toggle = 'open')
   })
   
+  # Page 2 -> Page 1
   observeEvent(input$prevToPage1, {
     toggleModal(session, "instructionsModal2", toggle = 'close')
     toggleModal(session, "instructionsModal1", toggle = 'open')
   })
   
+  # Page 2 -> Page 3
   observeEvent(input$nextToPage3, {
     toggleModal(session, "instructionsModal2", toggle = 'close')
     toggleModal(session, "instructionsModal3", toggle = 'open')
   })
   
+  # Page 3 -> Page 2
   observeEvent(input$prevToPage2, {
     toggleModal(session, "instructionsModal3", toggle = "close")
     toggleModal(session, "instructionsModal2", toggle = "open")
   })
   
+  # Page 3 -> Page 4 (Meta Analysis)
   observeEvent(input$nextToPage4, {
     toggleModal(session, "instructionsModal3", toggle = "close")
     toggleModal(session, "instructionsModal4", toggle = "open")
   })
+  
+  # Page 4 -> Page 3
   observeEvent(input$prevToPage3, {
     toggleModal(session, "instructionsModal4", toggle = "close")
     toggleModal(session, "instructionsModal3", toggle = "open")
   })
   
-  observeEvent(input$closePage4, {
+  # Page 4 -> Page 5 (Download Data)
+  observeEvent(input$nextToPage5, {
     toggleModal(session, "instructionsModal4", toggle = "close")
+    toggleModal(session, "instructionsModal5", toggle = "open")
+  })
+  
+  # Page 5 -> Page 4
+  observeEvent(input$prevToPage4, {
+    toggleModal(session, "instructionsModal5", toggle = "close")
+    toggleModal(session, "instructionsModal4", toggle = "open")
+  })
+  
+  # Close from Page 5
+  observeEvent(input$closePage5, {
+    toggleModal(session, "instructionsModal5", toggle = "close")
   })
 }

@@ -1,0 +1,13 @@
+name: BrainEffeX
+title: BrainEffeX
+username: halleeshearer
+account: halleeshearer
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14722170
+bundleId: 10708414
+url: https://halleeshearer.shinyapps.io/BrainEffeX/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .github/ISSUE_TEMPLATE/data-contribution.yml|.github/workflows/publish.yml|for_contributors/README.md|for_contributors/templates/sample_r_struct.mat|for_contributors/templates/sample_t_struct.mat|for_contributors/templates/sample_t2_struct.mat|output/test|scripts
