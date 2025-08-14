@@ -6,6 +6,7 @@ library(shinyjs)
 library(bslib)
 library(shinyscreenshot)
 library(DT)
+library(readr)
 
 source("helpers.R")
 
@@ -167,13 +168,33 @@ server <- function(input, output, session) {
     }
   })
   
+  output$preprocessingTable <- DT::renderDataTable({
+    # read the CSV file
+    preprocessing_info <- read_csv("~/halleerenate@gmail.com - Google Drive/My Drive/Github/BrainEffeX_July-9/BrainEffeX/data/preprocessing_info.csv")
+    
+    # Create the data table
+    DT::datatable(
+      preprocessing_info,
+      options = list(
+        autoWidth = TRUE,
+        scrollX = TRUE,
+        searching = TRUE,
+        filter = 'none',
+        #lengthMenu = 'none',
+        pageLength = 15
+      ),
+      rownames = FALSE,
+      class = 'cell-border stripe'
+    )
+  }, server = FALSE)
+    
+  
   output$studyInfoTable <- DT::renderDataTable({
     
     # Read the CSV file
-    study_extra <- read.csv("data/study_extra.csv", stringsAsFactors = FALSE)
-    study_extra <- study_extra[,c("name", "dataset", "test_component_1", "task_details", "test_component_2", "measure_details", "category")]
-    colnames(study_extra) <- c("Study Name", "Dataset", "Task", "Task Details", "Measure", "Measure Details", "Category")
-    # Create the data table with all columns from the CSV
+    study_extra <- read.csv("data/study_extra.csv", stringsAsFactors = FALSE, check.names = FALSE)
+    
+    # Create the data table
     DT::datatable(
       study_extra,
       options = list(
@@ -182,20 +203,19 @@ server <- function(input, output, session) {
         searching = TRUE,
         filter = 'none',
         lengthMenu = c(10, 15, 25, 50, 100),
-        columnDefs = list(
-          list(width = '120px', targets = 0),  # name
-          list(width = '70px', targets = 1),   # dataset
-          list(width = '70px', targets = 2),  # task
-          list(width = '300px', targets = 3),  # task details
-          list(width = '150px', targets = 4),   # measure
-          list(width = '150px', targets = 5),  # measure details
-          list(width = '150px', targets = 6)   # category
-        )
+        pageLength = 15
       ),
       rownames = FALSE,
-      class = 'cell-border stripe' 
+      class = 'cell-border stripe'
     )
   }, server = FALSE)
+  
+  output$downloadStudyInfo <- downloadHandler(
+    filename = function() paste0("data/study_info_citations.csv"),
+    content  = function(file) {
+      file.copy("data/study_info_citations.csv", file, overwrite = TRUE)
+    }
+  )
   
   ##### Functions #####
   #Plotting

@@ -89,7 +89,7 @@ ui <- fluidPage(
              selectInput("task",
                             label = tagList("Task", icon("info-circle", id = "task_icon")),
                             choices = c("All" = "*")),
-             bsTooltip("task_icon", "Choose one or more tasks for the analysis. See more information about each task in the Study Info tab. If no tasks are selected, all available options will be displayed by default.", "right", options = list(container = "body")),
+             bsTooltip("task_icon", "Choose one or more tasks for the analysis. See more information about each task in the Study Info tab. If no tasks are selected, all available options will be displayed by default. Task-based effect sizes may be influenced by dataset-specific modeling strategies and acquisition differences; interpret results with this in mind.", "right", options = list(container = "body")),
              
              selectInput("test_type",
                          label = tagList("Test Type", icon("info-circle", id = "test_type_icon")),
@@ -225,10 +225,11 @@ ui <- fluidPage(
                        
                        # h5("Helpful reminders"),
                        h3("The plots below visualize all edges or voxels in each meta-analysis"),
-                       h4("Meta-analyses were conducted for each category of studies. The rma.mv function in the R package metafor was used for mass univariate meta-analysis of effect sizes at each voxel, edge, network, or multivariate measure. Studies were nested by dataset within each category to account for dependence between studies within a dataset."),
                        wellPanel(style = "background-color: #ffffff;", 
+                                 helpText("Meta-analyses were conducted for each category of studies. The rma.mv function in the R package metafor was used for mass univariate meta-analysis of effect sizes at each voxel, edge, network, or multivariate measure. Studies were nested by dataset within each category to account for dependence between studies within a dataset."),
+                                 helpText("The shaded areas of the plost represent simultaneous confidence intervals (95% CI across all edges/voxels)."),
                                  helpText("The maximum conservative effect size is the largest of: 1) the absolute value of the largest lower bound across confidence intervals, 2) the absolute value of the smallest upper bound across confidence intervals."),
-                                 helpText("Simultaneous confidence intervals (95% CI across all edges/voxels)."),
+                                 
                        ),
                        #downloadButton("downloadPlots_m", "Download Plots"),
                        wellPanel(style = "background-color: #ffffff;", withSpinner(uiOutput("m_plots"), type = 1)),
@@ -240,18 +241,21 @@ ui <- fluidPage(
     ), 
   
   nav_panel("Study Info", 
-            fluidRow(
-              column(12,
-                     h3("Study Information"),
-                     p("This table provides detailed information about all studies available in the datasets."),
+            br(),
+            navset_card_pill(
+            nav_panel("Study Information",
+                      br(),
+                     h3("This table provides detailed information about all studies"),
+                     downloadButton("downloadStudyInfo", "Download Study Info table with citations (CSV)"),
                      br(),
-                     wellPanel(
-                       style = "background-color: #ffffff;",
-                       withSpinner(DT::dataTableOutput("studyInfoTable", width = "100%"))
-                     )
-              )
-            )
-  ), id = "tab"),
+                       withSpinner(DT::dataTableOutput("studyInfoTable", width = "100%"))),
+                     
+            nav_panel("Preprocessing",
+                      br(),
+                      h3("This table provides detailed information about the preprocessing of each dataset by contributors"),
+                      br(),
+                      withSpinner(DT::dataTableOutput("preprocessingTable", width = "100%")))
+  )), id = "tab"),
   
   
   #if you want to create a new panel in the tutorials, you'll have to instiate the modal here
