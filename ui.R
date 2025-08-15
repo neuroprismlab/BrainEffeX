@@ -9,7 +9,7 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "July-30-2025"
+date_updated = "Aug-15-2025"
 
 # User interface ----
 ui <- fluidPage(
@@ -165,7 +165,7 @@ ui <- fluidPage(
              #   DT::dataTableOutput("keys"),
              # ),
              
-             h6(paste("Version 1.6; Last updated ", date_updated)),
+             h6(paste("Version 1.0.0; Last updated ", date_updated)),
              
              tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
                     target = "_blank", 

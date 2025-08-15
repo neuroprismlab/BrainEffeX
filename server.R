@@ -170,7 +170,7 @@ server <- function(input, output, session) {
   
   output$preprocessingTable <- DT::renderDataTable({
     # read the CSV file
-    preprocessing_info <- read_csv("~/halleerenate@gmail.com - Google Drive/My Drive/Github/BrainEffeX_July-9/BrainEffeX/data/preprocessing_info.csv")
+    preprocessing_info <- read_csv("data/preprocessing_info.csv")
     
     # Create the data table
     DT::datatable(
