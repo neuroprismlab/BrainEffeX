@@ -27,13 +27,13 @@ BrainEffeX/
 Group level statistical maps are computed and converted to effect size estimates using scripts within the [calculate_effeX repository](https://github.com/neuroprismlab/calculate_effeX). 
 > The resulting effect size maps are avaliable on [OSF](https://osf.io/cwnjd/files/osfstorage), as they exceed GitHub's file size limitations. 
 
-The script 'generate_figures.R' uses these maps to create the visualizations, which are saved in a figures folder and then loaded into **BrainEffeX**.
+Figures are created with the create_figures/generate_figures.R script from the [calculate_effeX repository](https://github.com/neuroprismlab/calculate_effeX). The figures are saved in the figures directory and then loaded into **BrainEffeX**.
 
 The R package containing useful functions used in this app (and in related publications) can be found in the [BrainEffeX_utils Repository](https://github.com/neuroprismlab/BrainEffeX_utils).
 
 ---
 ## Contributions
-To support **BrainEffeX** as a growing resource, we welcome contributions of large sample fMRI datasets (n>500). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
+To support **BrainEffeX** as a growing resource, we welcome contributions of large sample fMRI datasets (n>400). Data should be provided at the subject level, after preproccessing and computation of functional connectivity or task-based activiation. 
 
 ### 📊 Data Contributions
 - If you have data to contribute to the app, please see the README.md file in the 'for_contributors' folder within this repository. 
@@ -53,8 +53,10 @@ For any questions or feedback, please submit an [issue](https://github.com/neuro
 
 ---
 ## Citation
-If you use this pipeline in your work, please cite:
+If you use this pipeline in your work, please cite both the preprint and the current version of the app:
 
 >Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. OSF. doi.org/10.31219/osf.io/kryn4_v3
 
 [![DOI](https://img.shields.io/badge/DOI-10.31219/osf.io/kryn4.v3-blue.svg)](https://doi.org/10.31219/osf.io/kryn4_v3)
+
+The DOI for the current version of the app is [![DOI](https://zenodo.org/badge/739537293.svg)](https://doi.org/10.5281/zenodo.16882652)
