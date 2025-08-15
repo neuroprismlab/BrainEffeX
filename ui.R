@@ -10,6 +10,7 @@ library(shinycssloaders)
 source("modals.R")
 
 date_updated = "Aug-15-2025"
+version = "1.6.0"
 
 # User interface ----
 ui <- fluidPage(
@@ -165,7 +166,7 @@ ui <- fluidPage(
              #   DT::dataTableOutput("keys"),
              # ),
              
-             h6(paste("Version 1.0.0; Last updated ", date_updated)),
+             h6(paste("Version 1.6.0; Last updated ", date_updated)),
              
              tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
                     target = "_blank", 
@@ -217,7 +218,7 @@ ui <- fluidPage(
                        # Button to take a screenshot of the app
                        actionButton("screenshot_m", "Take a screenshot"),
                        
-                       h6(paste("Version 1.5; Last updated ", date_updated)),
+                       h6(paste("Version: ", version, "; Last updated ", date_updated)),
                 ),
                 
                 column(9, align = "centre", # plots
