@@ -8,8 +8,6 @@ library(shinyscreenshot)
 library(DT)
 library(readr)
 
-source("helpers.R")
-
 server <- function(input, output, session) {
   ##### Setup #####
   v <- reactiveValues()
