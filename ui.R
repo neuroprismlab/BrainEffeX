@@ -197,7 +197,7 @@ ui <- fluidPage(
                        bsTooltip("group_by_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
                        selectInput("m_motion",
                                    label = tagList("Motion Method", icon("info-circle", id = "meta_motion_icon")),
-                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold" = 'threshold'), 
+                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold 0.1mm" = 'threshold'), 
                                    selected = 'none'),
                        bsTooltip("meta_motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
                        
