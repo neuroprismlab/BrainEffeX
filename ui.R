@@ -9,8 +9,8 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "Aug-20-2025"
-version = "1.6.1"
+date_updated = "Sept-24-2025"
+version = "1.6.3"
 
 # User interface ----
 ui <- fluidPage(
@@ -166,7 +166,7 @@ ui <- fluidPage(
              #   DT::dataTableOutput("keys"),
              # ),
              
-             h6(paste("Version 1.6.1; Last updated ", date_updated)),
+             h6(paste("Version ", version, "; Last updated ", date_updated)),
              
              tags$a(href = "https://github.com/neuroprismlab/BrainEffeX", 
                     target = "_blank", 
@@ -197,7 +197,7 @@ ui <- fluidPage(
                        bsTooltip("group_by_icon", "Choose which meta-analysis to visualize.", "right", options = list(container = "body")),
                        selectInput("m_motion",
                                    label = tagList("Motion Method", icon("info-circle", id = "meta_motion_icon")),
-                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold 0.1mm" = 'threshold'), 
+                                   choices = c("None" = 'none', "Regression" = 'regression', "Threshold 0.1mm" = 'threshold', "Threshold 0.2mm" = "threshold2"), 
                                    selected = 'none'),
                        bsTooltip("meta_motion_icon", "Select the method of motion correction. Regression: the mean framewise displacement (FD) for each subject was regressed from data. Thresholding: TRs with mean FD > 0.1 mm were removed.", "right", options = list(container = "body")),
                        
