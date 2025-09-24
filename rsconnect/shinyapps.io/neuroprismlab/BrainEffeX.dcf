@@ -5,9 +5,9 @@ account: neuroprismlab
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13780940
-bundleId: 10798176
+bundleId: 10804161
 url: https://neuroprismlab.shinyapps.io/BrainEffeX/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .github/ISSUE_TEMPLATE/data-contribution.yml|for_contributors/README.md|for_contributors/templates/sample_r_struct.mat|for_contributors/templates/sample_t_struct.mat|for_contributors/templates/sample_t2_struct.mat
+ignoredFiles: .github/ISSUE_TEMPLATE/data-contribution.yml|for_contributors/README.md|for_contributors/templates/sample_r_struct.mat|for_contributors/templates/sample_t_struct.mat|for_contributors/templates/sample_t2_struct.mat|new_figs|test
