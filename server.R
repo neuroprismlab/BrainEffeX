@@ -23,8 +23,8 @@ server <- function(input, output, session) {
   # Load in meta tab info
   load("data/meta_analysis/study_meta_category.RData")
   v$study_meta_category <- study_meta_category
-  load("data/meta_analysis/study_meta_statistic.RData")
-  v$study_meta_statistic <- study_meta_statistic
+  # load("data/meta_analysis/study_meta_statistic.RData")
+  #v$study_meta_statistic <- study_meta_statistic
   
   #Load in phen key info
   phen_keys <- read.csv('data/phen_key.csv')
