@@ -9,8 +9,8 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "Sept-24-2025"
-version = "1.6.3"
+date_updated = "Feb-7-2026"
+version = "1.7.0"
 
 # User interface ----
 ui <- fluidPage(
@@ -65,8 +65,8 @@ ui <- fluidPage(
     #        "View Preprint")
     
     actionButton("openLink", 
-                 "View Preprint",
-                 onclick = "window.open('https://osf.io/preprints/osf/kryn4_v3', '_blank')",
+                 "View Manuscript",
+                 onclick = "window.open('https://doi.org/10.52294/001c.146251', '_blank')",
                  style = "color: #fff; background-color: #5c8a54; border-color: #4d7346; margin-left:15px")
   ),
   
