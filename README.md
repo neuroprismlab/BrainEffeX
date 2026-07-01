@@ -53,10 +53,10 @@ For any questions or feedback, please submit an [issue](https://github.com/neuro
 
 ---
 ## Citation
-If you use this pipeline in your work, please cite both the preprint and the current version of the app:
+If you use this pipeline in your work, please cite both the manuscript and the current version of the app:
 
->Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. OSF. doi.org/10.31219/osf.io/kryn4_v3
+>Shearer, et al. (2025). BrainEffeX: A Web App for Exploring fMRI Effect Sizes. Aperture Neuro. doi.org/10.52294/001c.146251
 
-[![DOI](https://img.shields.io/badge/DOI-10.31219/osf.io/kryn4.v3-blue.svg)](https://doi.org/10.31219/osf.io/kryn4_v3)
+[![DOI](https://img.shields.io/badge/DOI-10.52294%2F001c.146251-blue.svg)](https://doi.org/10.52294/001c.146251)
 
 The DOI for the current version of the app is [![DOI](https://zenodo.org/badge/739537293.svg)](https://doi.org/10.5281/zenodo.16882652)
