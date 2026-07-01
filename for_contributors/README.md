@@ -1,18 +1,24 @@
 # Instructions for contributors
-BrainEffeX welcomes contributions of large (n>500) subject-level datasets. Data should be provided at the subject level, after preprocessing and computation of functional connectivity or task-based activation. Specifically, a .mat file containing three structs should be provided, with fields listed in Figure 3. Template .mat files with the proper structure for each test type may be downloaded from https://github.com/neuroprismlab/BrainEffeX/tree/main/for_contributors/templates to facilitate the organization of the data files.
+BrainEffeX welcomes contributions of large (n>400) subject-level datasets. Data should be provided at the subject level, after preprocessing and computation of functional connectivity or task-based activation. 
 
-If you have any issues while trying to contribute data, please don't hesistate to file an issue here on Github (via a 'Blank' issue request, not the contribution template), or email us at neuroprismlab@gmail.com. We would be happy to walk through any of these steps with you!
+## We now accept data in two formats:
+1. A .mat file containing three structs with fields listed in Figure 3 (see below). Template .mat files may be downloaded from https://github.com/neuroprismlab/BrainEffeX/tree/main/for_contributors/templates.
+2. BIDS-formatted preprocessed data, for example as output by C-PAC. While the BIDS recommendations are currently not solidified for functional connectivity matrices, we recommend following the output structure of C-PAC's RBC pipeline. See https://github.com/ReproBrainChart for examples of formatting. In addition to the C-PAC-style repository, we also need a dataset_description.json file, and the atlas file (see github.com/reprobrainchart/sourcedata-atlases for examples). 
+
+If you have any issues while trying to contribute data, please don't hesitate to file an issue here on Github (via a 'Blank' issue request, not the contribution template), or email us at neuroprismlab@gmail.com. We would be happy to walk through any of these steps with you!
 
 **To contribute data to BrainEffeX, please follow these steps...**
 
 ## 1. Format your data
-Data should be provided as a .mat struct. See the figure below for information about the required fields. Empty template structs for each test type (t, r, t2) are available in BrainEffeX/for_contributors/templates/. 
+Data should be provided in one of the above formats. 
 
-Save your .mat file in a directory that contains only this .mat file (this is important for uploading the data later) - the name of the directory does not matter. 
+For the matlab format, see the figure below for information about the required fields. Empty template structs for each test type (t, r, t2) are available in BrainEffeX/for_contributors/templates/. Save your .mat file in a directory that contains only this .mat file (this is important for uploading the data later) - the name of the directory does not matter. 
 ![contributor data structure](https://github.com/user-attachments/assets/5657b384-42d9-4e0b-81ee-47aaf8665ce0)
 
 
-## 2. Upload your data to Brainlife.io
+## 2. Upload your data to Brainlife.io (or send the data to us another way if you prefer)
+The following instructions are for uploading the data to Brainlife.io, but if you prefer to send us the data another way, please contact us. 
+
 1. Create an account on [Brainlife.io.](https://brainlife.io/auth/#!/signup)
 2. Verify your account with your email, and login.
 3. Create a project:
@@ -41,7 +47,7 @@ Save your .mat file in a directory that contains only this .mat file (this is im
   - Select "Data Contribution"
   ![Screenshot 2025-01-28 at 3 11 41 PM](https://github.com/user-attachments/assets/0d0261e7-05af-4495-8b52-7a878be55f76)
   - Fill in the form, providing information about the data that you are contributing.
-  - In the last field, provide the URL to the Brainlife project where you uploaded the data.
+  - In the last field, provide the URL to the Brainlife project where you uploaded the data. 
   - Submit the form!
 
 
