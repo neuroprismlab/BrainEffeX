@@ -9,8 +9,8 @@ library(shinycssloaders)
 
 source("modals.R")
 
-date_updated = "Feb-7-2026"
-version = "1.7.0"
+date_updated = "Jul-27-2026"
+version = "1.7.1"
 
 # User interface ----
 ui <- fluidPage(
